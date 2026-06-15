@@ -69,7 +69,6 @@ const getNavigation = (t: TFunction) => [
       { name: t('navigation.models'), href: '/settings/api-keys', icon: Bot },
       { name: t('navigation.transformations'), href: '/transformations', icon: Shuffle },
       { name: t('navigation.settings'), href: '/settings', icon: Settings },
-      { name: t('navigation.advanced'), href: '/advanced', icon: Wrench },
     ],
   },
 ] as const
@@ -121,8 +120,8 @@ export function AppSidebar() {
           {isCollapsed ? (
             <div className="relative flex items-center justify-center w-full">
               <Image
-                src="/logo.svg"
-                alt="Open Notebook"
+                src="/logo.png"
+                alt="EduLoom"
                 width={32}
                 height={32}
                 className="transition-opacity group-hover:opacity-0"
@@ -139,7 +138,7 @@ export function AppSidebar() {
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <Image src="/logo.svg" alt={t('common.appName')} width={32} height={32} />
+                <Image src="/logo.png" alt={t('common.appName')} width={32} height={32} />
                 <span className="text-base font-medium text-sidebar-foreground">
                   {t('common.appName')}
                 </span>
@@ -253,7 +252,9 @@ export function AppSidebar() {
                 )}
 
                 {section.items.map((item) => {
-                  const isActive = pathname?.startsWith(item.href) || false
+                  const isActive = item.href === '/settings'
+                    ? pathname === '/settings'
+                    : (pathname?.startsWith(item.href) || false)
                   const button = (
                     <Button
                       variant={isActive ? 'secondary' : 'ghost'}

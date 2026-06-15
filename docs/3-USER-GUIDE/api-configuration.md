@@ -1,48 +1,49 @@
-# API Configuration
+# API 配置指南
 
-Configure AI provider credentials through the Settings UI. No file editing required.
+您可以通过系统的前端设置界面（Settings UI）来配置 AI 服务商的凭证，无需手动编辑任何配置文件。
 
-> **Credential System**: Open Notebook uses encrypted credentials stored in the database. Each credential connects to a provider and allows you to discover, register, and test models.
-
----
-
-## Overview
-
-Open Notebook manages AI provider access through a **credential-based system**:
-
-1. You create a **credential** for each provider (API key + settings)
-2. Credentials are **encrypted** and stored in the database
-3. You **test connections** to verify credentials work
-4. You **discover and register models** from each credential
-5. Models are linked to credentials for direct configuration
+> **凭证系统说明**：EduLoom 使用加密的凭证并将其安全地存储在数据库中。每个凭证对应一个 AI 服务商，使您能够自动发现、注册并测试相关的模型。
 
 ---
 
-## Encryption Setup
+## 概述
 
-Before storing credentials, you must configure an encryption key.
+EduLoom 通过**凭证系统**管理对各大 AI 服务商的访问：
 
-### Setting the Encryption Key
+1. 您可以为每个服务商创建一个**凭证**（包含 API 密钥与相关配置）
+2. 凭证会在数据库中被**加密**存储
+3. 您可以**测试连接**以验证凭证的有效性
+4. 您可以从每个凭证中**自动发现并注册模型**
+5. 注册后的模型将与凭证绑定，可供您在系统中直接调用
 
-Add `OPEN_NOTEBOOK_ENCRYPTION_KEY` to your docker-compose.yml:
+---
+
+<a id="encryption-setup"></a>
+## 加密设置
+
+在存储任何 API 凭证之前，您必须配置一个主加密密钥。
+
+### 设置加密密钥
+
+在您的 `docker-compose.yml` 中添加 `OPEN_NOTEBOOK_ENCRYPTION_KEY` 环境变量：
 
 ```yaml
 environment:
-  - OPEN_NOTEBOOK_ENCRYPTION_KEY=my-secret-passphrase
+  - OPEN_NOTEBOOK_ENCRYPTION_KEY=your-secret-passphrase
 ```
 
-Any string works as a key — it will be securely derived via SHA-256 internally.
+任何字符串都可以作为密钥 —— 系统内部会使用 SHA-256 安全地派生实际的加密密钥。
 
-> **Warning**: If you change or lose the encryption key, **all stored credentials become unreadable**. Back up your encryption key securely and separately from your database backups.
+> **警告**：如果您更改或丢失了此加密密钥，**所有已存储的 API 凭证都将无法读取并失效**。请务必安全地备份您的加密密钥，并将其与数据库备份分开存放。
 
-### Docker Secrets Support
+### 支持 Docker Secrets
 
-Both password and encryption key support Docker secrets:
+密码和加密密钥均支持通过 Docker Secrets 进行配置：
 
 ```yaml
 # docker-compose.yml
 services:
-  open_notebook:
+  edu_loom:
     environment:
       - OPEN_NOTEBOOK_PASSWORD_FILE=/run/secrets/app_password
       - OPEN_NOTEBOOK_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
@@ -57,330 +58,167 @@ secrets:
     file: ./secrets/encryption_key.txt
 ```
 
-### Encryption Details
+### 加密技术细节
 
-API keys stored in the database are encrypted using Fernet (AES-128-CBC + HMAC-SHA256).
+存储在数据库中的 API 密钥采用 Fernet（AES-128-CBC + HMAC-SHA256）算法进行加密。
 
-| Configuration | Behavior |
+| 配置状态 | 行为表现 |
 |---------------|----------|
-| Encryption key set | Keys encrypted with your key |
-| No encryption key set | Storing credentials is disabled |
+| 已设置加密密钥 | API 密钥将被安全加密后存入数据库 |
+| 未设置加密密钥 | 系统将禁用存储凭证功能 |
 
 ---
 
-## Accessing Credential Configuration
+## 进入凭据配置界面
 
-1. Click **Settings** in the navigation bar
-2. Select **API Keys** tab
-3. You'll see existing credentials and an **Add Credential** button
+1. 点击左侧导航栏中的 **设置 (Settings)**
+2. 选择 **API 密钥 (API Keys)** 标签页
+3. 您将在此处看到现有凭证，并可以通过点击 **添加凭据 (Add Credential)** 按钮来添加新凭证
 
 ```
-Navigation: Settings → API Keys
+导航路径：设置 → API 密钥
 ```
 
 ---
 
-## Supported Providers
+## 支持的服务商
 
-### Cloud Providers
+### 云端服务商
 
-| Provider | Required Fields | Optional Fields |
+| 服务商 | 必填字段 | 选填字段 |
 |----------|-----------------|-----------------|
 | OpenAI | API Key | — |
-| Anthropic | API Key | — |
-| Google Gemini | API Key | — |
-| Groq | API Key | — |
-| Mistral | API Key | — |
 | DeepSeek | API Key | — |
-| xAI | API Key | — |
-| OpenRouter | API Key | — |
-| Voyage AI | API Key | — |
-| ElevenLabs | API Key | — |
+| DashScope (通义千问) | API Key | — |
+| MiniMax | API Key | — |
 
-### Local/Self-Hosted
+### 本地/自托管
 
-| Provider | Required Fields | Notes |
+| 服务商 | 必填字段 | 备注说明 |
 |----------|-----------------|-------|
-| Ollama | Base URL | Typically `http://localhost:11434` or `http://ollama:11434` |
+| Ollama | Base URL | 通常为 `http://localhost:11434` 或 `http://ollama:11434` |
 
-### Enterprise
+### 企业级与自定义
 
-| Provider | Required Fields | Optional Fields |
+| 服务商 | 必填字段 | 选填字段与备注 |
 |----------|-----------------|-----------------|
-| Azure OpenAI | API Key, URL Base (Azure endpoint) | Service-specific endpoints (LLM, Embedding, STT, TTS) |
-| OpenAI-Compatible | Base URL | API Key, Service-specific configs |
-| Vertex AI | Project ID, Location, Credentials Path | — |
+| Azure OpenAI | API Key, URL Base | 特定服务的端点（LLM, Embedding, STT, TTS） |
+| OpenAI-Compatible | Base URL | API Key, 各项服务的特定配置 |
 
 ---
 
-## Creating a Credential
+## 创建凭据步骤
 
-### Step 1: Add Credential
+### 第一步：添加凭据
 
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select your provider
-4. Give it a descriptive name (e.g., "My OpenAI Key", "Work Anthropic")
-5. Fill in the required fields (API key, base URL, etc.)
-6. Click **Save**
+1. 前往 **设置** → **API 密钥**
+2. 点击 **添加凭据** 按钮
+3. 选择您想配置的 AI 服务商
+4. 为该凭据起一个易懂的名字（例如：“我的 OpenAI 密钥”、“开发环境 DeepSeek”）
+5. 填写对应的必填字段（API 密钥、基础 URL 等）
+6. 点击 **保存**
 
-### Step 2: Test Connection
+### 第二步：测试连接
 
-1. On your new credential card, click **Test Connection**
-2. Wait for the result:
+1. 在新创建的凭证卡片上，点击 **测试连接 (Test Connection)**
+2. 等待连接测试结果：
 
-| Result | Meaning |
-|--------|---------|
-| Success | Key is valid, provider accessible |
-| Invalid API key | Check key format and value |
-| Connection failed | Check URL, network, firewall |
+| 测试结果 | 说明 | 解决方案 |
+|--------|---------|---|
+| **成功 (Success)** | 密钥有效，且能正常连接到该服务商 | 无需处理，即可进行下一步 |
+| **无效的 API 密钥** | API 密钥格式或内容错误 | 请检查并重新复制密钥 |
+| **连接失败** | 无法访问服务商的 API 地址 | 请检查网络、防火墙、或 Base URL 配置 |
 
-### Step 3: Discover Models
+### 第三步：自动发现模型
 
-1. Click **Discover Models** on the credential card
-2. The system queries the provider for available models
-3. Review the discovered models
+1. 点击凭证卡片上的 **发现模型 (Discover Models)**
+2. 系统将向对应的 API 端点发送查询请求，获取可用的模型列表
+3. 在弹出的对话框中浏览并确认获取到的模型
 
-### Step 4: Register Models
+### 第四步：注册模型
 
-1. Select the models you want to use
-2. Click **Register Models**
-3. The models are now available throughout Open Notebook
-
----
-
-## Multi-Credential Support
-
-Each provider can have **multiple credentials**. This is useful when:
-- You have different API keys for different projects
-- You want to test with different endpoints
-- Multiple team members need separate credentials
-
-### Creating Multiple Credentials
-
-1. Click **Add Credential** again
-2. Select the same provider
-3. Fill in different credentials
-4. Each credential can discover and register its own models
-
-### How Models Link to Credentials
-
-When you register models from a credential, those models are linked to that specific credential. This means:
-- Each model knows which API key to use
-- You can have models from different credentials for the same provider
-- Deleting a credential removes its linked models
+1. 勾选您希望在系统里启用的模型
+2. 点击 **注册模型 (Register Models)**
+3. 这些模型即成功注册，并可在 EduLoom 的各个会话和工作流中直接选择使用
 
 ---
 
-## Testing Connections
+## 多凭据支持
 
-Click **Test Connection** to verify your credential:
+EduLoom 允许您为同一个 AI 服务商配置**多个凭据**。这在以下场景非常实用：
+- 不同的项目使用不同的 API 密钥和计费账号
+- 需要测试同一个服务商下的不同自定义 API 端点
+- 多个团队成员需要独立的凭证进行隔离
 
-| Result | Meaning |
-|--------|---------|
-| Success | Key is valid, provider accessible |
-| Invalid API key | Check key format and value |
-| Connection failed | Check URL, network, firewall |
-| Model not available | Key valid but model access restricted |
+### 如何创建并关联
 
-Test uses inexpensive models (e.g., `gpt-3.5-turbo`, `claude-3-haiku`) to minimize cost.
-
----
-
-## Configuring Specific Providers
-
-### Simple Providers (API Key Only)
-
-For OpenAI, Anthropic, Google, Groq, Mistral, DeepSeek, xAI, OpenRouter:
-
-1. Add credential with your API key
-2. Test connection
-3. Discover and register models
-
-### Ollama (URL-Based)
-
-1. Add credential with provider **Ollama**
-2. Enter the base URL (e.g., `http://ollama:11434`)
-3. Test connection
-4. Discover and register models
-
-Ollama allows localhost and private IPs since it runs locally.
-
-### Azure OpenAI
-
-1. Add credential with provider **Azure OpenAI**
-2. Enter your API key
-3. Enter your Azure endpoint in the **URL Base** field (e.g., `https://myresource.openai.azure.com`)
-4. Test connection
-5. Discover and register models
-
-The URL Base field is automatically mapped to the Azure endpoint. The API version defaults to `2024-10-21` if not set via environment variable.
-
-### OpenAI-Compatible
-
-For custom OpenAI-compatible servers (LM Studio, vLLM, etc.):
-
-1. Add credential with provider **OpenAI-Compatible**
-2. Enter the base URL
-3. Enter API key (if required)
-4. Optionally configure per-service URLs
-
-Supports separate configurations for:
-- LLM (language models)
-- Embedding
-- STT (speech-to-text)
-- TTS (text-to-speech)
-
-### Vertex AI
-
-Google Cloud's enterprise AI platform:
-
-| Field | Example |
-|-------|---------|
-| Project ID | `my-gcp-project` |
-| Location | `us-central1` |
-| Credentials Path | `/path/to/service-account.json` |
+- 您只需再次点击 **添加凭据**，选择相同的服务商，并填入不同的 API 密钥即可。
+- 每个模型都与发现它的凭证相绑定。如果删除凭证，与之关联的所有已注册模型也将自动从系统模型列表中移除。
 
 ---
 
-## Migrating from Environment Variables
+## 针对特定服务商的配置建议
 
-If you have existing API keys in environment variables (from a previous version):
+### 简单服务商（仅需 API 密钥）
 
-1. Open **Settings → API Keys**
-2. A banner appears: "Environment variables detected"
-3. Click **Migrate to Database**
-4. Keys are copied to the database (encrypted)
-5. Original environment variables remain unchanged
+对于 OpenAI、DeepSeek、DashScope、MiniMax 等服务商：
+1. 填入 API 密钥并保存凭据。
+2. 测试连接。
+3. 发现并注册您所需的模型。
 
-### Migration Behavior
+### Ollama（本地运行）
 
-| Scenario | Action |
-|----------|--------|
-| Key in env only | Migrated to database |
-| Key in database only | No change |
-| Key in both | Database version kept (skipped) |
+1. 在凭证页面选择 **Ollama**。
+2. 输入您的本地 Ollama 服务地址（例如：`http://host.docker.internal:11434` 或 `http://localhost:11434`）。
+3. 测试连接、发现并注册模型。
+*(注意：请确保本地 Ollama 服务已启动，且已提前拉取过对应模型，如 `ollama pull qwen2.5`)*
 
-### After Migration
+### OpenAI-Compatible (自定义 OpenAI 兼容接口)
 
-- Database credentials are used for all operations
-- You can remove the API key environment variables from your docker-compose.yml
-- Keep `OPEN_NOTEBOOK_ENCRYPTION_KEY` — it's still required
-
-### Migration Banner Visibility
-
-The migration banner only appears when:
-- You have environment variables configured
-- Those providers are **not** already in the database
-- If all env providers are already migrated, the banner won't show
+对于 LM Studio、vLLM、或其他提供 OpenAI 格式接口的第三方大模型 API：
+1. 在凭据页面选择 **OpenAI-Compatible**。
+2. 输入其 API 基础路径 (Base URL)，例如 `http://localhost:1234/v1`。
+3. 填入 API 密钥（如无需密钥，可填入任意占位符如 `not-needed`）。
+4. （可选）为 LLM（对话）、Embedding（向量）、TTS（语音合成）、STT（语音识别）配置各自独立的端点。
 
 ---
 
-## Migrating from ProviderConfig (v1.1 → v1.2)
+## 从环境变量迁移 (如果您之前配置过)
 
-If you're upgrading from an older version that used the ProviderConfig system:
+如果您曾在旧版本的环境变量中直接指定过 API 密钥：
 
-- The migration happens automatically on first startup
-- Your existing configurations are converted to credentials
-- Check **Settings → API Keys** to verify the migration succeeded
-- If you see issues, check the API logs for migration messages
-
----
-
-## Key Storage Security
-
-### Encryption
-
-API keys stored in the database are encrypted using Fernet (AES-128-CBC + HMAC-SHA256).
-
-| Configuration | Behavior |
-|---------------|----------|
-| Encryption key set | Keys encrypted with your key |
-| No encryption key set | Storing API keys in database is disabled |
-
-### Default Credentials
-
-| Setting | Default Value | Production Recommendation |
-|---------|---------------|---------------------------|
-| Password | `open-notebook-change-me` | Set `OPEN_NOTEBOOK_PASSWORD` |
-| Encryption Key | None (must be set) | Set `OPEN_NOTEBOOK_ENCRYPTION_KEY` to any secret string |
-
-**For production deployments, always set custom credentials.**
+1. 打开 **设置 → API 密钥**
+2. 页面顶部会显示一个提示横幅：“检测到环境变量”
+3. 点击 **迁移到数据库 (Migrate to Database)**
+4. 这些密钥将被安全地加密并导入数据库凭证中
+5. 导入完成后，您可以安全地将旧环境变量从 `docker-compose.yml` 中删去。请务必保持 `OPEN_NOTEBOOK_ENCRYPTION_KEY` 环境变量的设置。
 
 ---
 
-## Deleting Credentials
+## 安全与存储
 
-1. Click the **Delete** button on the credential card
-2. Confirm deletion
-3. Credential and all its linked models are removed from the database
+### 加密机制
 
----
+EduLoom 数据库中的敏感字段（如 API Key）全部经过 Fernet 加密。若未设置 `OPEN_NOTEBOOK_ENCRYPTION_KEY` 环境变量，数据库加密功能将无法启用，系统也无法保存凭证。
 
-## Troubleshooting
+### 默认账户安全
 
-### Credential Not Saving
-
-| Symptom | Cause | Solution |
-|---------|-------|----------|
-| Save button disabled | Empty or invalid input | Enter a valid key |
-| Error on save | Encryption key not set | Set `OPEN_NOTEBOOK_ENCRYPTION_KEY` in docker-compose.yml |
-| Error on save | Database connection issue | Check database status |
-
-### Test Connection Fails
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| Invalid API key | Wrong key or format | Verify key from provider dashboard |
-| Connection refused | Wrong URL | Check base URL format |
-| Timeout | Network issue | Check firewall, proxy settings |
-| 403 Forbidden | IP restriction | Whitelist your server IP |
-
-### Migration Issues
-
-| Problem | Solution |
-|---------|----------|
-| No migration banner | No env vars detected, or already migrated |
-| Partial migration | Check error list, fix and retry |
-| Keys not working after migration | Clear browser cache, restart services |
-
-### Provider Shows "Not Configured"
-
-1. Check if a credential exists for this provider (Settings → API Keys)
-2. Test the credential connection
-3. Verify key format matches provider requirements
-4. Re-discover and register models if needed
+在生产环境部署时，建议通过 `OPEN_NOTEBOOK_PASSWORD` 环境变量为系统设置复杂的自定义访问密码，替换默认的密码以防未授权访问。
 
 ---
 
-## Provider-Specific Notes
+## 常见问题排查 (Troubleshooting)
 
-### OpenAI
-- Keys start with `sk-proj-` (project keys) or `sk-` (legacy)
-- Requires billing enabled on account
+### 凭证无法保存
+- **原因 1**：没有填写完整必填字段。请检查输入。
+- **原因 2**：后台容器未配置 `OPEN_NOTEBOOK_ENCRYPTION_KEY`。请在您的 `docker-compose.yml` 中配置该环境变量并重启容器。
 
-### Anthropic
-- Keys start with `sk-ant-`
-- Check account has API access enabled
-
-### Google Gemini
-- Keys start with `AIzaSy`
-- Free tier has rate limits
-
-### Ollama
-- No API key required
-- Default URL: `http://localhost:11434` (local) or `http://ollama:11434` (Docker)
-- Ensure Ollama server is running
-
-### Azure OpenAI
-- Enter your Azure endpoint in the **URL Base** field (format: `https://{resource-name}.openai.azure.com`)
-- API version defaults to `2024-10-21`; override via `AZURE_OPENAI_API_VERSION` environment variable if needed
-- Deployment names configured separately when registering models via the credential's Discover Models dialog
+### 测试连接失败
+- **原因 1**：API 密钥不正确或余额不足。请前往服务商后台确认。
+- **原因 2**：国内访问限制或代理网络不通。如果您在容器内运行，请确保容器具有外网访问权限，或者配置了适当的 HTTP 代理。
 
 ---
 
-## Related
-
-- **[AI Providers](../5-CONFIGURATION/ai-providers.md)** — Provider setup instructions and recommendations
-- **[Security](../5-CONFIGURATION/security.md)** — Password and encryption configuration
-- **[Environment Reference](../5-CONFIGURATION/environment-reference.md)** — All configuration options
+## 关联文档
+- **[AI 服务商配置](../5-CONFIGURATION/ai-providers.md)** —— 常见大模型服务商的密钥获取方法与推荐机型
+- **[OpenAI 兼容接口配置](../5-CONFIGURATION/openai-compatible.md)** —— 如何接入 LM Studio、vLLM 等本地或自定义服务

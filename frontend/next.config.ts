@@ -1,8 +1,33 @@
 import type { NextConfig } from "next";
+import os from "os";
 
-const nextConfig: NextConfig = {
+// 动态获取本机的所有局域网 IPv4 地址，防止因 IP 变更导致 Network 链接失效
+const getLocalIPs = () => {
+  const interfaces = os.networkInterfaces();
+  const ips: string[] = ["localhost", "127.0.0.1"];
+  for (const name of Object.keys(interfaces)) {
+    const networkInterface = interfaces[name];
+    if (networkInterface) {
+      for (const net of networkInterface) {
+        // 过滤 IPv4 且不是回环地址
+        if (net.family === "IPv4" && !net.internal) {
+          ips.push(net.address);
+        }
+      }
+    }
+  }
+  return ips;
+};
+
+const nextConfig: NextConfig & { allowedDevOrigins?: string[] } = {
   // Enable standalone output for optimized Docker deployment
   output: "standalone",
+
+  // 允许局域网 IP 访问 Next.js 开发服务（解决局域网 Network 访问时被安全策略拦截，导致 HMR 报错的问题）
+  allowedDevOrigins: getLocalIPs(),
+
+  // 禁用 Next.js 开发状态指示器（隐藏右上角带 "N" 的开发调试小圆圈）
+  devIndicators: false,
 
   // Experimental features
   // Type assertion needed: proxyClientMaxBodySize is valid in Next.js 15 but types lag behind

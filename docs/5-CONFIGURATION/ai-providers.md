@@ -1,548 +1,145 @@
-# AI Providers - Configuration Guide
+# AI 服务商配置指南
 
-Complete setup instructions for each AI provider via the **Settings UI**.
+本指南将为您介绍如何在 EduLoom 系统中通过**设置界面**配置各个 AI 服务商的 API 密钥及参数。
 
-> **New in v1.2**: All AI provider credentials are now managed through the Settings UI. Environment variables for API keys are deprecated.
-
----
-
-## How Provider Setup Works
-
-Open Notebook uses a **credential-based system** for managing AI providers:
-
-1. **Get your API key** from the provider's website
-2. **Open Settings** → **API Keys** → **Add Credential**
-3. **Test the connection** to verify it works
-4. **Discover & Register Models** to make them available
-5. **Start using** the provider in your notebooks
-
-> **Prerequisite**: You must set `OPEN_NOTEBOOK_ENCRYPTION_KEY` in your docker-compose.yml before storing credentials. See [API Configuration](../3-USER-GUIDE/api-configuration.md#encryption-setup) for details.
+> **提示**：所有 AI 服务商凭证均已迁移至前端设置界面中进行可视化管理。为了保障系统安全，建议不要使用废弃的环境变量来直接硬编码 API 密钥。
 
 ---
 
-## Cloud Providers (Recommended for Most)
+## 凭证管理工作流
+
+在 EduLoom 中启用一个 AI 服务商，通常包含以下几步：
+
+1. **获取 API 密钥**：前往对应服务商的开放平台申请 API Key。
+2. **添加凭据**：在系统内打开 **设置 (Settings)** → **API 密钥 (API Keys)** → 点击 **添加凭据 (Add Credential)**。
+3. **测试连接**：保存凭据后，点击 **测试连接**，系统将自动验证接口是否畅通。
+4. **发现并注册模型**：点击 **发现模型** 获取该服务商提供的可用模型列表，并勾选注册。注册成功后即可在聊天会话中直接调用。
+
+> **前提条件**：在保存任何密钥前，您必须在 `docker-compose.yml` 中配置好 `OPEN_NOTEBOOK_ENCRYPTION_KEY` 环境变量（用于凭证的加密存储）。详情请参阅 [API 配置指南](../3-USER-GUIDE/api-configuration.md#加密设置)。
+
+---
+
+## 国内主流 AI 服务商（推荐）
+
+### DeepSeek (深度求索)
+
+国内极具性价比且性能强劲的 AI 模型服务商。
+
+**获取 API 密钥：**
+1. 访问 [DeepSeek 开放平台](https://platform.deepseek.com/) 注册并登录。
+2. 导航至 API Keys 页面，创建一个新的 API 密钥。
+
+**在 EduLoom 中配置：**
+1. 前往 **设置** → **API 密钥**，点击 **添加凭据**。
+2. 选择服务商：**DeepSeek**。
+3. 填入凭证名称及您的 API 密钥。
+4. 点击 **保存** 并 **测试连接**。
+5. 点击 **发现模型** 并选择需要的模型进行 **注册**（如 `deepseek-chat` 或 `deepseek-reasoner`）。
+
+---
+
+### DashScope (阿里通义千问)
+
+阿里云提供的模型服务平台，拥有非常出色的中文处理和长文本处理能力。
+
+**获取 API 密钥：**
+1. 访问 [阿里云百炼平台/DashScope 控制台](https://dashscope.console.aliyun.com/)。
+2. 创建或登录您的阿里云账号，并开通 DashScope 服务。
+3. 导航至 API-KEY 管理页面，创建并复制您的 API 密钥。
+
+**在 EduLoom 中配置：**
+1. 前往 **设置** → **API 密钥**，点击 **添加凭据**。
+2. 选择服务商：**DashScope (Qwen)**。
+3. 填入您的 API 密钥，保存并测试。
+4. 点击 **发现模型** 并选择您需要的模型（如 `qwen-max`、`qwen-plus` 等）进行注册。
+
+---
+
+### MiniMax (名之梦)
+
+国内领先的通用大模型提供商，在长文本理解、语音和文本生成领域表现优异。
+
+**获取 API 密钥：**
+1. 访问 [MiniMax 开放平台](https://platform.minimaxi.com/)。
+2. 注册账号并进入控制台。
+3. 在左侧菜单中选择 API Keys，创建并获取密钥。
+
+**在 EduLoom 中配置：**
+1. 前往 **设置** → **API 密钥**。
+2. 添加凭据，选择服务商：**MiniMax**。
+3. 粘贴 API 密钥，保存并测试连接。
+4. 发现并注册您的模型（如 `MiniMax-M2.5` 等）。
+
+---
+
+## 本地部署与自托管（免 API 密钥）
+
+### Ollama (推荐本地运行)
+
+非常适合在本地电脑上部署开源大模型，完全免费且保障隐私。
+
+**安装与配置 Ollama：**
+1. 下载并安装 [Ollama 官方客户端](https://ollama.com/)。
+2. 启动 Ollama 服务。
+3. 在终端中拉取您想要使用的模型（例如：`ollama pull qwen2.5` 或 `ollama pull llama3`）。
+
+**在 EduLoom 中接入：**
+1. 前往 **设置** → **API 密钥**，点击 **添加凭据**，选择 **Ollama**。
+2. 输入您的 Ollama 服务地址 (Base URL)：
+   - 若 EduLoom 在 Docker 中运行，且 Ollama 在宿主机上：`http://host.docker.internal:11434`
+   - 若均为本地直接运行：`http://localhost:11434`
+3. 保存并测试连接。
+4. 点击 **发现模型**，系统会自动列出本地 Ollama 中已下载的所有模型，勾选并注册即可。
+
+> **上下文窗口配置 (`num_ctx`)**：Ollama 默认的上下文窗口通常为 8192 token。如果您需要处理较长的文档，可以在编辑 Ollama 凭证时，在可选的“上下文窗口 (num_ctx)”字段里输入更大的值（例如 `32768`），系统在发起请求时会自动应用此设置。
+
+---
+
+## 国外主流 AI 服务商
 
 ### OpenAI
 
-**Cost:** ~$0.03-0.15 per 1K tokens (varies by model)
+全球顶尖的 AI 模型服务商，支持文本、向量化、语音等多模态输入。
 
-**Get Your API Key:**
-1. Go to https://platform.openai.com/api-keys
-2. Create account (if needed)
-3. Create new API key (starts with "sk-proj-")
-4. Add $5+ credits to account
+**获取 API 密钥：**
+1. 访问 [OpenAI 开发者平台](https://platform.openai.com/) 并登录。
+2. 前往 API Keys 页面创建新的密钥（以 `sk-proj-` 开头）。
+3. 确保您的 OpenAI 账户中存有足够的余额。
 
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **OpenAI**
-4. Give it a name (e.g., "My OpenAI Key")
-5. Paste your API key
-6. Click **Save**, then **Test Connection**
-7. Click **Discover Models** to find available models
-8. Click **Register Models** to make them available
-
-**Available Models (in Open Notebook):**
-- `gpt-4o` — Best quality, fast (latest version)
-- `gpt-4o-mini` — Fast, cheap, good for testing
-- `o1` — Advanced reasoning model (slower, more expensive)
-- `o1-mini` — Faster reasoning model
-
-**Recommended:**
-- For general use: `gpt-4o` (best balance)
-- For testing/cheap: `gpt-4o-mini` (90% cheaper)
-- For complex reasoning: `o1` (best for hard problems)
-
-**Cost Estimate:**
-```
-Light use: $1-5/month
-Medium use: $10-30/month
-Heavy use: $50-100+/month
-```
-
-**Troubleshooting:**
-- "Invalid API key" → Check key starts with "sk-proj-" and test the connection in Settings
-- "Rate limit exceeded" → Wait or upgrade account
-- "Model not available" → Try gpt-4o-mini instead, or re-discover models
+**在 EduLoom 中配置：**
+1. 前往 **设置** → **API 密钥**，点击 **添加凭据**。
+2. 选择服务商：**OpenAI**。
+3. 输入您的 API 密钥，保存并测试连接。
+4. 发现并注册您需要的模型（如 `gpt-4o`、`gpt-4o-mini` 等）。
 
 ---
 
-### Anthropic (Claude)
+## 接入其他自定义或兼容平台
 
-**Cost:** ~$0.80-3.00 per 1M tokens (cheaper than OpenAI for long context)
+### OpenAI-Compatible (OpenAI 兼容接口)
 
-**Get Your API Key:**
-1. Go to https://console.anthropic.com/
-2. Create account or login
-3. Go to API keys section
-4. Create new API key (starts with "sk-ant-")
+如果您使用的是其他第三方中转 API、本地的 LM Studio、vLLM 或 LocalAI 等工具，可以通过此选项进行灵活配置。
 
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **Anthropic**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
+1. 在 **添加凭据** 中选择 **OpenAI-Compatible**。
+2. 填入目标的 API 基础地址（Base URL），例如 `https://api.your-provider.com/v1` 或本地的 `http://localhost:1234/v1`。
+3. 填入 API 密钥（如无需密钥则可填写任意占位符）。
+4. 保存并测试连接，进行模型自动发现与注册。
 
-**Available Models:**
-- `claude-sonnet-4-5-20250929` — Latest, best quality (recommended)
-- `claude-3-5-sonnet-20241022` — Previous generation, still excellent
-- `claude-3-5-haiku-20241022` — Fast, cheap
-- `claude-opus-4-5-20251101` — Most powerful, expensive
-
-**Recommended:**
-- For general use: `claude-sonnet-4-5` (best overall, latest)
-- For cheap: `claude-3-5-haiku` (80% cheaper)
-- For complex: `claude-opus-4-5` (most capable)
-
-**Cost Estimate:**
-```
-Sonnet: $3-20/month (typical use)
-Haiku: $0.50-3/month
-Opus: $10-50+/month
-```
-
-**Advantages:**
-- Great long-context support (200K tokens)
-- Excellent reasoning
-- Fast processing
-
-**Troubleshooting:**
-- "Invalid API key" → Check it starts with "sk-ant-" and test in Settings
-- "Overloaded" → Anthropic is busy, retry later
-- "Model unavailable" → Re-discover models from the credential
+具体配置详情及 Docker 网络调试方法，请参阅 **[OpenAI 兼容接口配置](openai-compatible.md)**。
 
 ---
 
-### Google Gemini
+## 常见选择建议
 
-**Cost:** ~$0.075-0.30 per 1K tokens (competitive with OpenAI)
-
-**Get Your API Key:**
-1. Go to https://aistudio.google.com/app/apikey
-2. Create account or login
-3. Create new API key
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **Google Gemini**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
-
-**Available Models:**
-- `gemini-2.0-flash-exp` — Latest experimental, fastest (recommended)
-- `gemini-2.0-flash` — Stable version, fast, cheap
-
-**Recommended:**
-- For general use: `gemini-2.0-flash-exp` (best value, latest)
-- For cheap: `gemini-1.5-flash` (very cheap)
-- For complex/long context: `gemini-1.5-pro-latest` (2M token context)
-
-**Advantages:**
-- Very long context (1M tokens)
-- Multimodal (images, audio, video)
-- Good for podcasts
-
-**Troubleshooting:**
-- "API key invalid" → Get fresh key from aistudio.google.com
-- "Quota exceeded" → Free tier limited, upgrade account
-- "Model not found" → Re-discover models from the credential
+1. **希望设置最简单，且需要极高的中文理解和逻辑推理能力：**
+   - 推荐使用 **DeepSeek**（性价比极高，中文推理效果拔群）或 阿里 **DashScope (Qwen)**。
+2. **由于网络或隐私原因，不希望任何数据上传至公网：**
+   - 推荐在本地电脑运行 **Ollama**（运行 Qwen、Llama 等开源模型），所有数据在本地处理，完全免费。
+3. **已拥有成熟的第三方大模型 API 中转或自建的推理集群：**
+   - 推荐使用 **OpenAI-Compatible**，可自由配置 LLM、Embedding、语音合成等服务的独立端点。
 
 ---
 
-### Groq
-
-**Cost:** ~$0.05 per 1M tokens (cheapest, but limited models)
-
-**Get Your API Key:**
-1. Go to https://console.groq.com/keys
-2. Create account or login
-3. Create new API key
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **Groq**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
-
-**Available Models:**
-- `llama-3.3-70b-versatile` — Best on Groq (recommended)
-- `llama-3.1-70b-versatile` — Fast, capable
-- `mixtral-8x7b-32768` — Good alternative
-- `gemma2-9b-it` — Small, very fast
-
-**Recommended:**
-- For quality: `llama-3.3-70b-versatile` (best overall)
-- For speed: `gemma2-9b-it` (ultra-fast)
-- For balance: `llama-3.1-70b-versatile`
-
-**Advantages:**
-- Ultra-fast inference
-- Very cheap
-- Great for transformations/batch work
-
-**Disadvantages:**
-- Limited model selection
-- Smaller models than OpenAI/Anthropic
-
-**Troubleshooting:**
-- "Rate limited" → Free tier has limits, upgrade
-- "Model not available" → Re-discover models from the credential
-
----
-
-### OpenRouter
-
-**Cost:** Varies by model ($0.05-15 per 1M tokens)
-
-**Get Your API Key:**
-1. Go to https://openrouter.ai/keys
-2. Create account or login
-3. Add credits to your account
-4. Create new API key
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **OpenRouter**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
-
-**Available Models (100+ options):**
-- OpenAI: `openai/gpt-4o`, `openai/o1`
-- Anthropic: `anthropic/claude-sonnet-4.5`, `anthropic/claude-3.5-haiku`
-- Google: `google/gemini-2.0-flash-exp`, `google/gemini-1.5-pro`
-- Meta: `meta-llama/llama-3.3-70b-instruct`, `meta-llama/llama-3.1-405b-instruct`
-- Mistral: `mistralai/mistral-large-2411`
-- DeepSeek: `deepseek/deepseek-chat`
-- And many more...
-
-**Recommended:**
-- For quality: `anthropic/claude-sonnet-4.5` (best overall)
-- For speed/cost: `google/gemini-2.0-flash-exp` (very fast, cheap)
-- For open-source: `meta-llama/llama-3.3-70b-instruct`
-- For reasoning: `openai/o1`
-
-**Advantages:**
-- One API key for 100+ models
-- Unified billing
-- Easy model comparison
-- Access to models that may have waitlists elsewhere
-
-**Cost Estimate:**
-```
-Light use: $1-5/month
-Medium use: $10-30/month
-Heavy use: Depends on models chosen
-```
-
-**Troubleshooting:**
-- "Invalid API key" → Check it starts with "sk-or-"
-- "Insufficient credits" → Add credits at openrouter.ai
-- "Model not available" → Check model ID spelling (use full path)
-
----
-
-### DashScope (Qwen)
-
-**Cost:** ~$0.01-0.06 per 1K tokens (varies by model)
-
-**Get Your API Key:**
-1. Go to https://dashscope.console.aliyun.com/
-2. Create an Alibaba Cloud account (if needed)
-3. Navigate to API Keys section
-4. Create a new API key
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **DashScope (Qwen)**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
-
-**Available Models:**
-- `qwen-max` — Most capable Qwen model
-- `qwen-plus` — Good balance of quality and speed
-- `qwen-turbo` — Fastest, cheapest
-
-**Recommended:**
-- For quality: `qwen-max` (best overall)
-- For general use: `qwen-plus` (good balance)
-- For speed/cost: `qwen-turbo` (cheapest)
-
-**Troubleshooting:**
-- "Invalid API key" → Check the key in the DashScope console
-- "Model not available" → Re-discover models from the credential
-
----
-
-### MiniMax
-
-**Cost:** Varies by model
-
-**Get Your API Key:**
-1. Go to https://platform.minimaxi.com/
-2. Create an account (if needed)
-3. Navigate to API Keys section
-4. Create a new API key
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **MiniMax**
-4. Give it a name, paste your API key
-5. Click **Save**, then **Test Connection**
-6. Click **Discover Models** → **Register Models**
-
-**Available Models:**
-- `MiniMax-M2.5` — Most capable, 204K context
-- `MiniMax-M2.5-highspeed` — Faster variant, 204K context
-
-**Recommended:**
-- For quality: `MiniMax-M2.5` (best overall)
-- For speed: `MiniMax-M2.5-highspeed` (faster responses)
-
-**Advantages:**
-- Very long context (204K tokens)
-- Competitive pricing
-
-**Troubleshooting:**
-- "Invalid API key" → Check the key in the MiniMax platform
-- "Model not available" → Re-discover models from the credential
-
----
-
-## Self-Hosted / Local
-
-### Ollama (Recommended for Local)
-
-**Cost:** Free (electricity only)
-
-**Setup Ollama:**
-1. Install Ollama: https://ollama.ai
-2. Run Ollama in background: `ollama serve`
-3. Download a model: `ollama pull mistral`
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **Ollama**
-4. Give it a name (e.g., "Local Ollama")
-5. Enter the base URL:
-   - Same machine (non-Docker): `http://localhost:11434`
-   - Docker with Ollama on host: `http://host.docker.internal:11434`
-   - Docker with Ollama container: `http://ollama:11434`
-6. Click **Save**, then **Test Connection**
-7. Click **Discover Models** → **Register Models**
-
-See [Ollama Setup Guide](ollama.md) for detailed network configuration.
-
-**Context Window (`num_ctx`):**
-
-Ollama models default to a **8,192-token** context window. This default is intentionally
-conservative so models run reliably on consumer GPUs (≈8GB VRAM) without running out of memory.
-If your hardware can handle more, set an optional **Context Window (num_ctx)** value on the
-Ollama credential (Settings → API Keys → edit the Ollama credential). It applies to all models
-that use that credential. Leave it empty to keep the default.
-
-- Raise it (e.g. `32768`) when ingesting large documents or using long chat histories.
-- If you hit "out of memory" errors, lower it or leave it at the default.
-
-**Available Models:**
-- `llama3.3:70b` — Best quality (requires 40GB+ RAM)
-- `llama3.1:8b` — Recommended, balanced (8GB RAM)
-- `qwen2.5:7b` — Excellent for code and reasoning
-- `mistral:7b` — Good general purpose
-- `phi3:3.8b` — Small, fast (4GB RAM)
-- `gemma2:9b` — Google's model, balanced
-- Many more: `ollama list` to see available
-
-**Recommended:**
-- For quality (with GPU): `llama3.3:70b` (best)
-- For general use: `llama3.1:8b` (best balance)
-- For speed/low memory: `phi3:3.8b` (very fast)
-- For coding: `qwen2.5:7b` (excellent at code)
-
-**Hardware Requirements:**
-```
-GPU (NVIDIA/AMD):
-  8GB VRAM: Runs most models fine
-  6GB VRAM: Works, slower
-  4GB VRAM: Small models only
-
-CPU-only:
-  16GB+ RAM: Slow but works
-  8GB RAM: Very slow
-  4GB RAM: Not recommended
-```
-
-**Advantages:**
-- Completely private (runs locally)
-- Free (electricity only)
-- No API key needed
-- Works offline
-
-**Disadvantages:**
-- Slower than cloud (unless on GPU)
-- Smaller models than cloud
-- Requires local hardware
-
-**Troubleshooting:**
-- "Connection refused" → Ollama not running or wrong URL in credential
-- "Model not found" → Download it: `ollama pull modelname`
-- "Out of memory" → Use smaller model or add more RAM
-
----
-
-### LM Studio (Local Alternative)
-
-**Cost:** Free
-
-**Setup LM Studio:**
-1. Download LM Studio: https://lmstudio.ai
-2. Open app
-3. Download a model from library
-4. Go to "Local Server" tab
-5. Start server (default port: 1234)
-
-**Configure in Open Notebook:**
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **OpenAI-Compatible**
-4. Give it a name (e.g., "LM Studio")
-5. Enter the base URL: `http://host.docker.internal:1234/v1` (Docker) or `http://localhost:1234/v1` (local)
-6. API key: `lm-studio` (placeholder, LM Studio doesn't require one)
-7. Click **Save**, then **Test Connection**
-
-**Advantages:**
-- GUI interface (easier than Ollama CLI)
-- Good model selection
-- Privacy-focused
-- Works offline
-
-**Disadvantages:**
-- Desktop only (Mac/Windows/Linux)
-- Slower than cloud
-- Requires local GPU
-
----
-
-### Custom OpenAI-Compatible
-
-For Text Generation UI, vLLM, or other OpenAI-compatible endpoints:
-
-1. Go to **Settings** → **API Keys**
-2. Click **Add Credential**
-3. Select provider: **OpenAI-Compatible**
-4. Enter the base URL for your endpoint (e.g., `http://localhost:8000/v1`)
-5. Enter API key if required
-6. Optionally configure per-service URLs (LLM, Embedding, TTS, STT)
-7. Click **Save**, then **Test Connection**
-
-See [OpenAI-Compatible Setup](openai-compatible.md) for detailed instructions.
-
----
-
-## Enterprise
-
-### Azure OpenAI
-
-**Cost:** Same as OpenAI (usage-based)
-
-**Configure in Open Notebook:**
-1. Create Azure OpenAI service in Azure portal
-2. Deploy GPT-4/3.5-turbo model
-3. Get your endpoint and key
-4. Go to **Settings** → **API Keys**
-5. Click **Add Credential**
-6. Select provider: **Azure OpenAI**
-7. Fill in: API Key, Endpoint, API Version
-8. Optionally configure service-specific endpoints (LLM, Embedding)
-9. Click **Save**, then **Test Connection**
-
-**Advantages:**
-- Enterprise support
-- VPC integration
-- Compliance (HIPAA, SOC2, etc.)
-
-**Disadvantages:**
-- More complex setup
-- Higher overhead
-- Requires Azure account
-
----
-
-## Embeddings (For Search/Semantic Features)
-
-By default, Open Notebook uses the LLM provider's embeddings. Embedding models are discovered and registered through the same credential system — when you discover models from a credential, embedding models are included alongside language models.
-
----
-
-## Choosing Your Provider
-
-**1. Don't want to run locally and don't want to mess around with different providers:**
-
-Use OpenAI
-- Cloud-based
-- Good quality
-- Reasonable cost
-- Simplest setup, supports all modes (text, embedding, tts, stt, etc)
-
-**For budget-conscious:** Groq, OpenRouter or Ollama
-- Groq: Super cheap cloud
-- Ollama: Free, but local
-- OpenRouter: many open source models very accessible
-
-**For privacy-first:** Ollama or LM Studio and Speaches ([TTS](local-tts.md), [STT](local-stt.md))
-- Everything stays local
-- Works offline
-- No API keys sent anywhere
-
-**For enterprise:** Azure OpenAI
-- Compliance
-- VPC integration
-- Support
-
----
-
-## Next Steps
-
-1. **Choose your provider** from above
-2. **Get API key** (if cloud) or install locally (if Ollama)
-3. **Set `OPEN_NOTEBOOK_ENCRYPTION_KEY`** in your docker-compose.yml (required for storing credentials)
-4. **Open Settings** → **API Keys** → **Add Credential**
-5. **Test Connection** to verify it works
-6. **Discover & Register Models** to make them available
-7. **Verify it works** with a test chat
-
-> **Multiple providers**: You can add credentials for as many providers as you want. Create separate credentials for different projects or team members.
-
-Done!
-
----
-
-## Legacy: Environment Variables (Deprecated)
-
-> **Deprecated**: Configuring AI provider API keys via environment variables is deprecated. Use the Settings UI instead. Environment variables may still work as a fallback but are no longer the recommended approach.
-
-If you are migrating from an older version that used environment variables, go to **Settings** → **API Keys** and click the **Migrate to Database** button to import your existing keys into the credential system.
-
----
-
-## Related
-
-- **[API Configuration](../3-USER-GUIDE/api-configuration.md)** — Detailed credential management guide
-- **[Environment Reference](environment-reference.md)** - Complete list of all environment variables
-- **[Advanced Configuration](advanced.md)** - Timeouts, SSL, performance tuning
-- **[Ollama Setup](ollama.md)** - Detailed Ollama configuration guide
-- **[OpenAI-Compatible](openai-compatible.md)** - LM Studio and other compatible providers
-- **[Local TTS Setup](local-tts.md)** - Text-to-speech with Speaches
-- **[Local STT Setup](local-stt.md)** - Speech-to-text with Speaches
-- **[Troubleshooting](../6-TROUBLESHOOTING/quick-fixes.md)** - Common issues and fixes
+## 关联文档
+- **[API 凭证配置指南](../3-USER-GUIDE/api-configuration.md)** —— 系统凭证加密、添加及测试的详细步骤说明
+- **[OpenAI 兼容接口配置](openai-compatible.md)** —— 如何接入 LM Studio、vLLM 等本地或自定义服务
