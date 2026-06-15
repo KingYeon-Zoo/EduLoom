@@ -65,13 +65,12 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   openai_compatible: 'OpenAI Compatible',
   deepseek: 'DeepSeek',
   dashscope: 'DashScope (Qwen)',
-  minimax: 'MiniMax',
   ollama: 'Ollama',
 }
 
 // All providers in display order
 const ALL_PROVIDERS = [
-  'openai_compatible', 'deepseek', 'dashscope', 'minimax', 'ollama',
+  'openai_compatible', 'deepseek', 'dashscope', 'ollama',
 ]
 
 // Default modalities per provider
@@ -80,7 +79,6 @@ const PROVIDER_MODALITIES: Record<string, ModelType[]> = {
   deepseek: ['language'],
   ollama: ['language', 'embedding'],
   dashscope: ['language'],
-  minimax: ['language'],
 }
 
 // Documentation links
@@ -88,7 +86,6 @@ const PROVIDER_DOCS: Record<string, string> = {
   openai_compatible: 'https://github.com/KingYeon-Zoo/EduLoom/blob/main/docs/5-CONFIGURATION/openai-compatible.md',
   deepseek: 'https://platform.deepseek.com/api_keys',
   dashscope: 'https://help.aliyun.com/zh/model-studio/getting-started/',
-  minimax: 'https://platform.minimaxi.com/document/Guides',
 }
 
 const TYPE_ICONS: Record<ModelType, React.ReactNode> = {
