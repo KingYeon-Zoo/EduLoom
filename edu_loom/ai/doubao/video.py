@@ -65,7 +65,7 @@ class DoubaoVideoClient:
 
     def poll(self, task_id: str) -> VideoResult:
         """Fetch current task state once. Does not block."""
-        task = self._client.content_generation.tasks.get(task_id)
+        task = self._client.content_generation.tasks.get(task_id=task_id)
         video_url = None
         content = getattr(task, "content", None)
         if content is not None:
