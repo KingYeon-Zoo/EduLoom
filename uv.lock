@@ -666,6 +666,7 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tomli" },
     { name = "uvicorn" },
+    { name = "volcengine-python-sdk", extra = ["ark"] },
 ]
 
 [package.optional-dependencies]
@@ -724,6 +725,7 @@ requires-dist = [
     { name = "tomli", specifier = ">=2.0.2" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.32.0.20241016" },
     { name = "uvicorn", specifier = ">=0.24.0" },
+    { name = "volcengine-python-sdk", extras = ["ark"], specifier = ">=5.0.35" },
 ]
 provides-extras = ["dev"]
 
@@ -3655,6 +3657,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/aa/a3/4d310fa5f00863544e1d0f4de93bddec248499ccf97d4791bc3122c9d4f3/virtualenv-20.36.1.tar.gz", hash = "sha256:8befb5c81842c641f8ee658481e42641c68b5eab3521d8e092d18320902466ba", size = 6032239, upload-time = "2026-01-09T18:21:01.296Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/2a/dc2228b2888f51192c7dc766106cd475f1b768c10caaf9727659726f7391/virtualenv-20.36.1-py3-none-any.whl", hash = "sha256:575a8d6b124ef88f6f51d56d656132389f961062a9177016a50e4f507bbcc19f", size = 6008258, upload-time = "2026-01-09T18:20:59.425Z" },
+]
+
+[[package]]
+name = "volcengine-python-sdk"
+version = "5.0.35"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "python-dateutil" },
+    { name = "six" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/d3/5c3b55471c459a7ab2095b1d53ecf79a5d4ab3c61234b1aef91b1dc7f353/volcengine_python_sdk-5.0.35.tar.gz", hash = "sha256:721f4fbe95c488b8a02e8101b2118aef6f0b801e1266dcd0a54939fa5957d240", size = 9587916, upload-time = "2026-06-17T03:53:49.653Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/11/a415b66a37ed03d5c47e3387ede1f02140c8f422bfa760cd721898b3e90a/volcengine_python_sdk-5.0.35-py2.py3-none-any.whl", hash = "sha256:c228c6fc4ed310a209ed8d7f3c92faf078ebba82b38b959ca57538bfb0e1d76e", size = 38441869, upload-time = "2026-06-17T03:53:43.454Z" },
+]
+
+[package.optional-dependencies]
+ark = [
+    { name = "anyio" },
+    { name = "cryptography" },
+    { name = "httpx" },
+    { name = "pydantic" },
 ]
 
 [[package]]
