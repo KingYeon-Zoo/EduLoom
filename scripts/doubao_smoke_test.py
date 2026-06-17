@@ -16,7 +16,10 @@ import sys
 from pathlib import Path
 
 import httpx
+from dotenv import load_dotenv
 from loguru import logger
+
+load_dotenv()
 
 from open_notebook.ai.doubao import (
     DoubaoImageClient,
@@ -39,7 +42,7 @@ def run_image() -> None:
     logger.info("=== Image (Seedream) ===")
     client = DoubaoImageClient()
     result = client.generate(
-        "一张简洁的计算机科学课程封面插画,扁平风格", size="1024x1024"
+        "一张简洁的计算机科学课程封面插画,扁平风格", size="2048x2048"
     )
     if result.url:
         _download(result.url, OUT / "image.png")
