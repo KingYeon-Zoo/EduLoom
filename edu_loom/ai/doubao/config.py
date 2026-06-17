@@ -6,8 +6,10 @@ used, so the rest of the app keeps working without Doubao configured.
 
 Two distinct credential sets are involved:
   * Ark Runtime (video + image) — uses ARK_API_KEY + ARK_BASE_URL.
-  * Doubao TTS — a separate Volcengine speech service authenticated with
-    app id + access token against the openspeech endpoint.
+  * Doubao TTS — a separate Volcengine speech service. We target the V3
+    unidirectional HTTP interface (required for seed-tts-2.0 voices). Auth is
+    either the new-console API key (X-Api-Key) or the legacy app id + access
+    token (X-Api-App-Id / X-Api-Access-Key), plus an X-Api-Resource-Id.
 """
 
 import os
@@ -16,7 +18,8 @@ from dataclasses import dataclass
 from open_notebook.ai.doubao.exceptions import DoubaoConfigError
 
 DEFAULT_ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-DEFAULT_TTS_ENDPOINT = "https://openspeech.bytedance.com/api/v1/tts"
+DEFAULT_TTS_ENDPOINT = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
+DEFAULT_TTS_RESOURCE_ID = "seed-tts-2.0"
 
 
 @dataclass(frozen=True)
@@ -27,11 +30,13 @@ class DoubaoConfig:
     ark_base_url: str
     video_model: str | None
     image_model: str | None
-    tts_app_id: str | None
-    tts_access_token: str | None
+    # TTS (V3 unidirectional)
     tts_endpoint: str
-    tts_voice_type: str | None
-    tts_cluster: str
+    tts_resource_id: str
+    tts_speaker: str | None
+    tts_api_key: str | None  # new console: X-Api-Key
+    tts_app_id: str | None  # legacy console: X-Api-App-Id
+    tts_access_token: str | None  # legacy console: X-Api-Access-Key
 
     @classmethod
     def from_env(cls) -> "DoubaoConfig":
@@ -40,11 +45,12 @@ class DoubaoConfig:
             ark_base_url=_clean(os.environ.get("ARK_BASE_URL")) or DEFAULT_ARK_BASE_URL,
             video_model=_clean(os.environ.get("DOUBAO_VIDEO_MODEL")),
             image_model=_clean(os.environ.get("DOUBAO_IMAGE_MODEL")),
+            tts_endpoint=_clean(os.environ.get("DOUBAO_TTS_ENDPOINT")) or DEFAULT_TTS_ENDPOINT,
+            tts_resource_id=_clean(os.environ.get("DOUBAO_TTS_RESOURCE_ID")) or DEFAULT_TTS_RESOURCE_ID,
+            tts_speaker=_clean(os.environ.get("DOUBAO_TTS_SPEAKER")),
+            tts_api_key=_clean(os.environ.get("DOUBAO_TTS_API_KEY")),
             tts_app_id=_clean(os.environ.get("DOUBAO_TTS_APP_ID")),
             tts_access_token=_clean(os.environ.get("DOUBAO_TTS_ACCESS_TOKEN")),
-            tts_endpoint=_clean(os.environ.get("DOUBAO_TTS_ENDPOINT")) or DEFAULT_TTS_ENDPOINT,
-            tts_voice_type=_clean(os.environ.get("DOUBAO_TTS_VOICE_TYPE")),
-            tts_cluster=_clean(os.environ.get("DOUBAO_TTS_CLUSTER")) or "volcano_tts",
         )
 
     def require_ark(self) -> str:
@@ -70,22 +76,33 @@ class DoubaoConfig:
             )
         return self.image_model
 
-    def require_tts(self) -> tuple[str, str, str]:
-        """Return (app_id, access_token, voice_type) or raise if any unset."""
-        missing = [
-            name
-            for name, val in [
-                ("DOUBAO_TTS_APP_ID", self.tts_app_id),
-                ("DOUBAO_TTS_ACCESS_TOKEN", self.tts_access_token),
-                ("DOUBAO_TTS_VOICE_TYPE", self.tts_voice_type),
-            ]
-            if not val
-        ]
-        if missing:
+    def tts_auth_headers(self) -> dict[str, str]:
+        """Build V3 TTS auth headers, or raise if neither auth method is set.
+
+        Prefers the new-console API key (X-Api-Key); falls back to the legacy
+        app id + access token. X-Api-Resource-Id is always required.
+        """
+        headers = {"X-Api-Resource-Id": self.tts_resource_id}
+        if self.tts_api_key:
+            headers["X-Api-Key"] = self.tts_api_key
+            return headers
+        if self.tts_app_id and self.tts_access_token:
+            headers["X-Api-App-Id"] = self.tts_app_id
+            headers["X-Api-Access-Key"] = self.tts_access_token
+            return headers
+        raise DoubaoConfigError(
+            "Doubao TTS auth is not configured. Set DOUBAO_TTS_API_KEY (new "
+            "console), or both DOUBAO_TTS_APP_ID and DOUBAO_TTS_ACCESS_TOKEN "
+            "(legacy console)."
+        )
+
+    def require_speaker(self) -> str:
+        if not self.tts_speaker:
             raise DoubaoConfigError(
-                f"Doubao TTS is not fully configured. Missing: {', '.join(missing)}."
+                "DOUBAO_TTS_SPEAKER is not set. For seed-tts-2.0 use a "
+                "'*_uranus_bigtts' voice, e.g. zh_female_vv_uranus_bigtts."
             )
-        return self.tts_app_id, self.tts_access_token, self.tts_voice_type  # type: ignore[return-value]
+        return self.tts_speaker
 
 
 def _clean(value: str | None) -> str | None:

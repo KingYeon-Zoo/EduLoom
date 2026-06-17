@@ -25,11 +25,12 @@ def _config(**overrides) -> DoubaoConfig:
         ark_base_url="https://ark.test/api/v3",
         video_model="seedance-test",
         image_model="seedream-test",
-        tts_app_id="app",
-        tts_access_token="tok",
-        tts_endpoint="https://tts.test",
-        tts_voice_type="voice",
-        tts_cluster="volcano_tts",
+        tts_endpoint="https://tts.test/api/v3/tts/unidirectional",
+        tts_resource_id="seed-tts-2.0",
+        tts_speaker="zh_female_vv_uranus_bigtts",
+        tts_api_key="tts-key",
+        tts_app_id=None,
+        tts_access_token=None,
     )
     base.update(overrides)
     return DoubaoConfig(**base)
@@ -53,11 +54,24 @@ def test_require_ark_raises_when_unset():
         _config(ark_api_key=None).require_ark()
 
 
-def test_require_tts_reports_missing_fields():
-    with pytest.raises(DoubaoConfigError) as exc:
-        _config(tts_access_token=None, tts_voice_type=None).require_tts()
-    assert "DOUBAO_TTS_ACCESS_TOKEN" in str(exc.value)
-    assert "DOUBAO_TTS_VOICE_TYPE" in str(exc.value)
+def test_require_tts_reports_missing_auth():
+    cfg = _config(tts_api_key=None, tts_app_id=None, tts_access_token=None)
+    with pytest.raises(DoubaoConfigError):
+        cfg.tts_auth_headers()
+
+
+def test_tts_auth_prefers_api_key():
+    headers = _config().tts_auth_headers()
+    assert headers["X-Api-Key"] == "tts-key"
+    assert headers["X-Api-Resource-Id"] == "seed-tts-2.0"
+
+
+def test_tts_auth_falls_back_to_legacy():
+    cfg = _config(tts_api_key=None, tts_app_id="app", tts_access_token="tok")
+    headers = cfg.tts_auth_headers()
+    assert headers["X-Api-App-Id"] == "app"
+    assert headers["X-Api-Access-Key"] == "tok"
+    assert "X-Api-Key" not in headers
 
 
 # --- video ----------------------------------------------------------------
@@ -147,30 +161,35 @@ def test_image_generate_returns_url():
 # --- tts ------------------------------------------------------------------
 
 
-def test_tts_synthesize_decodes_audio():
+def test_tts_synthesize_decodes_ndjson_audio():
     from open_notebook.ai.doubao.tts import DoubaoTTSClient
 
-    audio_bytes = b"\x00\x01fake-mp3"
+    chunk1 = base64.b64encode(b"\x00\x01").decode()
+    chunk2 = base64.b64encode(b"fake-mp3").decode()
+    body = "\n".join(
+        [
+            '{"code":0,"data":"' + chunk1 + '"}',
+            '{"code":0,"data":"' + chunk2 + '"}',
+            '{"code":20000000}',
+        ]
+    )
     fake_resp = MagicMock()
-    fake_resp.json.return_value = {
-        "code": 3000,
-        "data": base64.b64encode(audio_bytes).decode(),
-    }
+    fake_resp.text = body
     fake_resp.raise_for_status.return_value = None
 
     with patch("open_notebook.ai.doubao.tts.httpx.post", return_value=fake_resp):
         client = DoubaoTTSClient(config=_config())
         result = client.synthesize("你好")
 
-    assert result.audio == audio_bytes
+    assert result.audio == b"\x00\x01fake-mp3"
     assert result.encoding == "mp3"
 
 
-def test_tts_raises_on_error_code():
+def test_tts_raises_on_error_line():
     from open_notebook.ai.doubao.tts import DoubaoTTSClient
 
     fake_resp = MagicMock()
-    fake_resp.json.return_value = {"code": 3001, "message": "bad request"}
+    fake_resp.text = '{"code":40000001,"message":"bad request"}'
     fake_resp.raise_for_status.return_value = None
 
     with patch("open_notebook.ai.doubao.tts.httpx.post", return_value=fake_resp):
