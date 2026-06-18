@@ -70,6 +70,10 @@ PROVIDER_CONFIG = {
     "minimax": {
         "env_var": "MINIMAX_API_KEY",
     },
+    # Doubao (Volcengine) — TTS via DOUBAO_TTS_API_KEY; video/image use ARK_API_KEY.
+    "doubao": {
+        "env_var": "DOUBAO_TTS_API_KEY",
+    },
 }
 
 
