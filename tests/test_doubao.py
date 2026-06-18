@@ -198,3 +198,115 @@ def test_tts_raises_on_error_line():
         client = DoubaoTTSClient(config=_config())
         with pytest.raises(DoubaoError):
             client.synthesize("你好")
+
+
+# --- audio/video understanding --------------------------------------------
+
+
+def test_is_media_file_detects_extensions():
+    from open_notebook.ai.doubao.audio import is_media_file
+
+    assert is_media_file("lecture.mp3") is True
+    assert is_media_file("clip.MP4") is True  # case-insensitive
+    assert is_media_file("doc.pdf") is False
+    assert is_media_file("page.html") is False
+    assert is_media_file(None) is False
+    assert is_media_file("") is False
+
+
+def _audio_client(fake_ark):
+    from open_notebook.ai.doubao.audio import DoubaoAudioClient
+
+    with patch(
+        "open_notebook.ai.doubao.audio.build_ark_client", return_value=fake_ark
+    ):
+        return DoubaoAudioClient(config=_config())
+
+
+def _fake_completion(text):
+    return MagicMock(choices=[MagicMock(message=MagicMock(content=text))])
+
+
+def test_audio_understand_builds_input_audio_part(tmp_path):
+    fake_ark = MagicMock()
+    fake_ark.chat.completions.create.return_value = _fake_completion("转写文本")
+    client = _audio_client(fake_ark)
+
+    media = tmp_path / "lecture.mp3"
+    media.write_bytes(b"fake-mp3-bytes")
+
+    # Stub ffmpeg transcode: write a tiny mp3 to the expected temp path.
+    def fake_extract(self, path, tmp_dir):
+        return base64.b64encode(b"audio").decode()
+
+    with patch(
+        "open_notebook.ai.doubao.audio.DoubaoAudioClient._extract_audio_b64",
+        fake_extract,
+    ):
+        import asyncio
+
+        result = asyncio.run(client.understand(str(media)))
+
+    assert result.text == "转写文本"
+    assert result.model == "llm-test"
+    content = fake_ark.chat.completions.create.call_args.kwargs["messages"][0]["content"]
+    audio_parts = [p for p in content if p["type"] == "input_audio"]
+    text_parts = [p for p in content if p["type"] == "text"]
+    image_parts = [p for p in content if p["type"] == "image_url"]
+    assert len(audio_parts) == 1
+    assert audio_parts[0]["input_audio"]["format"] == "mp3"
+    assert len(text_parts) == 1
+    assert image_parts == []  # pure audio → no frames
+
+
+def test_video_understand_adds_image_frames(tmp_path):
+    fake_ark = MagicMock()
+    fake_ark.chat.completions.create.return_value = _fake_completion("视频理解")
+    client = _audio_client(fake_ark)
+
+    media = tmp_path / "clip.mp4"
+    media.write_bytes(b"fake-mp4")
+
+    with patch(
+        "open_notebook.ai.doubao.audio.DoubaoAudioClient._extract_audio_b64",
+        lambda self, p, d: base64.b64encode(b"audio").decode(),
+    ), patch(
+        "open_notebook.ai.doubao.audio.DoubaoAudioClient._extract_frames_b64",
+        lambda self, p, d: [base64.b64encode(b"frame").decode()] * 3,
+    ):
+        import asyncio
+
+        result = asyncio.run(client.understand(str(media)))
+
+    assert result.text == "视频理解"
+    content = fake_ark.chat.completions.create.call_args.kwargs["messages"][0]["content"]
+    image_parts = [p for p in content if p["type"] == "image_url"]
+    assert len(image_parts) == 3
+    assert image_parts[0]["image_url"]["url"].startswith("data:image/jpeg;base64,")
+
+
+def test_audio_understand_missing_file_raises():
+    fake_ark = MagicMock()
+    client = _audio_client(fake_ark)
+    import asyncio
+
+    with pytest.raises(DoubaoError):
+        asyncio.run(client.understand("/nonexistent/path.mp3"))
+
+
+def test_audio_understand_empty_response_raises(tmp_path):
+    fake_ark = MagicMock()
+    fake_ark.chat.completions.create.return_value = _fake_completion("")
+    client = _audio_client(fake_ark)
+
+    media = tmp_path / "lecture.mp3"
+    media.write_bytes(b"x")
+
+    with patch(
+        "open_notebook.ai.doubao.audio.DoubaoAudioClient._extract_audio_b64",
+        lambda self, p, d: "YXVkaW8=",
+    ):
+        import asyncio
+
+        with pytest.raises(DoubaoError):
+            asyncio.run(client.understand(str(media)))

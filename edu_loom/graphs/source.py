@@ -59,6 +59,25 @@ async def content_process(state: SourceState) -> dict:
     )
     content_state["output_format"] = "markdown"
 
+    # Audio/video files are routed to Doubao's full-modal model (transcription
+    # + understanding in one call) instead of content-core's narrow STT path.
+    # Detection is by file extension; non-media falls through to content-core.
+    from open_notebook.ai.doubao.audio import DoubaoAudioClient, is_media_file
+    from open_notebook.utils.error_classifier import classify_error
+
+    media_path = content_state.get("file_path")
+    if is_media_file(media_path):
+        logger.info(f"Routing media file to Doubao understanding: {media_path}")
+        try:
+            client = DoubaoAudioClient()
+            result = await client.understand(media_path)
+            content_state["content"] = result.text
+            content_state["output_format"] = "markdown"
+            return {"content_state": content_state}
+        except Exception as e:
+            exc_class, message = classify_error(e)
+            raise exc_class(message) from e
+
     # Add speech-to-text model configuration from Default Models
     try:
         model_manager = ModelManager()
