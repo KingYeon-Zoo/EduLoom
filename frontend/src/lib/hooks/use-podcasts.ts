@@ -24,6 +24,14 @@ export function useLanguages() {
   })
 }
 
+export function useDoubaoVoices() {
+  return useQuery({
+    queryKey: QUERY_KEYS.doubaoVoices,
+    queryFn: podcastsApi.listDoubaoVoices,
+    staleTime: Infinity,
+  })
+}
+
 interface EpisodeStatusCounts {
   total: number
   running: number

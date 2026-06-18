@@ -62,19 +62,21 @@ type ModelType = 'language' | 'embedding' | 'text_to_speech' | 'speech_to_text'
 
 // Provider display names
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  doubao: '豆包 (Doubao)',
   openai_compatible: 'OpenAI Compatible',
   deepseek: 'DeepSeek',
   dashscope: 'DashScope (Qwen)',
   ollama: 'Ollama',
 }
 
-// All providers in display order
+// All providers in display order (Doubao first — primary model)
 const ALL_PROVIDERS = [
-  'openai_compatible', 'deepseek', 'dashscope', 'ollama',
+  'doubao', 'openai_compatible', 'deepseek', 'dashscope', 'ollama',
 ]
 
 // Default modalities per provider
 const PROVIDER_MODALITIES: Record<string, ModelType[]> = {
+  doubao: ['language', 'text_to_speech'],
   openai_compatible: ['language', 'embedding', 'text_to_speech', 'speech_to_text'],
   deepseek: ['language'],
   ollama: ['language', 'embedding'],
@@ -83,6 +85,7 @@ const PROVIDER_MODALITIES: Record<string, ModelType[]> = {
 
 // Documentation links
 const PROVIDER_DOCS: Record<string, string> = {
+  doubao: 'https://www.volcengine.com/docs/82379',
   openai_compatible: 'https://github.com/KingYeon-Zoo/EduLoom/blob/main/docs/5-CONFIGURATION/openai-compatible.md',
   deepseek: 'https://platform.deepseek.com/api_keys',
   dashscope: 'https://help.aliyun.com/zh/model-studio/getting-started/',

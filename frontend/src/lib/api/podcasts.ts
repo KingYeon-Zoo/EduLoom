@@ -12,6 +12,17 @@ import {
 export type EpisodeProfileInput = Omit<EpisodeProfile, 'id'>
 export type SpeakerProfileInput = Omit<SpeakerProfile, 'id'>
 
+export interface DoubaoVoice {
+  id: string
+  name: string
+  gender: string
+}
+
+export interface DoubaoVoiceList {
+  default: string
+  voices: DoubaoVoice[]
+}
+
 export async function resolvePodcastAssetUrl(path?: string | null): Promise<string | undefined> {
   if (!path) {
     return undefined
@@ -121,6 +132,11 @@ export const podcastsApi = {
 
   listLanguages: async () => {
     const response = await apiClient.get<Language[]>('/languages')
+    return response.data
+  },
+
+  listDoubaoVoices: async () => {
+    const response = await apiClient.get<DoubaoVoiceList>('/doubao/voices')
     return response.data
   },
 }

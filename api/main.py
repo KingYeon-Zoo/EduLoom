@@ -19,6 +19,7 @@ from api.routers import (
     config,
     context,
     credentials,
+    doubao,
     embedding,
     embedding_rebuild,
     episode_profiles,
@@ -146,6 +147,15 @@ async def lifespan(app: FastAPI):
         # Non-fatal: profiles can be migrated manually via UI
 
     logger.success("API initialization completed successfully")
+
+    # Register Doubao TTS provider into the Esperanto factory so podcast
+    # generation can synthesize audio through Doubao.
+    try:
+        from edu_loom.ai.doubao.register import register_doubao_tts
+
+        register_doubao_tts()
+    except Exception as e:
+        logger.warning(f"Failed to register Doubao TTS provider: {e}")
 
     # Yield control to the application
     yield
@@ -310,6 +320,7 @@ app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
 app.include_router(credentials.router, prefix="/api", tags=["credentials"])
 app.include_router(languages.router, prefix="/api", tags=["languages"])
+app.include_router(doubao.router, prefix="/api", tags=["doubao"])
 
 
 @app.get("/")
