@@ -1,0 +1,6 @@
+-- Migration 16: Learner profile (Project B - 对话式学习画像)
+-- Single global learner-profile record (Open Learner Model style).
+-- SCHEMALESS: dimension structure is validated at the Pydantic layer; the DB
+-- stays flexible, matching the notebook/source table style. The singleton row
+-- is created lazily on first write via RecordModel.update()'s UPSERT.
+DEFINE TABLE IF NOT EXISTS learner_profile SCHEMALESS;

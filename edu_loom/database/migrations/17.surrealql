@@ -1,0 +1,117 @@
+-- Migration 17: Studio multimodal resource generators (Project C)
+-- Adds two tables:
+--   studio_profile  — reusable generation presets (报告/视频/思维导图/信息图)
+--   studio_artifact — generated resources, one table for all 4 types
+-- Seeds Chinese built-in presets for each resource type.
+
+-- ============================================================
+-- studio_profile: generation presets
+-- ============================================================
+DEFINE TABLE IF NOT EXISTS studio_profile SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS name ON TABLE studio_profile TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_type ON TABLE studio_profile TYPE string;
+DEFINE FIELD IF NOT EXISTS description ON TABLE studio_profile TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS default_prompt ON TABLE studio_profile TYPE string;
+DEFINE FIELD IF NOT EXISTS config ON TABLE studio_profile TYPE object FLEXIBLE DEFAULT {};
+DEFINE FIELD IF NOT EXISTS builtin ON TABLE studio_profile TYPE bool DEFAULT false;
+DEFINE FIELD IF NOT EXISTS created ON TABLE studio_profile TYPE datetime DEFAULT time::now();
+DEFINE FIELD IF NOT EXISTS updated ON TABLE studio_profile TYPE datetime DEFAULT time::now();
+
+DEFINE INDEX IF NOT EXISTS idx_studio_profile_name ON TABLE studio_profile COLUMNS name UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_studio_profile_type ON TABLE studio_profile COLUMNS resource_type;
+
+-- ============================================================
+-- studio_artifact: generated resources
+-- ============================================================
+DEFINE TABLE IF NOT EXISTS studio_artifact SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS name ON TABLE studio_artifact TYPE string;
+DEFINE FIELD IF NOT EXISTS resource_type ON TABLE studio_artifact TYPE string;
+DEFINE FIELD IF NOT EXISTS notebook_id ON TABLE studio_artifact TYPE option<record<notebook>>;
+DEFINE FIELD IF NOT EXISTS profile_snapshot ON TABLE studio_artifact TYPE object FLEXIBLE DEFAULT {};
+DEFINE FIELD IF NOT EXISTS instructions ON TABLE studio_artifact TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS content ON TABLE studio_artifact TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS file_paths ON TABLE studio_artifact TYPE array<string> DEFAULT [];
+DEFINE FIELD IF NOT EXISTS command ON TABLE studio_artifact TYPE option<record<command>>;
+DEFINE FIELD IF NOT EXISTS created ON TABLE studio_artifact TYPE datetime DEFAULT time::now();
+DEFINE FIELD IF NOT EXISTS updated ON TABLE studio_artifact TYPE datetime DEFAULT time::now();
+
+DEFINE INDEX IF NOT EXISTS idx_studio_artifact_type ON TABLE studio_artifact COLUMNS resource_type;
+DEFINE INDEX IF NOT EXISTS idx_studio_artifact_command ON TABLE studio_artifact COLUMNS command;
+
+-- ============================================================
+-- Seed built-in presets (Chinese)
+-- ============================================================
+INSERT INTO studio_profile [
+    {
+        name: "综合摘要报告",
+        resource_type: "report",
+        description: "全面、结构化地总结所选来源",
+        builtin: true,
+        config: {},
+        default_prompt: "你是一名专业的学习资料分析师。请基于提供的内容，撰写一份结构清晰、内容全面的中文摘要报告。使用 Markdown 格式，包含：一句话概述、核心要点（分点列出）、关键概念解释、以及总结。语言准确、客观，避免冗余。"
+    },
+    {
+        name: "重点知识梳理",
+        resource_type: "report",
+        description: "提炼并梳理核心知识点",
+        builtin: true,
+        config: {},
+        default_prompt: "你是一名资深教师。请基于提供的内容，梳理出其中的重点知识点，按主题分层组织。使用 Markdown 格式，为每个知识点给出简明定义与要点说明，必要时附上易混淆点提示。输出应便于学生复习记忆。"
+    },
+    {
+        name: "考点精讲报告",
+        resource_type: "report",
+        description: "面向考试的考点讲解",
+        builtin: true,
+        config: {},
+        default_prompt: "你是一名命题与备考专家。请基于提供的内容，提炼可能的考点，并对每个考点进行讲解：考点名称、考查形式、核心内容、答题要点。使用 Markdown 格式，条理清晰，突出高频与易错点。"
+    },
+    {
+        name: "知识点快讲",
+        resource_type: "video",
+        description: "短视频形式的知识点讲解（16:9，约5秒）",
+        builtin: true,
+        config: { ratio: "16:9", duration: 5, resolution: "720p" },
+        default_prompt: "你是一名短视频脚本导演。请基于提供的内容，输出一段用于文生视频模型的英文画面描述提示词（prompt），描绘一个生动、富有教育意义的知识讲解场景。只输出最终的视频画面描述提示词本身，不要任何解释或前后缀，控制在 120 词以内。"
+    },
+    {
+        name: "概念动画演示",
+        resource_type: "video",
+        description: "概念可视化动画（16:9）",
+        builtin: true,
+        config: { ratio: "16:9", duration: 5, resolution: "720p" },
+        default_prompt: "你是一名教育动画导演。请基于提供的内容，输出一段用于文生视频模型的英文画面描述提示词（prompt），以动画方式可视化呈现其中的核心概念，画面简洁、富有动感。只输出最终的视频画面描述提示词本身，不要任何解释或前后缀，控制在 120 词以内。"
+    },
+    {
+        name: "知识结构导图",
+        resource_type: "mindmap",
+        description: "层级化的知识结构思维导图",
+        builtin: true,
+        config: {},
+        default_prompt: "你是一名思维导图专家。请基于提供的内容，生成一张层级清晰的思维导图，使用 Mermaid 的 mindmap 语法。只输出合法的 Mermaid 代码（以 mindmap 开头），不要使用代码块标记（不要 ```），不要任何解释。根节点为内容主题，逐层展开核心概念与要点。节点文字使用中文。"
+    },
+    {
+        name: "因果关系导图",
+        resource_type: "mindmap",
+        description: "展示因果/流程关系的有向图",
+        builtin: true,
+        config: {},
+        default_prompt: "你是一名知识可视化专家。请基于提供的内容，生成一张展示因果或流程关系的有向图，使用 Mermaid 的 graph TD 语法。只输出合法的 Mermaid 代码（以 graph TD 开头），不要使用代码块标记（不要 ```），不要任何解释。节点文字使用中文，用箭头表达逻辑关系。"
+    },
+    {
+        name: "图解知识卡",
+        resource_type: "infographic",
+        description: "将内容浓缩为多张图解卡片（4张，1024x1024）",
+        builtin: true,
+        config: { num_images: 4, size: "1024x1024" },
+        default_prompt: "你是一名信息图设计师。请基于提供的内容，将其拆解为若干个关键知识点，为每个知识点设计一张信息图卡片。针对每张卡片，输出一段用于文生图模型的英文画面描述提示词（prompt），描述一张清晰、现代、教育风格的信息图，包含简洁的图标与中文标题文字。只输出一个 JSON 数组，数组每个元素是一个字符串提示词，不要任何解释或代码块标记。"
+    },
+    {
+        name: "流程图解",
+        resource_type: "infographic",
+        description: "以图解方式呈现流程或步骤（4张）",
+        builtin: true,
+        config: { num_images: 4, size: "1024x1024" },
+        default_prompt: "你是一名信息图设计师。请基于提供的内容，提炼出其中的关键流程或步骤，为每个步骤设计一张信息图卡片。针对每张卡片，输出一段用于文生图模型的英文画面描述提示词（prompt），描述一张清晰、现代、教育风格的步骤图解，包含编号、简洁图标与中文标题。只输出一个 JSON 数组，数组每个元素是一个字符串提示词，不要任何解释或代码块标记。"
+    }
+];

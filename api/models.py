@@ -272,6 +272,43 @@ class SettingsUpdate(BaseModel):
     youtube_preferred_languages: Optional[List[str]] = None
 
 
+# Learner profile API models (Project B - 对话式学习画像)
+class ProfileEntryModel(BaseModel):
+    content: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    provenance: str = "unknown"
+    created: Optional[str] = None
+    updated: Optional[str] = None
+
+
+class LearnerProfileResponse(BaseModel):
+    """Full profile: dimension key -> entries, plus display labels."""
+
+    dimensions: Dict[str, List[ProfileEntryModel]]
+    labels: Dict[str, str]
+
+
+class LearnerProfileUpdate(BaseModel):
+    """Manual edit (Open Learner Model): replace entries for given dimensions.
+
+    Only dimensions present in the payload are replaced; omitted dimensions are
+    left unchanged.
+    """
+
+    dimensions: Dict[str, List[ProfileEntryModel]]
+
+
+class ProfileExtractRequest(BaseModel):
+    """Trigger a manual extraction run (demo / cold start)."""
+
+    conversation: str = Field(..., description="Conversation text to extract from")
+    session_id: str = Field("manual", description="Provenance label")
+
+
+class ProfileExtractResponse(BaseModel):
+    command_id: str
+
+
 # Sources API models
 class AssetModel(BaseModel):
     file_path: Optional[str] = None

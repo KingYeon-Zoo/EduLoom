@@ -33,4 +33,7 @@ export const QUERY_KEYS = {
   speakerProfiles: ['podcasts', 'speaker-profiles'] as const,
   languages: ['languages'] as const,
   doubaoVoices: ['doubao', 'voices'] as const,
+  learnerProfile: ['learner-profile'] as const,
+  studioArtifacts: (resourceType: string) => ['studio', 'artifacts', resourceType] as const,
+  studioProfiles: (resourceType: string) => ['studio', 'profiles', resourceType] as const,
 }

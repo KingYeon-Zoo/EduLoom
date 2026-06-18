@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
+from loguru import logger
 from typing_extensions import TypedDict
 
 from open_notebook.ai.provision import provision_langchain_model
@@ -88,12 +89,57 @@ def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict
         cleaned_content = clean_thinking_content(content)
         cleaned_message = ai_message.model_copy(update={"content": cleaned_content})
 
+        # Fire-and-forget: refresh the learner profile from this turn (Project B).
+        # Never block or break the chat reply if submission fails.
+        _submit_profile_extraction(state, config, cleaned_content)
+
         return {"messages": cleaned_message}
     except OpenNotebookError:
         raise
     except Exception as e:
         error_class, user_message = classify_error(e)
         raise error_class(user_message) from e
+
+
+def _submit_profile_extraction(
+    state: ThreadState, config: RunnableConfig, reply: str
+) -> None:
+    """Submit a background learner-profile extraction for the latest turn.
+
+    Builds a small recent-conversation window (last few messages + this reply)
+    and fires the `extract_profile` command. All failures are swallowed with a
+    warning so the chat path is never affected.
+    """
+    try:
+        from surreal_commands import submit_command
+
+        session_id = (
+            config.get("configurable", {}).get("thread_id")
+            or config.get("configurable", {}).get("session_id")
+            or "unknown"
+        )
+
+        # Build a recent window: last 6 prior messages + the new reply.
+        lines = []
+        for msg in state.get("messages", [])[-6:]:
+            role = getattr(msg, "type", "user")
+            text = extract_text_content(getattr(msg, "content", ""))
+            if text and text.strip():
+                lines.append(f"{role}: {text.strip()}")
+        if reply and reply.strip():
+            lines.append(f"ai: {reply.strip()}")
+        conversation = "\n".join(lines)
+
+        if not conversation.strip():
+            return
+
+        submit_command(
+            "open_notebook",
+            "extract_profile",
+            {"conversation": conversation, "session_id": str(session_id)},
+        )
+    except Exception as e:  # noqa: BLE001 - never break chat
+        logger.warning(f"Failed to submit profile extraction: {e}")
 
 
 conn = sqlite3.connect(

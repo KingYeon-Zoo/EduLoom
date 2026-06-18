@@ -1,0 +1,2 @@
+-- Migration 16 rollback: remove the learner_profile table.
+REMOVE TABLE IF EXISTS learner_profile;

@@ -25,6 +25,7 @@ from api.routers import (
     episode_profiles,
     insights,
     languages,
+    learner_profile,
     models,
     notebooks,
     notes,
@@ -34,6 +35,7 @@ from api.routers import (
     source_chat,
     sources,
     speaker_profiles,
+    studio,
     transformations,
 )
 from api.routers import commands as commands_router
@@ -336,6 +338,10 @@ app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
 app.include_router(credentials.router, prefix="/api", tags=["credentials"])
 app.include_router(languages.router, prefix="/api", tags=["languages"])
 app.include_router(doubao.router, prefix="/api", tags=["doubao"])
+app.include_router(studio.router, prefix="/api", tags=["studio"])
+app.include_router(
+    learner_profile.router, prefix="/api", tags=["learner-profile"]
+)
 
 
 @app.get("/")
