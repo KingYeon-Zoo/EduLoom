@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Sparkles, LayoutTemplate } from 'lucide-react'
 
 import { AppShell } from '@/components/layout/AppShell'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -37,15 +38,25 @@ export function StudioPageShell({
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as 'artifacts' | 'templates')}
+            className="space-y-6"
           >
-            <TabsList>
-              <TabsTrigger value="artifacts">{t('studio.tabArtifacts')}</TabsTrigger>
-              <TabsTrigger value="templates">{t('studio.tabTemplates')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="artifacts" className="mt-4">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('studio.chooseAView')}</p>
+              <TabsList aria-label={t('common.accessibility.transformationViews')} className="w-full max-w-md">
+                <TabsTrigger value="artifacts">
+                  <Sparkles className="h-4 w-4" />
+                  {t('studio.tabArtifacts')}
+                </TabsTrigger>
+                <TabsTrigger value="templates">
+                  <LayoutTemplate className="h-4 w-4" />
+                  {t('studio.tabTemplates')}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="artifacts">
               <ArtifactsTab resourceType={resourceType} />
             </TabsContent>
-            <TabsContent value="templates" className="mt-4">
+            <TabsContent value="templates">
               <StudioTemplatesTab resourceType={resourceType} />
             </TabsContent>
           </Tabs>
