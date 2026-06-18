@@ -12,7 +12,8 @@ import {
   CreateNotebookChatSessionRequest,
   UpdateNotebookChatSessionRequest,
   SourceListResponse,
-  NoteResponse
+  NoteResponse,
+  ReasoningEffort
 } from '@/lib/types/api'
 import { ContextSelections } from '@/app/(dashboard)/notebooks/[id]/page'
 
@@ -33,6 +34,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
   const [charCount, setCharCount] = useState<number>(0)
   // Pending model override for when user changes model before a session exists
   const [pendingModelOverride, setPendingModelOverride] = useState<string | null>(null)
+  // Pending reasoning effort for when user changes it before a session exists
+  const [pendingReasoningEffort, setPendingReasoningEffort] = useState<ReasoningEffort | null>(null)
 
   // Fetch sessions for this notebook
   const {
@@ -186,12 +189,14 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
           notebook_id: notebookId,
           title: defaultTitle,
           // Include pending model override when creating session
-          model_override: pendingModelOverride ?? undefined
+          model_override: pendingModelOverride ?? undefined,
+          reasoning_effort: pendingReasoningEffort ?? undefined
         })
         sessionId = newSession.id
         setCurrentSessionId(sessionId)
         // Clear pending model override now that it's applied to the session
         setPendingModelOverride(null)
+        setPendingReasoningEffort(null)
         queryClient.invalidateQueries({
           queryKey: QUERY_KEYS.notebookChatSessions(notebookId)
         })
@@ -219,7 +224,9 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
         session_id: sessionId,
         message,
         context,
-        model_override: modelOverride ?? (currentSession?.model_override ?? undefined)
+        model_override: modelOverride ?? (currentSession?.model_override ?? undefined),
+        reasoning_effort:
+          currentSession?.reasoning_effort ?? pendingReasoningEffort ?? undefined
       })
 
       // Update messages with API response
@@ -287,6 +294,18 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     }
   }, [currentSessionId, updateSessionMutation])
 
+  // Set reasoning effort - handles both existing sessions and pending state
+  const setReasoningEffort = useCallback((effort: ReasoningEffort) => {
+    if (currentSessionId) {
+      updateSessionMutation.mutate({
+        sessionId: currentSessionId,
+        data: { reasoning_effort: effort }
+      })
+    } else {
+      setPendingReasoningEffort(effort)
+    }
+  }, [currentSessionId, updateSessionMutation])
+
   // Update token/char counts when context selections change
   useEffect(() => {
     const updateContextCounts = async () => {
@@ -310,6 +329,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     tokenCount,
     charCount,
     pendingModelOverride,
+    pendingReasoningEffort,
 
     // Actions
     createSession,
@@ -318,6 +338,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     switchSession,
     sendMessage,
     setModelOverride,
+    setReasoningEffort,
     refetchSessions
   }
 }

@@ -615,6 +615,7 @@ class ChatSession(ObjectModel):
     nullable_fields: ClassVar[set[str]] = {"model_override"}
     title: Optional[str] = None
     model_override: Optional[str] = None
+    reasoning_effort: Optional[str] = "medium"
 
     async def relate_to_notebook(self, notebook_id: str) -> Any:
         if not notebook_id:

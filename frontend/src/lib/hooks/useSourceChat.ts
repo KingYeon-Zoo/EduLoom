@@ -11,7 +11,8 @@ import {
   SourceChatMessage,
   SourceChatContextIndicator,
   CreateSourceChatSessionRequest,
-  UpdateSourceChatSessionRequest
+  UpdateSourceChatSessionRequest,
+  ReasoningEffort
 } from '@/lib/types/api'
 
 export function useSourceChat(sourceId: string) {
@@ -21,6 +22,8 @@ export function useSourceChat(sourceId: string) {
   const [messages, setMessages] = useState<SourceChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [contextIndicators, setContextIndicators] = useState<SourceChatContextIndicator | null>(null)
+  // Pending reasoning effort for when user changes it before a session exists
+  const [pendingReasoningEffort, setPendingReasoningEffort] = useState<ReasoningEffort | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
   // Fetch sessions
@@ -109,9 +112,13 @@ export function useSourceChat(sourceId: string) {
     if (!sessionId) {
       try {
         const defaultTitle = message.length > 30 ? `${message.substring(0, 30)}...` : message
-        const newSession = await sourceChatApi.createSession(sourceId, { title: defaultTitle })
+        const newSession = await sourceChatApi.createSession(sourceId, {
+          title: defaultTitle,
+          reasoning_effort: pendingReasoningEffort ?? undefined
+        })
         sessionId = newSession.id
         setCurrentSessionId(sessionId)
+        setPendingReasoningEffort(null)
         queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', sourceId] })
       } catch (err: unknown) {
         const error = err as { response?: { data?: { detail?: string } }, message?: string };
@@ -134,7 +141,9 @@ export function useSourceChat(sourceId: string) {
     try {
       const response = await sourceChatApi.sendMessage(sourceId, sessionId, {
         message,
-        model_override: modelOverride
+        model_override: modelOverride,
+        reasoning_effort:
+          currentSession?.reasoning_effort ?? pendingReasoningEffort ?? undefined
       })
 
       if (!response) {
@@ -233,6 +242,18 @@ export function useSourceChat(sourceId: string) {
     return deleteSessionMutation.mutate(sessionId)
   }, [deleteSessionMutation])
 
+  // Set reasoning effort - updates existing session or stores as pending
+  const setReasoningEffort = useCallback((effort: ReasoningEffort) => {
+    if (currentSessionId) {
+      updateSessionMutation.mutate({
+        sessionId: currentSessionId,
+        data: { reasoning_effort: effort }
+      })
+    } else {
+      setPendingReasoningEffort(effort)
+    }
+  }, [currentSessionId, updateSessionMutation])
+
   return {
     // State
     sessions,
@@ -242,13 +263,15 @@ export function useSourceChat(sourceId: string) {
     isStreaming,
     contextIndicators,
     loadingSessions,
-    
+    pendingReasoningEffort,
+
     // Actions
     createSession,
     updateSession,
     deleteSession,
     switchSession,
     sendMessage,
+    setReasoningEffort,
     cancelStreaming,
     refetchSessions
   }

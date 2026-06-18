@@ -11,6 +11,7 @@ from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 
 from open_notebook.ai.provision import provision_langchain_model
+from edu_loom.ai.doubao.esperanto_llm import normalize_reasoning_effort
 from open_notebook.config import LANGGRAPH_CHECKPOINT_FILE
 from open_notebook.domain.notebook import Source, SourceInsight
 from open_notebook.exceptions import OpenNotebookError
@@ -27,6 +28,7 @@ class SourceChatState(TypedDict):
     insights: Optional[List[SourceInsight]]
     context: Optional[str]
     model_override: Optional[str]
+    reasoning_effort: Optional[str]
     context_indicators: Optional[Dict[str, List[str]]]
 
 
@@ -130,6 +132,14 @@ def _call_model_with_source_context_inner(
     )
     payload = [SystemMessage(content=system_prompt)] + state.get("messages", [])
 
+    model_id = config.get("configurable", {}).get("model_id") or state.get(
+        "model_override"
+    )
+    reasoning_effort = normalize_reasoning_effort(
+        config.get("configurable", {}).get("reasoning_effort")
+        or state.get("reasoning_effort")
+    )
+
     # Handle async model provisioning from sync context
     def run_in_new_loop():
         """Run the async function in a new event loop"""
@@ -139,10 +149,10 @@ def _call_model_with_source_context_inner(
             return new_loop.run_until_complete(
                 provision_langchain_model(
                     str(payload),
-                    config.get("configurable", {}).get("model_id")
-                    or state.get("model_override"),
+                    model_id,
                     "chat",
                     max_tokens=8192,
+                    reasoning_effort=reasoning_effort,
                 )
             )
         finally:
@@ -163,10 +173,10 @@ def _call_model_with_source_context_inner(
         model = asyncio.run(
             provision_langchain_model(
                 str(payload),
-                config.get("configurable", {}).get("model_id")
-                or state.get("model_override"),
+                model_id,
                 "chat",
                 max_tokens=8192,
+                reasoning_effort=reasoning_effort,
             )
         )
 

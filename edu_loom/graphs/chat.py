@@ -11,6 +11,7 @@ from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 
 from open_notebook.ai.provision import provision_langchain_model
+from edu_loom.ai.doubao.esperanto_llm import normalize_reasoning_effort
 from open_notebook.config import LANGGRAPH_CHECKPOINT_FILE
 from open_notebook.domain.notebook import Notebook
 from open_notebook.exceptions import OpenNotebookError
@@ -25,6 +26,7 @@ class ThreadState(TypedDict):
     context: Optional[str]
     context_config: Optional[dict]
     model_override: Optional[str]
+    reasoning_effort: Optional[str]
 
 
 def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict:
@@ -33,6 +35,10 @@ def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict
         payload = [SystemMessage(content=system_prompt)] + state.get("messages", [])
         model_id = config.get("configurable", {}).get("model_id") or state.get(
             "model_override"
+        )
+        reasoning_effort = normalize_reasoning_effort(
+            config.get("configurable", {}).get("reasoning_effort")
+            or state.get("reasoning_effort")
         )
 
         # Handle async model provisioning from sync context
@@ -43,7 +49,11 @@ def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict
                 asyncio.set_event_loop(new_loop)
                 return new_loop.run_until_complete(
                     provision_langchain_model(
-                        str(payload), model_id, "chat", max_tokens=8192
+                        str(payload),
+                        model_id,
+                        "chat",
+                        max_tokens=8192,
+                        reasoning_effort=reasoning_effort,
                     )
                 )
             finally:
@@ -67,6 +77,7 @@ def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict
                     model_id,
                     "chat",
                     max_tokens=8192,
+                    reasoning_effort=reasoning_effort,
                 )
             )
 

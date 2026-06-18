@@ -151,11 +151,24 @@ async def lifespan(app: FastAPI):
     # Register Doubao TTS provider into the Esperanto factory so podcast
     # generation can synthesize audio through Doubao.
     try:
-        from edu_loom.ai.doubao.register import register_doubao_tts
+        from edu_loom.ai.doubao.register import register_doubao_providers
 
-        register_doubao_tts()
+        register_doubao_providers()
     except Exception as e:
-        logger.warning(f"Failed to register Doubao TTS provider: {e}")
+        logger.warning(f"Failed to register Doubao providers: {e}")
+
+    # Ensure a Doubao embedding model is configured as the default so the
+    # embedding pipeline (vectorize, search) works out of the box.
+    try:
+        from edu_loom.ai.doubao.seed import (
+            ensure_doubao_embedding_default,
+            ensure_doubao_llm_default,
+        )
+
+        await ensure_doubao_embedding_default()
+        await ensure_doubao_llm_default()
+    except Exception as e:
+        logger.warning(f"Failed to ensure Doubao default models: {e}")
 
     # Yield control to the application
     yield

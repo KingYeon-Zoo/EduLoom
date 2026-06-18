@@ -13,9 +13,11 @@ import remarkGfm from 'remark-gfm'
 import {
   SourceChatMessage,
   SourceChatContextIndicator,
-  BaseChatSession
+  BaseChatSession,
+  ReasoningEffort
 } from '@/lib/types/api'
 import { ModelSelector } from './ModelSelector'
+import { ReasoningEffortSelector } from './ReasoningEffortSelector'
 import { ContextIndicator } from '@/components/common/ContextIndicator'
 import { SessionManager } from '@/components/source/SessionManager'
 import { MessageActions } from '@/components/source/MessageActions'
@@ -39,6 +41,8 @@ interface ChatPanelProps {
   onSendMessage: (message: string, modelOverride?: string) => void
   modelOverride?: string
   onModelChange?: (model?: string) => void
+  reasoningEffort?: ReasoningEffort | null
+  onReasoningEffortChange?: (effort: ReasoningEffort) => void
   // Session management props
   sessions?: BaseChatSession[]
   currentSessionId?: string | null
@@ -63,6 +67,8 @@ export function ChatPanel({
   onSendMessage,
   modelOverride,
   onModelChange,
+  reasoningEffort,
+  onReasoningEffortChange,
   sessions = [],
   currentSessionId,
   onCreateSession,
@@ -285,6 +291,20 @@ export function ChatPanel({
               <ModelSelector
                 currentModel={modelOverride}
                 onModelChange={onModelChange}
+                disabled={isStreaming}
+              />
+            </div>
+          )}
+
+          {/* Reasoning effort (thinking strength) selector */}
+          {onReasoningEffortChange && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {t('chat.reasoningEffort')}
+              </span>
+              <ReasoningEffortSelector
+                value={reasoningEffort}
+                onChange={onReasoningEffortChange}
                 disabled={isStreaming}
               />
             </div>

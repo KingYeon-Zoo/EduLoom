@@ -129,6 +129,9 @@ export interface APIError {
 }
 
 // Source Chat Types
+// Doubao thinking-strength levels exposed in the chat UI.
+export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high'
+
 // Base session interface with common fields
 export interface BaseChatSession {
   id: string
@@ -137,6 +140,7 @@ export interface BaseChatSession {
   updated: string
   message_count?: number
   model_override?: string | null
+  reasoning_effort?: ReasoningEffort | null
 }
 
 export interface SourceChatSession extends BaseChatSession {
@@ -166,16 +170,19 @@ export interface CreateSourceChatSessionRequest {
   source_id: string
   title?: string
   model_override?: string
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface UpdateSourceChatSessionRequest {
   title?: string
   model_override?: string
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface SendMessageRequest {
   message: string
   model_override?: string
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface SourceChatStreamEvent {
@@ -206,11 +213,13 @@ export interface CreateNotebookChatSessionRequest {
   notebook_id: string
   title?: string
   model_override?: string
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface UpdateNotebookChatSessionRequest {
   title?: string
   model_override?: string | null
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface SendNotebookChatMessageRequest {
@@ -221,6 +230,7 @@ export interface SendNotebookChatMessageRequest {
     notes: Array<Record<string, unknown>>
   }
   model_override?: string
+  reasoning_effort?: ReasoningEffort
 }
 
 export interface BuildContextRequest {

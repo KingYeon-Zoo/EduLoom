@@ -63,6 +63,8 @@ export default function SourceDetailPage() {
                 chat.updateSession(chat.currentSessionId, { model_override: model })
               }
             }}
+            reasoningEffort={chat.currentSession?.reasoning_effort ?? chat.pendingReasoningEffort ?? undefined}
+            onReasoningEffortChange={chat.setReasoningEffort}
             sessions={chat.sessions}
             currentSessionId={chat.currentSessionId}
             onCreateSession={(title) => chat.createSession({ title })}

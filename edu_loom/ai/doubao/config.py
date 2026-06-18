@@ -20,6 +20,8 @@ from open_notebook.ai.doubao.exceptions import DoubaoConfigError
 DEFAULT_ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 DEFAULT_TTS_ENDPOINT = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
 DEFAULT_TTS_RESOURCE_ID = "seed-tts-2.0"
+DEFAULT_EMBEDDING_MODEL = "doubao-embedding-vision-251215"
+DEFAULT_LLM_MODEL = "doubao-seed-2-0-lite-260428"
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,8 @@ class DoubaoConfig:
     ark_base_url: str
     video_model: str | None
     image_model: str | None
+    embedding_model: str
+    llm_model: str
     # TTS (V3 unidirectional)
     tts_endpoint: str
     tts_resource_id: str
@@ -45,6 +49,9 @@ class DoubaoConfig:
             ark_base_url=_clean(os.environ.get("ARK_BASE_URL")) or DEFAULT_ARK_BASE_URL,
             video_model=_clean(os.environ.get("DOUBAO_VIDEO_MODEL")),
             image_model=_clean(os.environ.get("DOUBAO_IMAGE_MODEL")),
+            embedding_model=_clean(os.environ.get("DOUBAO_EMBEDDING_MODEL"))
+            or DEFAULT_EMBEDDING_MODEL,
+            llm_model=_clean(os.environ.get("DOUBAO_LLM_MODEL")) or DEFAULT_LLM_MODEL,
             tts_endpoint=_clean(os.environ.get("DOUBAO_TTS_ENDPOINT")) or DEFAULT_TTS_ENDPOINT,
             tts_resource_id=_clean(os.environ.get("DOUBAO_TTS_RESOURCE_ID")) or DEFAULT_TTS_RESOURCE_ID,
             tts_speaker=_clean(os.environ.get("DOUBAO_TTS_SPEAKER")),
@@ -75,6 +82,15 @@ class DoubaoConfig:
                 "DOUBAO_IMAGE_MODEL is not set. Set it to your Seedream model ID."
             )
         return self.image_model
+
+    def embeddings_url(self) -> str:
+        """Full URL for the Ark multimodal embeddings endpoint.
+
+        The vision embedding model (doubao-embedding-vision-*) is served from
+        the ``/embeddings/multimodal`` path rather than the plain
+        ``/embeddings`` text endpoint.
+        """
+        return f"{self.ark_base_url.rstrip('/')}/embeddings/multimodal"
 
     def tts_auth_headers(self) -> dict[str, str]:
         """Build V3 TTS auth headers, or raise if neither auth method is set.

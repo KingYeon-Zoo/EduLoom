@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.notebook import ChatSession, Source
+from edu_loom.ai.doubao.esperanto_llm import normalize_reasoning_effort
 from open_notebook.exceptions import (
     NotFoundError,
 )
@@ -27,11 +28,17 @@ class CreateSourceChatSessionRequest(BaseModel):
     model_override: Optional[str] = Field(
         None, description="Optional model override for this session"
     )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high (default medium)"
+    )
 
 class UpdateSourceChatSessionRequest(BaseModel):
     title: Optional[str] = Field(None, description="New session title")
     model_override: Optional[str] = Field(
         None, description="Model override for this session"
+    )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high"
     )
 
 class ChatMessage(BaseModel):
@@ -59,6 +66,9 @@ class SourceChatSessionResponse(BaseModel):
     model_override: Optional[str] = Field(
         None, description="Model override for this session"
     )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength for this session"
+    )
     created: str = Field(..., description="Creation timestamp")
     updated: str = Field(..., description="Last update timestamp")
     message_count: Optional[int] = Field(
@@ -77,6 +87,9 @@ class SendMessageRequest(BaseModel):
     message: str = Field(..., description="User message content")
     model_override: Optional[str] = Field(
         None, description="Optional model override for this message"
+    )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high for this message"
     )
 
 class SuccessResponse(BaseModel):
@@ -105,6 +118,7 @@ async def create_source_chat_session(
         session = ChatSession(
             title=request.title or f"Source Chat {asyncio.get_event_loop().time():.0f}",
             model_override=request.model_override,
+            reasoning_effort=normalize_reasoning_effort(request.reasoning_effort),
         )
         await session.save()
 
@@ -116,6 +130,7 @@ async def create_source_chat_session(
             title=session.title or "Untitled Session",
             source_id=source_id,
             model_override=session.model_override,
+            reasoning_effort=session.reasoning_effort,
             created=str(session.created),
             updated=str(session.updated),
             message_count=0,
@@ -172,6 +187,7 @@ async def get_source_chat_sessions(source_id: str = Path(..., description="Sourc
                             title=session_data.get("title") or "Untitled Session",
                             source_id=source_id,
                             model_override=session_data.get("model_override"),
+                            reasoning_effort=session_data.get("reasoning_effort"),
                             created=str(session_data.get("created")),
                             updated=str(session_data.get("updated")),
                             message_count=msg_count,
@@ -272,6 +288,7 @@ async def get_source_chat_session(
             title=session.title or "Untitled Session",
             source_id=source_id,
             model_override=getattr(session, "model_override", None),
+            reasoning_effort=getattr(session, "reasoning_effort", None),
             created=str(session.created),
             updated=str(session.updated),
             message_count=len(messages),
@@ -335,6 +352,10 @@ async def update_source_chat_session(
             session.title = request.title
         if request.model_override is not None:
             session.model_override = request.model_override
+        if request.reasoning_effort is not None:
+            session.reasoning_effort = normalize_reasoning_effort(
+                request.reasoning_effort
+            )
 
         await session.save()
 
@@ -346,6 +367,7 @@ async def update_source_chat_session(
             title=session.title or "Untitled Session",
             source_id=source_id,
             model_override=getattr(session, "model_override", None),
+            reasoning_effort=getattr(session, "reasoning_effort", None),
             created=str(session.created),
             updated=str(session.updated),
             message_count=msg_count,
@@ -415,10 +437,15 @@ async def delete_source_chat_session(
 
 
 async def stream_source_chat_response(
-    session_id: str, source_id: str, message: str, model_override: Optional[str] = None
+    session_id: str,
+    source_id: str,
+    message: str,
+    model_override: Optional[str] = None,
+    reasoning_effort: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
     """Stream the source chat response as Server-Sent Events."""
     try:
+        effort = normalize_reasoning_effort(reasoning_effort)
         # Get current state
         # Use sync get_state() in a thread since SqliteSaver doesn't support async
         current_state = await asyncio.to_thread(
@@ -431,6 +458,7 @@ async def stream_source_chat_response(
         state_values["messages"] = state_values.get("messages", [])
         state_values["source_id"] = source_id
         state_values["model_override"] = model_override
+        state_values["reasoning_effort"] = effort
 
         # Add user message to state
         user_message = HumanMessage(content=message)
@@ -444,7 +472,11 @@ async def stream_source_chat_response(
         result = source_chat_graph.invoke(
             input=state_values,  # type: ignore[arg-type]
             config=RunnableConfig(
-                configurable={"thread_id": session_id, "model_id": model_override}
+                configurable={
+                    "thread_id": session_id,
+                    "model_id": model_override,
+                    "reasoning_effort": effort,
+                }
             ),
         )
 
@@ -528,6 +560,13 @@ async def send_message_to_source_chat(
             session, "model_override", None
         )
 
+        # Determine reasoning effort (request > session > default medium)
+        reasoning_effort = normalize_reasoning_effort(
+            request.reasoning_effort
+            if request.reasoning_effort is not None
+            else getattr(session, "reasoning_effort", None)
+        )
+
         # Update session timestamp
         await session.save()
 
@@ -538,6 +577,7 @@ async def send_message_to_source_chat(
                 source_id=full_source_id,
                 message=request.message,
                 model_override=model_override,
+                reasoning_effort=reasoning_effort,
             ),
             media_type="text/plain",
             headers={

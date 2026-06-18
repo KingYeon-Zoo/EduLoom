@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.notebook import ChatSession, Note, Notebook, Source
+from edu_loom.ai.doubao.esperanto_llm import normalize_reasoning_effort
 from open_notebook.exceptions import (
     NotFoundError,
 )
@@ -25,12 +26,18 @@ class CreateSessionRequest(BaseModel):
     model_override: Optional[str] = Field(
         None, description="Optional model override for this session"
     )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high (default medium)"
+    )
 
 
 class UpdateSessionRequest(BaseModel):
     title: Optional[str] = Field(None, description="New session title")
     model_override: Optional[str] = Field(
         None, description="Model override for this session"
+    )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high"
     )
 
 
@@ -53,6 +60,9 @@ class ChatSessionResponse(BaseModel):
     model_override: Optional[str] = Field(
         None, description="Model override for this session"
     )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength for this session"
+    )
 
 
 class ChatSessionWithMessagesResponse(ChatSessionResponse):
@@ -69,6 +79,9 @@ class ExecuteChatRequest(BaseModel):
     )
     model_override: Optional[str] = Field(
         None, description="Optional model override for this message"
+    )
+    reasoning_effort: Optional[str] = Field(
+        None, description="Thinking strength: minimal|low|medium|high for this message"
     )
 
 
@@ -121,6 +134,7 @@ async def get_sessions(notebook_id: str = Query(..., description="Notebook ID"))
                     updated=str(session.updated),
                     message_count=msg_count,
                     model_override=getattr(session, "model_override", None),
+                    reasoning_effort=getattr(session, "reasoning_effort", None),
                 )
             )
 
@@ -148,6 +162,7 @@ async def create_session(request: CreateSessionRequest):
             title=request.title
             or f"Chat Session {asyncio.get_event_loop().time():.0f}",
             model_override=request.model_override,
+            reasoning_effort=normalize_reasoning_effort(request.reasoning_effort),
         )
         await session.save()
 
@@ -162,6 +177,7 @@ async def create_session(request: CreateSessionRequest):
             updated=str(session.updated),
             message_count=0,
             model_override=session.model_override,
+            reasoning_effort=session.reasoning_effort,
         )
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Notebook not found")
@@ -239,6 +255,7 @@ async def get_session(session_id: str):
             message_count=len(messages),
             messages=messages,
             model_override=getattr(session, "model_override", None),
+            reasoning_effort=getattr(session, "reasoning_effort", None),
         )
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -269,6 +286,11 @@ async def update_session(session_id: str, request: UpdateSessionRequest):
         if "model_override" in update_data:
             session.model_override = update_data["model_override"]
 
+        if "reasoning_effort" in update_data:
+            session.reasoning_effort = normalize_reasoning_effort(
+                update_data["reasoning_effort"]
+            )
+
         await session.save()
 
         # Find notebook_id
@@ -295,6 +317,7 @@ async def update_session(session_id: str, request: UpdateSessionRequest):
             updated=str(session.updated),
             message_count=msg_count,
             model_override=session.model_override,
+            reasoning_effort=getattr(session, "reasoning_effort", None),
         )
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -358,6 +381,13 @@ async def execute_chat(request: ExecuteChatRequest):
             else getattr(session, "model_override", None)
         )
 
+        # Determine reasoning effort (per-request > session-level > default medium)
+        reasoning_effort = normalize_reasoning_effort(
+            request.reasoning_effort
+            if request.reasoning_effort is not None
+            else getattr(session, "reasoning_effort", None)
+        )
+
         # Get current state
         # Use sync get_state() in a thread since SqliteSaver doesn't support async
         current_state = await asyncio.to_thread(
@@ -371,6 +401,7 @@ async def execute_chat(request: ExecuteChatRequest):
         state_values["context"] = request.context
         state_values["notebook"] = notebook
         state_values["model_override"] = model_override
+        state_values["reasoning_effort"] = reasoning_effort
 
         # Add user message to state
         from langchain_core.messages import HumanMessage
@@ -385,6 +416,7 @@ async def execute_chat(request: ExecuteChatRequest):
                 configurable={
                     "thread_id": full_session_id,
                     "model_id": model_override,
+                    "reasoning_effort": reasoning_effort,
                 }
             ),
         )
