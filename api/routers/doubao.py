@@ -10,6 +10,7 @@ class VoiceResponse(BaseModel):
     id: str
     name: str
     gender: str
+    description: str
 
 
 class VoiceListResponse(BaseModel):
@@ -23,7 +24,7 @@ async def list_doubao_voices():
     return VoiceListResponse(
         default=DEFAULT_VOICE_ID,
         voices=[
-            VoiceResponse(id=v.id, name=v.name, gender=v.gender)
+            VoiceResponse(id=v.id, name=v.name, gender=v.gender, description=v.description)
             for v in list_voices()
         ],
     )

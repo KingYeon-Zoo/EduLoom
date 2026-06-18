@@ -16,6 +16,7 @@ export interface DoubaoVoice {
   id: string
   name: string
   gender: string
+  description: string
 }
 
 export interface DoubaoVoiceList {
