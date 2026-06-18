@@ -163,10 +163,12 @@ async def lifespan(app: FastAPI):
         from edu_loom.ai.doubao.seed import (
             ensure_doubao_embedding_default,
             ensure_doubao_llm_default,
+            ensure_doubao_tts_default,
         )
 
         await ensure_doubao_embedding_default()
         await ensure_doubao_llm_default()
+        await ensure_doubao_tts_default()
     except Exception as e:
         logger.warning(f"Failed to ensure Doubao default models: {e}")
 

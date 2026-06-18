@@ -25,6 +25,8 @@ def _config(**overrides) -> DoubaoConfig:
         ark_base_url="https://ark.test/api/v3",
         video_model="seedance-test",
         image_model="seedream-test",
+        embedding_model="embedding-test",
+        llm_model="llm-test",
         tts_endpoint="https://tts.test/api/v3/tts/unidirectional",
         tts_resource_id="seed-tts-2.0",
         tts_speaker="zh_female_vv_uranus_bigtts",

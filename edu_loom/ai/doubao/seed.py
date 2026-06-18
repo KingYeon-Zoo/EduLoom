@@ -98,3 +98,37 @@ async def ensure_doubao_llm_default() -> None:
             f"Set default chat/tools/transformation/large-context models to "
             f"Doubao '{model_name}' (id={doubao_model.id})"
         )
+
+
+async def ensure_doubao_tts_default() -> None:
+    """Ensure a Doubao TTS model exists and is the default (idempotent)."""
+    cfg = get_config()
+    model_name = cfg.tts_resource_id
+
+    # Find an existing Doubao TTS model record, if any.
+    existing = await Model.get_models_by_type("text_to_speech")
+    doubao_model = next(
+        (m for m in existing if m.provider == "doubao" and m.name == model_name),
+        None,
+    )
+
+    if doubao_model is None:
+        doubao_model = Model(
+            name=model_name,
+            provider="doubao",
+            type="text_to_speech",
+        )
+        await doubao_model.save()
+        logger.info(
+            f"Seeded Doubao TTS model '{model_name}' (id={doubao_model.id})"
+        )
+
+    # Only set the default when none is configured, to avoid clobbering a
+    # user's explicit selection.
+    defaults = await DefaultModels.get_instance()
+    if not defaults.default_text_to_speech_model:
+        defaults.default_text_to_speech_model = doubao_model.id
+        await defaults.update()
+        logger.info(
+            f"Set default TTS model to Doubao '{model_name}' (id={doubao_model.id})"
+        )

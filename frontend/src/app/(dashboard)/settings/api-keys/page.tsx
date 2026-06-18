@@ -76,7 +76,7 @@ const ALL_PROVIDERS = [
 
 // Default modalities per provider
 const PROVIDER_MODALITIES: Record<string, ModelType[]> = {
-  doubao: ['language', 'text_to_speech'],
+  doubao: ['language', 'embedding', 'text_to_speech'],
   openai_compatible: ['language', 'embedding', 'text_to_speech', 'speech_to_text'],
   deepseek: ['language'],
   ollama: ['language', 'embedding'],
@@ -1208,6 +1208,9 @@ function DefaultModelSelectors({
                     </Button>
                   )}
                 </div>
+                {config.description && (
+                  <p className="text-[10px] text-muted-foreground leading-tight">{config.description}</p>
+                )}
               </div>
             )
           })}

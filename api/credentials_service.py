@@ -31,6 +31,7 @@ from open_notebook.utils.encryption import get_secret_from_env
 # - "required_any": at least ONE of the listed env vars must be set.
 # - "optional": additional env vars used during migration but not required.
 PROVIDER_ENV_CONFIG: Dict[str, dict] = {
+    "doubao": {"required": ["ARK_API_KEY"]},
     "openai": {"required": ["OPENAI_API_KEY"]},
     "anthropic": {"required": ["ANTHROPIC_API_KEY"]},
     "google": {"required_any": ["GOOGLE_API_KEY", "GEMINI_API_KEY"]},
@@ -64,6 +65,7 @@ PROVIDER_ENV_CONFIG: Dict[str, dict] = {
 }
 
 PROVIDER_MODALITIES: Dict[str, List[str]] = {
+    "doubao": ["language", "embedding", "text_to_speech"],
     "openai": ["language", "embedding", "speech_to_text", "text_to_speech"],
     "anthropic": ["language"],
     "google": ["language", "embedding", "speech_to_text", "text_to_speech"],
