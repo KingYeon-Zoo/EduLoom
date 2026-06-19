@@ -1,4 +1,4 @@
-.env
+# Configs & Environments
 prompts/patterns/user/
 /notebooks/
 data/
@@ -63,13 +63,16 @@ profile_default/
 ipython_config.py
 
 # Environments
-.env
+.env*
+*.env
+!.env.example
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
 
 # PyCharm
 .idea/
@@ -144,3 +147,22 @@ specs/
 .mcp.json
 node_modules/
 **/node_modules/
+
+# Vim temp files
+*.swp
+*.swo
+
+# Credentials / Secrets
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Web / Next.js / Turbo build artifacts (defense-in-depth)
+**/.next/
+**/out/
+**/.vercel/
+**/.turbo/
+
+# Python Tools Cache
+.ruff_cache/
