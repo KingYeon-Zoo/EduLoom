@@ -205,6 +205,14 @@ export interface NotebookChatMessage {
   timestamp?: string
 }
 
+// Tutoring resource-generation suggestion (Project E gate). Surfaced by the
+// chat backend; the frontend shows a confirm card and only generates after the
+// user confirms on the target studio page.
+export interface ChatGenerationSuggestion {
+  type: 'report' | 'quiz' | 'mindmap' | 'ppt' | 'video'
+  prompt: string
+}
+
 export interface NotebookChatSessionWithMessages extends NotebookChatSession {
   messages: NotebookChatMessage[]
 }

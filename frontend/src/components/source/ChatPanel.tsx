@@ -1,21 +1,24 @@
 'use client'
 
 import { useState, useRef, useEffect, useId } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Bot, User, Send, Loader2, FileText, Lightbulb, StickyNote, Clock } from 'lucide-react'
+import { Bot, User, Send, Loader2, FileText, Lightbulb, StickyNote, Clock, Sparkles, ArrowRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
   SourceChatMessage,
   SourceChatContextIndicator,
   BaseChatSession,
+  ChatGenerationSuggestion,
   ReasoningEffort
 } from '@/lib/types/api'
+import { RESOURCE_TYPE_META, ResourceType } from '@/lib/types/studio'
 import { ModelSelector } from './ModelSelector'
 import { ReasoningEffortSelector } from './ReasoningEffortSelector'
 import { ContextIndicator } from '@/components/common/ContextIndicator'
@@ -58,6 +61,10 @@ interface ChatPanelProps {
   notebookContextStats?: NotebookContextStats
   // Notebook ID for saving notes
   notebookId?: string
+  // Tutoring gate (Project E): a non-binding resource-generation suggestion
+  // from the latest AI reply, rendered as a confirm card.
+  generationSuggestion?: ChatGenerationSuggestion | null
+  onDismissSuggestion?: () => void
 }
 
 export function ChatPanel({
@@ -79,9 +86,12 @@ export function ChatPanel({
   title,
   contextType = 'source',
   notebookContextStats,
-  notebookId
+  notebookId,
+  generationSuggestion,
+  onDismissSuggestion,
 }: ChatPanelProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const chatInputId = useId()
   const [input, setInput] = useState('')
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false)
@@ -112,6 +122,29 @@ export function ChatPanel({
       onSendMessage(input.trim(), modelOverride)
       setInput('')
     }
+  }
+
+  // Tutoring gate (Project E): hand the AI's generation hint + notebook to the
+  // target studio page; generation only happens after the user confirms there.
+  const handleGenerateSuggestion = () => {
+    if (!generationSuggestion) return
+    const type = generationSuggestion.type as ResourceType
+    const meta = RESOURCE_TYPE_META[type]
+    if (!meta) return
+    try {
+      sessionStorage.setItem(
+        'studio_prefill',
+        JSON.stringify({
+          resourceType: type,
+          notebookId: notebookId ?? '',
+          instructions: generationSuggestion.prompt,
+        })
+      )
+    } catch {
+      // sessionStorage may be unavailable; the page still opens.
+    }
+    onDismissSuggestion?.()
+    router.push(`${meta.route}?prefill=1`)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -228,6 +261,40 @@ export function ChatPanel({
                   )}
                 </div>
               ))
+            )}
+            {generationSuggestion && !isStreaming && (
+              <div className="flex gap-3 justify-start">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 max-w-[80%] rounded-lg border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+                  <p className="text-sm font-medium">
+                    {t('learning.tutorSuggestTitle')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('learning.tutorSuggestTypePrefix')}
+                    {t(`studio.types.${generationSuggestion.type}`)}
+                  </p>
+                  <p className="text-xs text-muted-foreground break-words">
+                    {generationSuggestion.prompt}
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button size="sm" className="gap-1" onClick={handleGenerateSuggestion}>
+                      {t('learning.tutorSuggestGenerate')}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onDismissSuggestion?.()}
+                    >
+                      {t('learning.tutorSuggestDismiss')}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
             {isStreaming && (
               <div className="flex gap-3 justify-start">

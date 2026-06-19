@@ -1,10 +1,10 @@
 """Studio generation presets (templates).
 
-A StudioProfile is a reusable preset for one resource type (report / video /
-mindmap / infographic). It bundles a default system prompt and type-specific
-config (e.g. video ratio/duration, infographic image count). Users pick a
-profile + add free-form custom instructions when generating, and can CRUD
-their own profiles in the Templates tab.
+A StudioProfile is a reusable preset for one resource type (report / quiz /
+video / mindmap / ppt). It bundles a default system prompt and type-specific
+config (e.g. video ratio/duration, ppt slide count, quiz question count). Users
+pick a profile + add free-form custom instructions when generating, and can
+CRUD their own profiles in the Templates tab.
 
 Mirrors the EpisodeProfile pattern (open_notebook/podcasts/models.py).
 """
@@ -17,7 +17,7 @@ from open_notebook.database.repository import repo_query
 from open_notebook.domain.base import ObjectModel
 
 # Valid resource types shared across the studio feature.
-RESOURCE_TYPES = ("report", "video", "mindmap", "infographic")
+RESOURCE_TYPES = ("report", "quiz", "video", "mindmap", "ppt")
 
 
 class StudioProfile(ObjectModel):
@@ -28,7 +28,7 @@ class StudioProfile(ObjectModel):
 
     name: str = Field(..., description="Unique profile name")
     resource_type: str = Field(
-        ..., description="report | video | mindmap | infographic"
+        ..., description="report | quiz | video | mindmap | ppt"
     )
     description: Optional[str] = Field(None, description="Profile description")
     default_prompt: str = Field(
@@ -37,7 +37,7 @@ class StudioProfile(ObjectModel):
     config: Dict[str, Any] = Field(
         default_factory=dict,
         description="Type-specific params (video: ratio/duration/resolution; "
-        "infographic: num_images/size)",
+        "ppt: num_images/size)",
     )
     builtin: bool = Field(
         default=False, description="Seeded preset (UI marks as non-deletable)"

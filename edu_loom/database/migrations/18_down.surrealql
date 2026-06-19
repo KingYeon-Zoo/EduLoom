@@ -1,0 +1,10 @@
+-- Migration 18 down: revert learning PPT -> infographic (Project C)
+-- Removes the built-in ppt presets and re-types ppt records back to infographic.
+-- Note: the original infographic 1024x1024 presets are NOT restored here; a
+-- full re-up re-seeds them only if migration 17 reruns. This down is a best-
+-- effort rollback of the type rename.
+
+DELETE studio_profile WHERE resource_type = "ppt" AND builtin = true;
+
+UPDATE studio_profile SET resource_type = "infographic" WHERE resource_type = "ppt";
+UPDATE studio_artifact SET resource_type = "infographic" WHERE resource_type = "ppt";

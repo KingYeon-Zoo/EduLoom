@@ -1,0 +1,5 @@
+-- Migration 19 down: remove studio quiz presets (Project C)
+-- Drops the built-in quiz presets and any quiz artifacts.
+
+DELETE studio_profile WHERE resource_type = "quiz";
+DELETE studio_artifact WHERE resource_type = "quiz";

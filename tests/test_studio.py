@@ -100,6 +100,23 @@ async def test_report_command_writes_markdown():
     artifact.save.assert_awaited()
 
 
+# --- quiz -----------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_quiz_command_writes_markdown():
+    artifact = _fake_artifact()
+    quiz_md = "## 测试题\n\n1. 问题一\n\n### 参考答案与解析\n1. 答案一"
+    with patch.object(
+        sc.StudioArtifact, "get", AsyncMock(return_value=artifact)
+    ), patch.object(sc, "_run_llm", AsyncMock(return_value=quiz_md)):
+        out = await sc.generate_quiz_command(_input(system_prompt="出题"))
+
+    assert out.success is True
+    assert artifact.content == quiz_md
+    artifact.save.assert_awaited()
+
+
 # --- mindmap --------------------------------------------------------------
 
 
@@ -116,11 +133,11 @@ async def test_mindmap_command_strips_fence():
     assert artifact.content == "mindmap\n  root((主题))"
 
 
-# --- infographic ----------------------------------------------------------
+# --- ppt ------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_infographic_command_generates_images():
+async def test_ppt_command_generates_images_and_deck():
     artifact = _fake_artifact()
     fake_image_client = MagicMock()
     fake_image_client.generate.return_value = MagicMock(url="https://img/x.png")
@@ -131,18 +148,26 @@ async def test_infographic_command_generates_images():
         sc, "_run_llm", AsyncMock(return_value='["p1", "p2"]')
     ), patch(
         "open_notebook.ai.doubao.DoubaoImageClient", return_value=fake_image_client
-    ), patch.object(sc, "_download") as mock_dl:
-        out = await sc.generate_infographic_command(
-            _input(config={"num_images": 2, "size": "1024x1024"})
+    ), patch.object(sc, "_download") as mock_dl, patch.object(
+        sc, "_build_pptx"
+    ) as mock_pptx:
+        out = await sc.generate_ppt_command(
+            _input(config={"num_images": 2, "size": "1280x720"})
         )
 
     assert out.success is True
-    assert len(artifact.file_paths) == 2
+    # 2 slide images + 1 stitched .pptx deck
+    assert len(artifact.file_paths) == 3
+    assert artifact.file_paths[-1].endswith("slides.pptx")
     assert fake_image_client.generate.call_count == 2
     assert mock_dl.call_count == 2
-    # image client called with the requested size
+    # deck assembled from exactly the downloaded slide images
+    mock_pptx.assert_called_once()
+    img_args = mock_pptx.call_args[0][0]
+    assert len(img_args) == 2
+    # image client called with the requested slide size
     _, kwargs = fake_image_client.generate.call_args
-    assert kwargs["size"] == "1024x1024"
+    assert kwargs["size"] == "1280x720"
 
 
 # --- video ----------------------------------------------------------------

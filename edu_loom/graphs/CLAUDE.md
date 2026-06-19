@@ -9,8 +9,12 @@ LangGraph-based workflow orchestration for content processing, chat interactions
 - **`ask.py`**: Multi-search strategy agent (generates search terms, retrieves results, synthesizes answers)
 - **`source.py`**: Content ingestion pipeline (extract → save → transform with content-core)
 - **`transformation.py`**: Single-node transformation executor with prompt templating via ai_prompter
+- **`path_planning.py`** (Project D): Two-node plan→push state machine. `plan` (PathPlanner) turns notebook content + learner-profile summary into ordered steps; `push` (ResourcePusher) matches the notebook's existing StudioArtifacts onto each step or marks a `resource_gap`. Pure helper `apply_push_decisions()` is unit-tested; only real artifact ids are kept (anti-hallucination).
+- **`assessment.py`** (Project E): Single-node `analyze` (AssessmentAnalyst) scoring 6 dimensions from profile + quiz artifacts + path progress; scores clamped to 0-100, invalid dimensions filtered, malformed JSON → ValueError.
 - **`prompt.py`**: Generic pattern chain for arbitrary prompt-based LLM calls
 - **`tools.py`**: Minimal tool library (currently just `get_current_timestamp()`)
+
+> Orchestration: `edu_loom/agents/coordinator.py` (`LearningCoordinator`) is a thin sequencer that drives `path_planning` and `assessment` graphs and exposes the named `AGENT_ROSTER` (multi-agent collaboration made visible for the rubric + UI). The `chat.py` graph also extracts a tutoring resource-generation suggestion (`<<SUGGEST_GENERATE ...>>` marker via `extract_generation_suggestion()`) and returns it as `generation_suggestion` without auto-triggering generation.
 
 ## Important Patterns
 

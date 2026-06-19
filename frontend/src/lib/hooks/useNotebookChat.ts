@@ -9,6 +9,7 @@ import { chatApi } from '@/lib/api/chat'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import {
   NotebookChatMessage,
+  ChatGenerationSuggestion,
   CreateNotebookChatSessionRequest,
   UpdateNotebookChatSessionRequest,
   SourceListResponse,
@@ -30,6 +31,9 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<NotebookChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
+  // Tutoring gate (Project E): suggestion from the latest AI reply, if any.
+  const [generationSuggestion, setGenerationSuggestion] =
+    useState<ChatGenerationSuggestion | null>(null)
   const [tokenCount, setTokenCount] = useState<number>(0)
   const [charCount, setCharCount] = useState<number>(0)
   // Pending model override for when user changes model before a session exists
@@ -216,6 +220,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     }
     setMessages(prev => [...prev, userMessage])
     setIsSending(true)
+    // Clear any prior tutoring suggestion when a new turn starts.
+    setGenerationSuggestion(null)
 
     try {
       // Build context and send message
@@ -231,6 +237,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
       // Update messages with API response
       setMessages(response.messages)
+      setGenerationSuggestion(response.generation_suggestion ?? null)
 
       // Refetch current session to get updated data
       await refetchCurrentSession()
@@ -325,6 +332,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     currentSessionId,
     messages,
     isSending,
+    generationSuggestion,
+    clearGenerationSuggestion: () => setGenerationSuggestion(null),
     loadingSessions,
     tokenCount,
     charCount,

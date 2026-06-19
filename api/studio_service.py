@@ -9,47 +9,72 @@ Orchestrates the four resource generators. Generation flow:
 Mirrors api/podcast_service.py.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+
+import json
 
 from fastapi import HTTPException
+from langchain_core.messages import HumanMessage, SystemMessage
 from loguru import logger
 from surreal_commands import get_command_status, submit_command
 
+from open_notebook.ai.provision import provision_langchain_model
 from open_notebook.domain.artifact import StudioArtifact
-from open_notebook.domain.notebook import Notebook
 from open_notebook.domain.studio_profile import RESOURCE_TYPES, StudioProfile
+from open_notebook.utils import clean_thinking_content
+from open_notebook.utils.learning_context import (
+    build_notebook_content as _build_notebook_content,
+)
+from open_notebook.utils.learning_context import (
+    summarize_learner_profile as _summarize_learner_profile,
+)
+from open_notebook.utils.text_utils import extract_text_content
 
 # resource_type -> surreal command name
 COMMAND_BY_TYPE = {
     "report": "generate_report",
+    "quiz": "generate_quiz",
     "mindmap": "generate_mindmap",
-    "infographic": "generate_infographic",
+    "ppt": "generate_ppt",
     "video": "generate_video",
 }
 
 
-async def _build_notebook_content(notebook_id: str) -> str:
-    """Assemble a plain-text context string from a notebook's sources.
+# Schema the recommender LLM must return.
+_RECOMMEND_SCHEMA = (
+    '{"recommended_profile_name": "<必须是候选预设名之一>", '
+    '"reason": "<一句话中文推荐理由，结合学习画像>", '
+    '"suggested_instructions": "<可选的中文自定义指令补充，没有则空字符串>"}'
+)
 
-    Concatenates each source's title + full_text (falling back to insights).
-    This is self-contained so generators don't depend on the frontend
-    serializing context.
-    """
-    notebook = await Notebook.get(notebook_id)
-    sources = await notebook.get_sources()
-    parts: list[str] = []
-    for src in sources:
-        title = getattr(src, "title", None) or "Untitled"
-        body = getattr(src, "full_text", None)
-        if not body:
-            try:
-                insights = await src.get_insights()
-                body = "\n".join(i.content for i in insights if getattr(i, "content", None))
-            except Exception:
-                body = ""
-        if body:
-            parts.append(f"## {title}\n\n{body}")
-    return "\n\n---\n\n".join(parts)
+
+def _parse_recommendation(raw: str, valid_names: List[str]) -> Dict[str, str]:
+    """Parse the recommender LLM's JSON; coerce to a valid known profile name."""
+    text = raw.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    name = ""
+    reason = ""
+    suggested = ""
+    try:
+        parsed = json.loads(text)
+        name = str(parsed.get("recommended_profile_name", "")).strip()
+        reason = str(parsed.get("reason", "")).strip()
+        suggested = str(parsed.get("suggested_instructions", "")).strip()
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    # Coerce to a valid name (exact match, else substring, else first candidate).
+    if name not in valid_names:
+        match = next((n for n in valid_names if n and (n in name or name in n)), None)
+        name = match or (valid_names[0] if valid_names else "")
+    return {
+        "recommended_profile_name": name,
+        "reason": reason,
+        "suggested_instructions": suggested,
+    }
 
 
 class StudioService:
@@ -177,6 +202,73 @@ class StudioService:
         except Exception as e:
             logger.error(f"Failed to get studio artifact {artifact_id}: {e}")
             raise HTTPException(status_code=404, detail=f"Artifact not found: {str(e)}")
+
+    @staticmethod
+    async def recommend_profile(resource_type: str) -> Dict[str, str]:
+        """Recommend a preset for this resource type from the learner profile.
+
+        A lightweight "RecommenderAgent": reads the singleton learner profile +
+        the candidate presets, runs a single LLM call, and returns which preset
+        to use plus a one-line reason and optional custom-instruction補充. Falls
+        back to the first preset (with a generic reason) when the profile is
+        empty (cold start) or the LLM call fails.
+        """
+        if resource_type not in RESOURCE_TYPES:
+            raise HTTPException(
+                status_code=400, detail=f"Unknown resource type '{resource_type}'"
+            )
+
+        profiles = await StudioProfile.get_by_type(resource_type)
+        if not profiles:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No presets available for '{resource_type}'",
+            )
+        valid_names = [p.name for p in profiles]
+
+        profile_text = await _summarize_learner_profile()
+
+        # Cold start: no learner signal yet -> default to the first preset.
+        if not profile_text:
+            return {
+                "recommended_profile_name": valid_names[0],
+                "reason": "暂无学习画像数据，已为你推荐默认预设。多与 AI 对话可获得更精准的个性化推荐。",
+                "suggested_instructions": "",
+                "profile_empty": True,
+            }
+
+        catalog = "\n".join(
+            f"- {p.name}：{p.description or '（无描述）'}" for p in profiles
+        )
+        system_prompt = (
+            "你是一名个性化学习顾问。根据学习者画像，从候选预设中选出最适合该学习者的一个，"
+            "并给出一句中文推荐理由，必要时补充一条简短的中文自定义生成指令。"
+            f"只输出一个 JSON 对象，格式如下，不要任何解释或代码块标记：\n{_RECOMMEND_SCHEMA}"
+        )
+        human = (
+            f"学习者画像：\n{profile_text}\n\n"
+            f"候选预设（资源类型：{resource_type}）：\n{catalog}\n\n"
+            f"recommended_profile_name 必须是以下之一：{valid_names}"
+        )
+        try:
+            chain = await provision_langchain_model(
+                f"{system_prompt}\n{human}", None, "transformation", max_tokens=1024
+            )
+            response = await chain.ainvoke(
+                [SystemMessage(content=system_prompt), HumanMessage(content=human)]
+            )
+            raw = clean_thinking_content(extract_text_content(response.content))
+            result = _parse_recommendation(raw, valid_names)
+            result["profile_empty"] = False
+            return result
+        except Exception as e:
+            logger.warning(f"Recommendation LLM failed, falling back: {e}")
+            return {
+                "recommended_profile_name": valid_names[0],
+                "reason": "已根据你的学习画像推荐预设。",
+                "suggested_instructions": "",
+                "profile_empty": False,
+            }
 
     # ---- Profile CRUD -----------------------------------------------------
     @staticmethod

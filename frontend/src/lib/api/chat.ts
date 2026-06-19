@@ -6,6 +6,7 @@ import {
   UpdateNotebookChatSessionRequest,
   SendNotebookChatMessageRequest,
   NotebookChatMessage,
+  ChatGenerationSuggestion,
   BuildContextRequest,
   BuildContextResponse,
 } from '@/lib/types/api'
@@ -52,6 +53,7 @@ export const chatApi = {
     const response = await apiClient.post<{
       session_id: string
       messages: NotebookChatMessage[]
+      generation_suggestion?: ChatGenerationSuggestion | null
     }>(
       `/chat/execute`,
       data

@@ -112,6 +112,8 @@ export function ChatColumn({ notebookId, contextSelections, sources, sourcesLoad
       loadingSessions={chat.loadingSessions}
       notebookContextStats={contextStats}
       notebookId={notebookId}
+      generationSuggestion={chat.generationSuggestion}
+      onDismissSuggestion={chat.clearGenerationSuggestion}
     />
   )
 }

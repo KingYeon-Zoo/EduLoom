@@ -1,4 +1,4 @@
-export type ResourceType = 'report' | 'video' | 'mindmap' | 'infographic'
+export type ResourceType = 'report' | 'quiz' | 'video' | 'mindmap' | 'ppt'
 
 export type ArtifactStatus =
   | 'running'
@@ -58,6 +58,13 @@ export interface StudioProfileInput {
   config: Record<string, unknown>
 }
 
+export interface StudioRecommendResponse {
+  recommended_profile_name: string
+  reason: string
+  suggested_instructions: string
+  profile_empty: boolean
+}
+
 export type ArtifactStatusGroup = 'running' | 'completed' | 'failed' | 'pending'
 export type ArtifactStatusGroups = Record<ArtifactStatusGroup, StudioArtifact[]>
 
@@ -97,7 +104,8 @@ export const RESOURCE_TYPE_META: Record<
   { labelKey: string; route: string }
 > = {
   report: { labelKey: 'studio.types.report', route: '/reports' },
+  quiz: { labelKey: 'studio.types.quiz', route: '/quiz' },
   video: { labelKey: 'studio.types.video', route: '/videos' },
   mindmap: { labelKey: 'studio.types.mindmap', route: '/mindmaps' },
-  infographic: { labelKey: 'studio.types.infographic', route: '/infographics' },
+  ppt: { labelKey: 'studio.types.ppt', route: '/ppt' },
 }

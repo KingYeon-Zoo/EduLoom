@@ -1,10 +1,10 @@
 """Unified studio artifact: a generated multimodal study resource.
 
-One table backs all four resource types (report / video / mindmap /
-infographic), discriminated by ``resource_type``. Text outputs (report
-markdown, mindmap mermaid) live in ``content``; binary outputs (video mp4,
-infographic images) are written to ``data/studio/<artifact_id>/`` and their
-paths recorded in ``file_paths``.
+One table backs all five resource types (report / quiz / video / mindmap /
+ppt), discriminated by ``resource_type``. Text outputs (report
+markdown, quiz markdown, mindmap mermaid) live in ``content``; binary outputs
+(video mp4, ppt slide images + .pptx deck) are written to
+``data/studio/<artifact_id>/`` and their paths recorded in ``file_paths``.
 
 Job tracking mirrors PodcastEpisode (open_notebook/podcasts/models.py): the
 ``command`` field links to a surreal-commands record and ``get_job_detail()``
@@ -23,7 +23,7 @@ from open_notebook.domain.base import ObjectModel
 
 
 class StudioArtifact(ObjectModel):
-    """A generated study resource (report / video / mindmap / infographic)."""
+    """A generated study resource (report / quiz / video / mindmap / ppt)."""
 
     table_name: ClassVar[str] = "studio_artifact"
     nullable_fields: ClassVar[set[str]] = {
@@ -35,7 +35,7 @@ class StudioArtifact(ObjectModel):
 
     name: str = Field(..., description="Artifact display name")
     resource_type: str = Field(
-        ..., description="report | video | mindmap | infographic"
+        ..., description="report | quiz | video | mindmap | ppt"
     )
     notebook_id: Optional[str] = Field(
         default=None, description="Owning notebook (record<notebook>)"
@@ -51,7 +51,7 @@ class StudioArtifact(ObjectModel):
     )
     file_paths: List[str] = Field(
         default_factory=list,
-        description="Binary outputs on disk (video mp4 / infographic images)",
+        description="Binary outputs on disk (video mp4 / ppt slide images + deck)",
     )
     command: Optional[Union[str, RecordID]] = Field(
         default=None, description="Link to surreal-commands job"

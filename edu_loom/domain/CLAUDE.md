@@ -53,6 +53,12 @@ Two base classes support different persistence patterns: **ObjectModel** (mutabl
 - **Transformation**: Reusable prompts for content transformation
 - **DefaultPrompts**: Singleton with transformation instructions
 
+### learning_path.py (Projects D / E)
+- **LearningPath**: One ordered study plan per notebook. `steps` is a list of PathStep dicts (title, order, status todo/in_progress/done, objectives, recommended_artifacts, resource_gap/gap_resource_type/gap_prompt). Class method `get_by_notebook(notebook_id)`. record-ref fields (`notebook_id`, `command`) coerced to RecordID in `_prepare_save_data` (mirrors StudioArtifact).
+- **LearningAssessment**: Multi-dimension evaluation snapshot for a notebook (append-only history). `dimensions` = list of AssessmentDimension dicts (name/label/score 0-100/comment/evidence), plus `overall_comment` + `suggestions`. Class method `get_by_notebook` returns newest-first.
+- **PathStep / AssessmentDimension**: Embedded pydantic models with validators (status coerced to a valid value, score clamped to 0-100).
+- **STEP_STATUSES / ASSESSMENT_DIMENSIONS**: Shared constants (single source of truth for statuses + the 6 evaluation dimension keys/labels).
+
 ### credential.py
 - **Credential**: Individual credential records for API keys and provider configuration
   - **One record per credential**: Each credential (e.g., "My OpenAI Key", "Work Anthropic") is a separate `Credential` record in SurrealDB

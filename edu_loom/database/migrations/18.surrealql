@@ -1,0 +1,34 @@
+-- Migration 18: Studio infographic -> learning PPT (Project C)
+-- The "信息图" resource type becomes "学习PPT": the generator still produces
+-- N images via Doubao, but now stitches them into a single .pptx deck
+-- (one image per 16:9 slide). This migration:
+--   1. Removes the two built-in infographic presets.
+--   2. Inserts two built-in ppt presets (16:9 slide prompts, 1280x720).
+--   3. Re-types any existing infographic artifacts/profiles to ppt.
+
+-- Drop the old built-in infographic presets (custom ones are re-typed below).
+DELETE studio_profile WHERE resource_type = "infographic" AND builtin = true;
+
+-- Re-type any remaining (user-created) infographic profiles + artifacts to ppt.
+UPDATE studio_profile SET resource_type = "ppt" WHERE resource_type = "infographic";
+UPDATE studio_artifact SET resource_type = "ppt" WHERE resource_type = "infographic";
+
+-- Seed built-in ppt presets (Chinese). Slides are 16:9 visual pages.
+INSERT INTO studio_profile [
+    {
+        name: "知识要点幻灯",
+        resource_type: "ppt",
+        description: "将内容拆成多页要点幻灯，拼成一份学习 PPT（16:9，4页）",
+        builtin: true,
+        config: { num_images: 4, size: "1280x720" },
+        default_prompt: "你是一名课件设计师。请基于提供的内容，将其拆解为若干个关键知识点，为每个知识点设计一页 16:9 横向幻灯片。针对每一页，输出一段用于文生图模型的英文画面描述提示词（prompt），描述一张清晰、现代、教育风格的横版幻灯片，包含醒目的中文标题、要点文字与简洁图标，配色协调、排版专业。只输出一个 JSON 数组，数组每个元素是一个字符串提示词，按讲解顺序排列，不要任何解释或代码块标记。"
+    },
+    {
+        name: "流程步骤幻灯",
+        resource_type: "ppt",
+        description: "以分步幻灯呈现流程或步骤，拼成一份学习 PPT（16:9，4页）",
+        builtin: true,
+        config: { num_images: 4, size: "1280x720" },
+        default_prompt: "你是一名课件设计师。请基于提供的内容，提炼出其中的关键流程或步骤，为每个步骤设计一页 16:9 横向幻灯片。针对每一页，输出一段用于文生图模型的英文画面描述提示词（prompt），描述一张清晰、现代、教育风格的横版步骤幻灯片，包含步骤编号、醒目的中文标题、简洁说明与图标，排版专业。只输出一个 JSON 数组，数组每个元素是一个字符串提示词，按步骤顺序排列，不要任何解释或代码块标记。"
+    }
+];

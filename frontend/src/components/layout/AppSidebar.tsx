@@ -45,7 +45,9 @@ import {
   FileBarChart,
   Video,
   Network,
-  Image as ImageIcon,
+  Presentation,
+  FileQuestion,
+  Compass,
 } from 'lucide-react'
 
 const getNavigation = (t: TFunction) => [
@@ -61,6 +63,7 @@ const getNavigation = (t: TFunction) => [
       { name: t('navigation.notebooks'), href: '/notebooks', icon: Book },
       { name: t('navigation.askAndSearch'), href: '/search', icon: Search },
       { name: t('navigation.learnerProfile'), href: '/profile', icon: UserCog },
+      { name: t('navigation.learning'), href: '/learning', icon: Compass },
     ],
   },
   {
@@ -68,9 +71,10 @@ const getNavigation = (t: TFunction) => [
     items: [
       { name: t('navigation.podcasts'), href: '/podcasts', icon: Mic },
       { name: t('navigation.reports'), href: '/reports', icon: FileBarChart },
+      { name: t('navigation.quiz'), href: '/quiz', icon: FileQuestion },
       { name: t('navigation.videos'), href: '/videos', icon: Video },
       { name: t('navigation.mindmaps'), href: '/mindmaps', icon: Network },
-      { name: t('navigation.infographics'), href: '/infographics', icon: ImageIcon },
+      { name: t('navigation.ppt'), href: '/ppt', icon: Presentation },
     ],
   },
   {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Trash2, RotateCw, Loader2 } from 'lucide-react'
+import { Trash2, RotateCw, Loader2, Download } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -110,6 +110,7 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
 function ArtifactBody({ artifact }: { artifact: StudioArtifact }) {
   switch (artifact.resource_type) {
     case 'report':
+    case 'quiz':
       return (
         <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -121,8 +122,8 @@ function ArtifactBody({ artifact }: { artifact: StudioArtifact }) {
       return artifact.content ? (
         <MermaidDiagram code={artifact.content} id={artifact.id} />
       ) : null
-    case 'infographic':
-      return <ImageGallery artifact={artifact} />
+    case 'ppt':
+      return <PptViewer artifact={artifact} />
     case 'video':
       return <VideoPlayer artifact={artifact} />
     default:
@@ -130,33 +131,57 @@ function ArtifactBody({ artifact }: { artifact: StudioArtifact }) {
   }
 }
 
-function ImageGallery({ artifact }: { artifact: StudioArtifact }) {
-  const [urls, setUrls] = useState<string[]>([])
+function PptViewer({ artifact }: { artifact: StudioArtifact }) {
+  const { t } = useTranslation()
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [deckUrl, setDeckUrl] = useState<string>()
+
+  // file_urls: slide images first, the .pptx deck last.
+  const urls = artifact.file_urls
+  const imageEndpoints = urls.slice(0, Math.max(0, urls.length - 1))
+  const deckEndpoint = urls.length > 0 ? urls[urls.length - 1] : undefined
 
   useEffect(() => {
     let cancelled = false
-    Promise.all(artifact.file_urls.map((u) => resolveStudioAssetUrl(u))).then(
+    Promise.all(imageEndpoints.map((u) => resolveStudioAssetUrl(u))).then(
       (resolved) => {
-        if (!cancelled) setUrls(resolved.filter(Boolean) as string[])
+        if (!cancelled) setImageUrls(resolved.filter(Boolean) as string[])
       }
     )
+    resolveStudioAssetUrl(deckEndpoint).then((u) => {
+      if (!cancelled) setDeckUrl(u)
+    })
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artifact.file_urls])
 
-  if (urls.length === 0) return null
+  if (imageUrls.length === 0 && !deckUrl) return null
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {urls.map((url, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={i}
-          src={url}
-          alt={`${artifact.name} ${i + 1}`}
-          className="w-full rounded border"
-        />
-      ))}
+    <div className="space-y-3">
+      {imageUrls.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {imageUrls.map((url, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={i}
+              src={url}
+              alt={`${artifact.name} ${t('studio.slide')} ${i + 1}`}
+              className="w-full rounded border"
+            />
+          ))}
+        </div>
+      )}
+      {deckUrl && (
+        <a href={deckUrl} download>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            {t('studio.downloadPpt')}
+          </Button>
+        </a>
+      )}
     </div>
   )
 }

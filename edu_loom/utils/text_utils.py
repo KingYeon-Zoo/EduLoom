@@ -5,13 +5,26 @@ Extracted from main utils to avoid circular imports.
 
 import re
 import unicodedata
-from typing import Tuple
+from typing import Optional, Tuple
 
-# Patterns for matching thinking content in AI responses
+# Pattern for matching thinking content in AI responses
 # Standard pattern: <think>...</think>
 THINK_PATTERN = re.compile(r"<think>(.*?)</think>", re.DOTALL)
 # Pattern for malformed output: content</think> (missing opening tag)
 THINK_PATTERN_NO_OPEN = re.compile(r"^(.*?)</think>", re.DOTALL)
+
+# Tutoring gate marker (Project E): the chat model emits this to SUGGEST (never
+# auto-trigger) generating a multimodal resource. Example:
+#   <<SUGGEST_GENERATE type="video" prompt="用动画演示快速排序的分区过程">>
+# We strip it from the displayed reply and surface {type, prompt} separately so
+# the frontend can show a confirm card; generation only happens after the user
+# confirms on the target studio page.
+SUGGEST_GENERATE_PATTERN = re.compile(
+    r"<<\s*SUGGEST_GENERATE\s+type\s*=\s*[\"']?(?P<type>[a-zA-Z]+)[\"']?\s+"
+    r"prompt\s*=\s*[\"'](?P<prompt>.*?)[\"']\s*>>",
+    re.DOTALL,
+)
+_VALID_SUGGEST_TYPES = {"report", "quiz", "mindmap", "ppt", "video"}
 
 
 def remove_non_ascii(text: str) -> str:
@@ -143,3 +156,40 @@ def extract_text_content(content) -> str:
                 text_parts.append(part)
         return "".join(text_parts)
     return str(content)
+
+
+def extract_generation_suggestion(content: str) -> Tuple[str, Optional[dict]]:
+    """Extract a tutoring generation suggestion from an AI reply (Project E).
+
+    Looks for a ``<<SUGGEST_GENERATE type="..." prompt="...">>`` marker. Returns
+    ``(cleaned_content, suggestion)`` where:
+      - cleaned_content: the reply with the marker stripped out (display text)
+      - suggestion: ``{"type": <resource_type>, "prompt": <hint>}`` or ``None``
+
+    Only the first valid marker is honored; the resource type must be one of the
+    five studio types, otherwise the marker is stripped and ``None`` returned.
+
+    >>> txt = 'Sure!<<SUGGEST_GENERATE type="video" prompt="演示快排">>'
+    >>> cleaned, sug = extract_generation_suggestion(txt)
+    >>> cleaned
+    'Sure!'
+    >>> sug
+    {'type': 'video', 'prompt': '演示快排'}
+    """
+    if not isinstance(content, str) or not content:
+        return (content if isinstance(content, str) else "", None)
+
+    match = SUGGEST_GENERATE_PATTERN.search(content)
+    # Always strip ALL markers from the displayed text, even invalid ones.
+    cleaned = SUGGEST_GENERATE_PATTERN.sub("", content).strip()
+    cleaned = re.sub(r"\n\s*\n\s*\n", "\n\n", cleaned).strip()
+
+    if not match:
+        return cleaned, None
+
+    res_type = (match.group("type") or "").strip().lower()
+    prompt = (match.group("prompt") or "").strip()
+    if res_type not in _VALID_SUGGEST_TYPES or not prompt:
+        return cleaned, None
+
+    return cleaned, {"type": res_type, "prompt": prompt}

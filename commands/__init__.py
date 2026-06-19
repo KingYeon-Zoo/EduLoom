@@ -21,12 +21,17 @@ from .embedding_commands import (
 )
 from .doubao_commands import generate_doubao_video_command
 from .example_commands import analyze_data_command, process_text_command
+from .learning_commands import (
+    generate_assessment_command,
+    generate_path_command,
+)
 from .podcast_commands import generate_podcast_command
 from .profile_commands import extract_profile_command
 from .source_commands import process_source_command
 from .studio_commands import (
-    generate_infographic_command,
     generate_mindmap_command,
+    generate_ppt_command,
+    generate_quiz_command,
     generate_report_command,
     generate_video_command,
 )
@@ -46,7 +51,11 @@ __all__ = [
     "extract_profile_command",
     # Studio commands (Project C)
     "generate_report_command",
+    "generate_quiz_command",
     "generate_mindmap_command",
-    "generate_infographic_command",
+    "generate_ppt_command",
     "generate_video_command",
+    # Learning loop commands (Projects D / E)
+    "generate_path_command",
+    "generate_assessment_command",
 ]

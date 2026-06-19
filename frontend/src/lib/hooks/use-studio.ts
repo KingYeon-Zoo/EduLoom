@@ -114,6 +114,12 @@ export function useRetryArtifact(resourceType: ResourceType) {
   })
 }
 
+export function useRecommendProfile(resourceType: ResourceType) {
+  return useMutation({
+    mutationFn: () => studioApi.recommend(resourceType),
+  })
+}
+
 export function useStudioProfiles(resourceType: ResourceType) {
   const query = useQuery({
     queryKey: QUERY_KEYS.studioProfiles(resourceType),

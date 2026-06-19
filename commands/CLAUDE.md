@@ -17,6 +17,8 @@
 - **`process_source_command`**: Ingests content through `source_graph`, creates embeddings (optional), and generates insights. Retries on transaction conflicts (exp. jitter, max 15×, 1-120s).
 - **`run_transformation_command`**: Runs a transformation on an existing source to generate an insight. Executes the transformation graph (LLM call) then creates insight via `create_insight_command`. Used by `POST /sources/{id}/insights` API endpoint. Retry: 5 attempts, exponential jitter 1-60s.
 - **`generate_podcast_command`**: Creates podcasts via podcast-creator library. Resolves model registry references and credentials for all profiles before invoking podcast-creator. Validates that outline_llm, transcript_llm, and voice_model are configured.
+- **`generate_path_command`** (Project D): Drives `LearningCoordinator.plan_path` (PathPlanner + ResourcePusher) and upserts one `LearningPath` per notebook (overwrites the old one). Retry: 5 attempts, exp. jitter 1-60s, `stop_on=[ValueError, ConfigurationError]`.
+- **`generate_assessment_command`** (Project E): Renders the notebook's path progress + quiz artifact content, drives `LearningCoordinator.assess` (AssessmentAnalyst), and appends a `LearningAssessment` snapshot. Same retry policy.
 - **`process_text_command`** (example): Test fixture for text operations (uppercase, lowercase, reverse, word_count).
 - **`analyze_data_command`** (example): Test fixture for numeric aggregations.
 

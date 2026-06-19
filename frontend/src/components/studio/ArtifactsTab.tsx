@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, RefreshCw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -15,12 +16,42 @@ import {
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
 
+interface StudioPrefill {
+  resourceType: ResourceType
+  notebookId: string
+  instructions: string
+}
+
 export function ArtifactsTab({ resourceType }: { resourceType: ResourceType }) {
   const { t } = useTranslation()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { artifacts, isLoading, refetch } = useArtifacts(resourceType)
   const deleteArtifact = useDeleteArtifact(resourceType)
   const retryArtifact = useRetryArtifact(resourceType)
   const [showDialog, setShowDialog] = useState(false)
+  const [prefill, setPrefill] = useState<StudioPrefill | null>(null)
+
+  // Tutoring gate (Project E): when arriving with ?prefill=1, read the handoff
+  // from sessionStorage and auto-open the dialog with the AI's suggestion.
+  useEffect(() => {
+    if (searchParams.get('prefill') !== '1') return
+    try {
+      const raw = sessionStorage.getItem('studio_prefill')
+      if (raw) {
+        const data = JSON.parse(raw) as StudioPrefill
+        if (data.resourceType === resourceType) {
+          setPrefill(data)
+          setShowDialog(true)
+        }
+        sessionStorage.removeItem('studio_prefill')
+      }
+    } catch {
+      // ignore malformed handoff
+    }
+    // Strip the query param so a refresh doesn't re-open the dialog.
+    router.replace(window.location.pathname)
+  }, [searchParams, resourceType, router])
 
   return (
     <div className="space-y-4">
@@ -64,7 +95,12 @@ export function ArtifactsTab({ resourceType }: { resourceType: ResourceType }) {
       <GenerateArtifactDialog
         resourceType={resourceType}
         open={showDialog}
-        onOpenChange={setShowDialog}
+        onOpenChange={(open) => {
+          setShowDialog(open)
+          if (!open) setPrefill(null)
+        }}
+        initialInstructions={prefill?.instructions}
+        initialNotebookId={prefill?.notebookId}
       />
     </div>
   )

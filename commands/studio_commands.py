@@ -4,13 +4,16 @@ Four independent generators, each a named "agent" run in the worker process
 via surreal-commands (same mechanism as podcasts). Each command updates a
 single ``StudioArtifact`` record and links it to its command job:
 
-  * generate_report      — ReportWriter:        LLM -> markdown (artifact.content)
-  * generate_mindmap     — MindMapArchitect:    LLM -> mermaid  (artifact.content)
-  * generate_infographic — InfographicDesigner: LLM -> N prompts -> Doubao images
-  * generate_video       — VideoDirector:       LLM -> prompt -> Doubao Seedance mp4
+  * generate_report   — ReportWriter:     LLM -> markdown (artifact.content)
+  * generate_quiz     — QuizMaster:       LLM -> markdown quiz (artifact.content)
+  * generate_mindmap  — MindMapArchitect: LLM -> mermaid  (artifact.content)
+  * generate_ppt      — SlideComposer:    LLM -> N slide prompts -> Doubao
+                        images -> stitched into one .pptx (one image per slide)
+  * generate_video    — VideoDirector:    LLM -> prompt -> Doubao Seedance mp4
 
 Text generation reuses ``provision_langchain_model`` (the same path as
-transformations); image/video reuse the Doubao clients from Project A. Binary
+transformations); image/video reuse the Doubao clients from Project A. The PPT
+deck is assembled from the generated slide images with python-pptx. Binary
 outputs land under ``data/studio/<artifact_id>/``.
 """
 
@@ -138,6 +141,36 @@ async def generate_report_command(
 
 
 # --------------------------------------------------------------------------
+# QuizMaster — LLM markdown quiz (questions + answers + explanations)
+# --------------------------------------------------------------------------
+@command("generate_quiz", app="open_notebook", retry={"max_attempts": 1})
+async def generate_quiz_command(
+    input_data: StudioGenerationInput,
+) -> StudioGenerationOutput:
+    """QuizMaster agent: generate a markdown quiz with answers."""
+    start = time.time()
+    try:
+        artifact = await _load_artifact(input_data.artifact_id)
+        markdown = await _run_llm(
+            input_data.system_prompt, input_data.content, input_data.instructions
+        )
+        artifact.content = markdown
+        await artifact.save()
+        logger.info(f"QuizMaster done: {artifact.id}")
+        return StudioGenerationOutput(
+            success=True,
+            artifact_id=str(artifact.id),
+            processing_time=time.time() - start,
+        )
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"Quiz generation failed: {e}")
+        logger.exception(e)
+        raise RuntimeError(str(e)) from e
+
+
+# --------------------------------------------------------------------------
 # MindMapArchitect — LLM mermaid
 # --------------------------------------------------------------------------
 @command("generate_mindmap", app="open_notebook", retry={"max_attempts": 1})
@@ -168,7 +201,7 @@ async def generate_mindmap_command(
 
 
 # --------------------------------------------------------------------------
-# InfographicDesigner — LLM prompts -> Doubao images
+# SlideComposer — LLM slide prompts -> Doubao images -> stitched .pptx
 # --------------------------------------------------------------------------
 def _parse_prompt_list(raw: str, limit: int) -> List[str]:
     """Parse the LLM's JSON array of image prompts; tolerate stray fences."""
@@ -186,18 +219,53 @@ def _parse_prompt_list(raw: str, limit: int) -> List[str]:
     return prompts[:limit]
 
 
-@command("generate_infographic", app="open_notebook", retry={"max_attempts": 1})
-async def generate_infographic_command(
+def _build_pptx(image_paths: List[str], dest: Path) -> None:
+    """Stitch slide images into a single 16:9 .pptx, one image per slide.
+
+    Each image is scaled to fit the slide while preserving aspect ratio and
+    centered on a blank layout (a deck of full-bleed visual slides).
+    """
+    from PIL import Image
+    from pptx import Presentation
+    from pptx.util import Emu
+
+    prs = Presentation()
+    # 16:9 widescreen deck.
+    prs.slide_width = Emu(12192000)
+    prs.slide_height = Emu(6858000)
+    slide_w, slide_h = prs.slide_width, prs.slide_height
+    blank_layout = prs.slide_layouts[6]  # fully blank
+
+    for img_path in image_paths:
+        slide = prs.slides.add_slide(blank_layout)
+        with Image.open(img_path) as im:
+            img_w, img_h = im.size
+        # Scale to fit (contain), preserving aspect ratio, then center.
+        scale = min(slide_w / img_w, slide_h / img_h)
+        draw_w = int(img_w * scale)
+        draw_h = int(img_h * scale)
+        left = int((slide_w - draw_w) / 2)
+        top = int((slide_h - draw_h) / 2)
+        slide.shapes.add_picture(
+            img_path, left, top, width=draw_w, height=draw_h
+        )
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    prs.save(str(dest))
+
+
+@command("generate_ppt", app="open_notebook", retry={"max_attempts": 1})
+async def generate_ppt_command(
     input_data: StudioGenerationInput,
 ) -> StudioGenerationOutput:
-    """InfographicDesigner agent: LLM -> N prompts -> Doubao images."""
+    """SlideComposer agent: LLM -> N slide prompts -> Doubao images -> .pptx."""
     from open_notebook.ai.doubao import DoubaoImageClient
 
     start = time.time()
     try:
         artifact = await _load_artifact(input_data.artifact_id)
         num_images = int(input_data.config.get("num_images", 4))
-        size = input_data.config.get("size", "1024x1024")
+        size = input_data.config.get("size", "1280x720")
 
         raw = await _run_llm(
             input_data.system_prompt, input_data.content, input_data.instructions
@@ -206,22 +274,30 @@ async def generate_infographic_command(
 
         client = DoubaoImageClient()
         out_dir = _artifact_dir(input_data.artifact_id)
-        file_paths: List[str] = []
+        image_paths: List[str] = []
         for idx, prompt in enumerate(prompts):
             result = client.generate(prompt, size=size, response_format="url")
             if not result.url:
-                logger.warning(f"Infographic image {idx} returned no URL, skipping")
+                logger.warning(f"Slide image {idx} returned no URL, skipping")
                 continue
             dest = out_dir / f"img_{idx}.png"
             _download(result.url, dest)
-            file_paths.append(str(dest))
+            image_paths.append(str(dest))
 
-        if not file_paths:
-            raise RuntimeError("No infographic images were generated")
+        if not image_paths:
+            raise RuntimeError("No slide images were generated")
 
-        artifact.file_paths = file_paths
+        # Stitch the slide images into a single .pptx deck.
+        pptx_path = out_dir / "slides.pptx"
+        _build_pptx(image_paths, pptx_path)
+
+        # file_paths: slide images first (for gallery preview), deck last.
+        artifact.file_paths = image_paths + [str(pptx_path)]
         await artifact.save()
-        logger.info(f"InfographicDesigner done: {artifact.id} ({len(file_paths)} imgs)")
+        logger.info(
+            f"SlideComposer done: {artifact.id} "
+            f"({len(image_paths)} slides -> {pptx_path.name})"
+        )
         return StudioGenerationOutput(
             success=True,
             artifact_id=str(artifact.id),
@@ -230,7 +306,7 @@ async def generate_infographic_command(
     except ValueError:
         raise
     except Exception as e:
-        logger.error(f"Infographic generation failed: {e}")
+        logger.error(f"PPT generation failed: {e}")
         logger.exception(e)
         raise RuntimeError(str(e)) from e
 
@@ -289,7 +365,8 @@ async def generate_video_command(
 # Map resource_type -> command name, used by the service layer.
 COMMAND_BY_TYPE = {
     "report": "generate_report",
+    "quiz": "generate_quiz",
     "mindmap": "generate_mindmap",
-    "infographic": "generate_infographic",
+    "ppt": "generate_ppt",
     "video": "generate_video",
 }

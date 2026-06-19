@@ -36,4 +36,7 @@ export const QUERY_KEYS = {
   learnerProfile: ['learner-profile'] as const,
   studioArtifacts: (resourceType: string) => ['studio', 'artifacts', resourceType] as const,
   studioProfiles: (resourceType: string) => ['studio', 'profiles', resourceType] as const,
+  learningPath: (notebookId: string) => ['learning', 'path', notebookId] as const,
+  learningAssessments: (notebookId: string) => ['learning', 'assessments', notebookId] as const,
+  agentRoster: ['learning', 'agents'] as const,
 }

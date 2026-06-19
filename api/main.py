@@ -26,6 +26,7 @@ from api.routers import (
     insights,
     languages,
     learner_profile,
+    learning,
     models,
     notebooks,
     notes,
@@ -342,6 +343,7 @@ app.include_router(studio.router, prefix="/api", tags=["studio"])
 app.include_router(
     learner_profile.router, prefix="/api", tags=["learner-profile"]
 )
+app.include_router(learning.router, prefix="/api", tags=["learning"])
 
 
 @app.get("/")

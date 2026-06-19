@@ -18,7 +18,10 @@ from open_notebook.domain.notebook import Notebook
 from open_notebook.exceptions import OpenNotebookError
 from open_notebook.utils import clean_thinking_content
 from open_notebook.utils.error_classifier import classify_error
-from open_notebook.utils.text_utils import extract_text_content
+from open_notebook.utils.text_utils import (
+    extract_generation_suggestion,
+    extract_text_content,
+)
 
 
 class ThreadState(TypedDict):
@@ -28,6 +31,7 @@ class ThreadState(TypedDict):
     context_config: Optional[dict]
     model_override: Optional[str]
     reasoning_effort: Optional[str]
+    generation_suggestion: Optional[dict]
 
 
 def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict:
@@ -87,13 +91,23 @@ def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict
         # Clean thinking content from AI response (e.g., <think>...</think> tags)
         content = extract_text_content(ai_message.content)
         cleaned_content = clean_thinking_content(content)
+
+        # Tutoring gate (Project E): extract a (non-binding) resource-generation
+        # suggestion and strip its marker from the displayed reply. Generation
+        # only happens after the user confirms on the target studio page.
+        cleaned_content, generation_suggestion = extract_generation_suggestion(
+            cleaned_content
+        )
         cleaned_message = ai_message.model_copy(update={"content": cleaned_content})
 
         # Fire-and-forget: refresh the learner profile from this turn (Project B).
         # Never block or break the chat reply if submission fails.
         _submit_profile_extraction(state, config, cleaned_content)
 
-        return {"messages": cleaned_message}
+        return {
+            "messages": cleaned_message,
+            "generation_suggestion": generation_suggestion,
+        }
     except OpenNotebookError:
         raise
     except Exception as e:

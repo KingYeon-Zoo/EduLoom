@@ -1,0 +1,32 @@
+-- Migration 19: Studio quiz generator (Project C)
+-- Adds the fifth resource type "测试题" (quiz): an LLM text generator (like
+-- report) that produces a markdown quiz with questions, answers and
+-- explanations. Seeds Chinese built-in quiz presets. No schema change needed
+-- (studio_profile / studio_artifact already store quiz via resource_type).
+
+INSERT INTO studio_profile [
+    {
+        name: "综合自测题",
+        resource_type: "quiz",
+        description: "覆盖核心知识点的综合自测题（含答案与解析）",
+        builtin: true,
+        config: { num_questions: 8 },
+        default_prompt: "你是一名命题老师。请基于提供的内容，编写一套综合自测题，覆盖其中的核心知识点。题型可包含单选题、多选题、判断题与简答题，难度由易到难。使用 Markdown 格式，先列出全部题目（每题标注题型与序号），再在「参考答案与解析」小节给出每题的正确答案与简要解析。题目数量约 8 题，语言准确、表述清晰。"
+    },
+    {
+        name: "选择题专项",
+        resource_type: "quiz",
+        description: "以单选/多选题为主的客观题练习（含答案解析）",
+        builtin: true,
+        config: { num_questions: 10 },
+        default_prompt: "你是一名命题老师。请基于提供的内容，编写一套选择题练习，以单选题与多选题为主，约 10 题。使用 Markdown 格式，每题给出题干与 A/B/C/D 选项；在「参考答案与解析」小节统一给出每题答案及考点解析。题目应覆盖关键概念，干扰项设计合理。"
+    },
+    {
+        name: "简答与论述题",
+        resource_type: "quiz",
+        description: "考查理解与表达的主观题（含答题要点）",
+        builtin: true,
+        config: { num_questions: 5 },
+        default_prompt: "你是一名命题老师。请基于提供的内容，编写一套简答与论述题，约 5 题，重点考查对核心概念的理解与表达。使用 Markdown 格式，先列出全部题目，再在「答题要点」小节给出每题的参考答案要点与评分要素。题目应有层次，兼顾识记、理解与应用。"
+    }
+];

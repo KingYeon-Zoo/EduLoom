@@ -1,7 +1,7 @@
 """Studio resource generation API (Project C).
 
-Endpoints for the four resource generators (report / video / mindmap /
-infographic): generate, list/get/delete/retry artifacts, stream binary files,
+Endpoints for the five resource generators (report / quiz / video / mindmap /
+ppt): generate, list/get/delete/retry artifacts, stream binary files,
 and CRUD presets. Mirrors api/routers/podcasts.py.
 """
 
@@ -58,6 +58,17 @@ class StudioProfileRequest(BaseModel):
     description: Optional[str] = None
     default_prompt: str
     config: Dict[str, Any] = {}
+
+
+class StudioRecommendRequest(BaseModel):
+    resource_type: str
+
+
+class StudioRecommendResponse(BaseModel):
+    recommended_profile_name: str
+    reason: str
+    suggested_instructions: str = ""
+    profile_empty: bool = False
 
 
 class StudioProfileResponse(BaseModel):
@@ -126,6 +137,13 @@ async def generate_studio_artifact(request: StudioGenerationRequest):
         status="submitted",
         message=f"Generation started for '{request.name}'",
     )
+
+
+@router.post("/studio/recommend", response_model=StudioRecommendResponse)
+async def recommend_studio_profile(request: StudioRecommendRequest):
+    """AI-recommend a preset for a resource type based on the learner profile."""
+    result = await StudioService.recommend_profile(request.resource_type)
+    return StudioRecommendResponse(**result)
 
 
 @router.get("/studio/artifacts", response_model=List[StudioArtifactResponse])

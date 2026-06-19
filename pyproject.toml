@@ -42,6 +42,8 @@ dependencies = [
     "pycountry>=26.2.16",
     "babel>=2.18.0",
     "volcengine-python-sdk[ark]>=5.0.35",
+    "python-pptx>=1.0.2",
+    "pillow>=11.0.0",
 ]
 
 [tool.setuptools]

@@ -7,6 +7,7 @@ import {
   StudioGenerationResponse,
   StudioProfile,
   StudioProfileInput,
+  StudioRecommendResponse,
 } from '@/lib/types/studio'
 
 /** Resolve a relative artifact file URL to an absolute one. */
@@ -38,6 +39,14 @@ export const studioApi = {
     const response = await apiClient.post<StudioGenerationResponse>(
       '/studio/generate',
       payload
+    )
+    return response.data
+  },
+
+  recommend: async (resourceType: ResourceType) => {
+    const response = await apiClient.post<StudioRecommendResponse>(
+      '/studio/recommend',
+      { resource_type: resourceType }
     )
     return response.data
   },
