@@ -157,6 +157,7 @@ class StudioService:
             return {"job_id": str(job_id), "artifact_id": str(artifact.id)}
 
         except ValueError as e:
+            logger.warning(f"ValueError submitting studio generation job: {e}")
             raise HTTPException(status_code=400, detail=str(e))
         except HTTPException:
             raise

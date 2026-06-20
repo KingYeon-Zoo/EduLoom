@@ -157,7 +157,7 @@ def test_image_generate_returns_url():
     kwargs = fake_ark.images.generate.call_args.kwargs
     assert kwargs["model"] == "seedream-test"
     assert kwargs["prompt"] == "a logo"
-    assert kwargs["size"] == "1024x1024"
+    assert kwargs["size"] == "2048x2048"
 
 
 # --- tts ------------------------------------------------------------------

@@ -87,7 +87,7 @@ const getNavigation = (t: TFunction) => [
   },
 ] as const
 
-type CreateTarget = 'source' | 'notebook' | 'podcast'
+type CreateTarget = 'source' | 'notebook' | 'podcast' | 'report' | 'quiz' | 'video' | 'mindmap' | 'ppt'
 
 export function AppSidebar() {
   const { t } = useTranslation()
@@ -95,7 +95,16 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { logout } = useAuth()
   const { isCollapsed, toggleCollapse } = useSidebarStore()
-  const { openSourceDialog, openNotebookDialog, openPodcastDialog } = useCreateDialogs()
+  const {
+    openSourceDialog,
+    openNotebookDialog,
+    openPodcastDialog,
+    openReportDialog,
+    openQuizDialog,
+    openVideoDialog,
+    openMindmapDialog,
+    openPptDialog,
+  } = useCreateDialogs()
 
   const [createMenuOpen, setCreateMenuOpen] = useState(false)
   const [isMac, setIsMac] = useState(true) // Default to Mac for SSR
@@ -114,6 +123,16 @@ export function AppSidebar() {
       openNotebookDialog()
     } else if (target === 'podcast') {
       openPodcastDialog()
+    } else if (target === 'report') {
+      openReportDialog()
+    } else if (target === 'quiz') {
+      openQuizDialog()
+    } else if (target === 'video') {
+      openVideoDialog()
+    } else if (target === 'mindmap') {
+      openMindmapDialog()
+    } else if (target === 'ppt') {
+      openPptDialog()
     }
   }
 
@@ -248,6 +267,56 @@ export function AppSidebar() {
                 >
                    <Mic className="h-4 w-4" />
                   {t('common.podcast')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleCreateSelection('report')
+                  }}
+                  className="gap-2"
+                >
+                   <FileBarChart className="h-4 w-4" />
+                  {t('navigation.reports')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleCreateSelection('quiz')
+                  }}
+                  className="gap-2"
+                >
+                   <FileQuestion className="h-4 w-4" />
+                  {t('navigation.quiz')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleCreateSelection('video')
+                  }}
+                  className="gap-2"
+                >
+                   <Video className="h-4 w-4" />
+                  {t('navigation.videos')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleCreateSelection('mindmap')
+                  }}
+                  className="gap-2"
+                >
+                   <Network className="h-4 w-4" />
+                  {t('navigation.mindmaps')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleCreateSelection('ppt')
+                  }}
+                  className="gap-2"
+                >
+                   <Presentation className="h-4 w-4" />
+                  {t('navigation.ppt')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

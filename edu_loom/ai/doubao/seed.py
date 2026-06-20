@@ -101,34 +101,75 @@ async def ensure_doubao_llm_default() -> None:
 
 
 async def ensure_doubao_tts_default() -> None:
-    """Ensure a Doubao TTS model exists and is the default (idempotent)."""
+    """Ensure a TTS model exists and is the default (idempotent).
+    
+    If Doubao TTS credentials are configured, we seed and default to Doubao.
+    Otherwise, we fall back to OpenAI's tts-1 to ensure a functional default.
+    """
     cfg = get_config()
-    model_name = cfg.tts_resource_id
+    has_doubao_tts = bool(cfg.tts_api_key or (cfg.tts_app_id and cfg.tts_access_token))
 
-    # Find an existing Doubao TTS model record, if any.
     existing = await Model.get_models_by_type("text_to_speech")
-    doubao_model = next(
-        (m for m in existing if m.provider == "doubao" and m.name == model_name),
-        None,
-    )
-
-    if doubao_model is None:
-        doubao_model = Model(
-            name=model_name,
-            provider="doubao",
-            type="text_to_speech",
-        )
-        await doubao_model.save()
-        logger.info(
-            f"Seeded Doubao TTS model '{model_name}' (id={doubao_model.id})"
-        )
-
-    # Only set the default when none is configured, to avoid clobbering a
-    # user's explicit selection.
     defaults = await DefaultModels.get_instance()
-    if not defaults.default_text_to_speech_model:
-        defaults.default_text_to_speech_model = doubao_model.id
-        await defaults.update()
-        logger.info(
-            f"Set default TTS model to Doubao '{model_name}' (id={doubao_model.id})"
+
+    if has_doubao_tts:
+        model_name = cfg.tts_resource_id
+        doubao_model = next(
+            (m for m in existing if m.provider == "doubao" and m.name == model_name),
+            None,
         )
+
+        if doubao_model is None:
+            doubao_model = Model(
+                name=model_name,
+                provider="doubao",
+                type="text_to_speech",
+            )
+            await doubao_model.save()
+            logger.info(
+                f"Seeded Doubao TTS model '{model_name}' (id={doubao_model.id})"
+            )
+
+        # Only set the default when none is configured, to avoid clobbering a
+        # user's explicit selection.
+        if not defaults.default_text_to_speech_model:
+            defaults.default_text_to_speech_model = doubao_model.id
+            await defaults.update()
+            logger.info(
+                f"Set default TTS model to Doubao '{model_name}' (id={doubao_model.id})"
+            )
+    else:
+        # Find or create OpenAI tts-1 model record
+        openai_model = next(
+            (m for m in existing if m.provider == "openai" and m.name == "tts-1"),
+            None,
+        )
+        if openai_model is None:
+            openai_model = Model(
+                name="tts-1",
+                provider="openai",
+                type="text_to_speech",
+            )
+            await openai_model.save()
+            logger.info("Seeded OpenAI TTS model 'tts-1'")
+
+        # If default is unset, OR it points to a Doubao model but Doubao isn't configured,
+        # point it to OpenAI tts-1 to avoid errors.
+        should_use_openai = False
+        if not defaults.default_text_to_speech_model:
+            should_use_openai = True
+        else:
+            try:
+                current_default = await Model.get(defaults.default_text_to_speech_model)
+                if current_default.provider == "doubao":
+                    should_use_openai = True
+            except Exception:
+                should_use_openai = True
+
+        if should_use_openai:
+            defaults.default_text_to_speech_model = openai_model.id
+            await defaults.update()
+            logger.info(
+                f"Set default TTS model to OpenAI 'tts-1' (id={openai_model.id}) "
+                f"because Doubao TTS is not configured"
+            )

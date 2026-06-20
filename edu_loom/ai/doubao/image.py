@@ -39,6 +39,14 @@ class DoubaoImageClient:
     ) -> ImageResult:
         """Generate a single image and return its URL (or base64 if requested)."""
         model = model or self._config.require_image_model()
+
+        # Volcengine Seedream-5 model requires image size to be at least 3686400 pixels.
+        # Auto-upgrade legacy sizes to their high-res equivalents.
+        if size == "1280x720":
+            size = "2560x1440"
+        elif size == "1024x1024":
+            size = "2048x2048"
+
         kwargs: dict = {
             "model": model,
             "prompt": prompt,
