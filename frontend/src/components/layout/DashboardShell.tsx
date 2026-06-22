@@ -10,7 +10,7 @@ import { ModalProvider } from '@/components/providers/ModalProvider'
 import { CreateDialogsProvider } from '@/lib/hooks/use-create-dialogs'
 import { CommandPalette } from '@/components/common/CommandPalette'
 
-export default function DashboardLayout({
+export default function DashboardShell({
   children,
 }: {
   children: React.ReactNode
@@ -19,17 +19,12 @@ export default function DashboardLayout({
   const router = useRouter()
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
 
-  // Check for version updates once per session
   useVersionCheck()
 
   useEffect(() => {
-    // Mark that we've completed the initial auth check
     if (!isLoading) {
       setHasCheckedAuth(true)
-
-      // Redirect to login if not authenticated
       if (!isAuthenticated) {
-        // Store the current path to redirect back after login
         const currentPath = window.location.pathname + window.location.search
         sessionStorage.setItem('redirectAfterLogin', currentPath)
         router.push('/login')
@@ -37,7 +32,6 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, router])
 
-  // Show loading spinner during initial auth check or while loading
   if (isLoading || !hasCheckedAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -46,7 +40,6 @@ export default function DashboardLayout({
     )
   }
 
-  // Don't render anything if not authenticated (during redirect)
   if (!isAuthenticated) {
     return null
   }

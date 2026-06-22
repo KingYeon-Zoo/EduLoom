@@ -125,7 +125,7 @@ EduLoom 不堆砌重型编排框架（消息总线、注册中心等属过度工
 - **SurrealDB**
   - macOS: `brew install surrealdb/tap/surreal`
   - Linux / WSL: `curl -sSf https://install.surrealdb.com | sh`
-  - Windows: `iwr -useb https://install.surrealdb.com | iex`
+  - Windows: `winget install SurrealDB.SurrealDB`
 - **uv**: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ### 2. 配置密钥
