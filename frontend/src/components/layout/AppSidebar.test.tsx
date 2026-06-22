@@ -12,6 +12,23 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
+const noop = () => {}
+
+/** Default store shape returned when no specific mock is set */
+const defaultStore = {
+  isCollapsed: false,
+  forcedCollapse: false,
+  hasManuallyToggled: false,
+  overlayOpen: false,
+  toggleCollapse: vi.fn(),
+  setCollapsed: noop,
+  setForcedCollapse: noop,
+  setHasManuallyToggled: noop,
+  setOverlayOpen: noop,
+}
+
+vi.mocked(useSidebarStore).mockReturnValue(defaultStore as any)
+
 describe('AppSidebar', () => {
   it('renders correctly when expanded', () => {
     render(<AppSidebar />)
@@ -25,6 +42,7 @@ describe('AppSidebar', () => {
   it('toggles collapse state when clicking handle', () => {
     const toggleCollapse = vi.fn()
     vi.mocked(useSidebarStore).mockReturnValue({
+      ...defaultStore,
       isCollapsed: false,
       toggleCollapse,
     } as any)
@@ -38,8 +56,8 @@ describe('AppSidebar', () => {
 
   it('shows collapsed view when isCollapsed is true', () => {
     vi.mocked(useSidebarStore).mockReturnValue({
+      ...defaultStore,
       isCollapsed: true,
-      toggleCollapse: vi.fn(),
     } as any)
 
     render(<AppSidebar />)
