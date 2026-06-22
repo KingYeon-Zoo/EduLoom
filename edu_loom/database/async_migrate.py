@@ -1,4 +1,4 @@
-"""
+﻿"""
 Async migration system for SurrealDB using the official Python client.
 Based on patterns from sblpy migration system.
 """
@@ -96,107 +96,107 @@ class AsyncMigrationManager:
     def __init__(self):
         """Initialize migration manager."""
         self.up_migrations = [
-            AsyncMigration.from_file("open_notebook/database/migrations/1.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/2.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/3.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/4.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/5.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/6.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/7.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/8.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/9.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/10.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/1.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/2.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/3.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/4.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/5.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/6.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/7.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/8.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/9.surrealql"),
+            AsyncMigration.from_file("edu_loom/database/migrations/10.surrealql"),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/11.surrealql"
+                "edu_loom/database/migrations/11.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/12.surrealql"
+                "edu_loom/database/migrations/12.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/13.surrealql"
+                "edu_loom/database/migrations/13.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/14.surrealql"
+                "edu_loom/database/migrations/14.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/15.surrealql"
+                "edu_loom/database/migrations/15.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/16.surrealql"
+                "edu_loom/database/migrations/16.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/17.surrealql"
+                "edu_loom/database/migrations/17.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/18.surrealql"
+                "edu_loom/database/migrations/18.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/19.surrealql"
+                "edu_loom/database/migrations/19.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/20.surrealql"
+                "edu_loom/database/migrations/20.surrealql"
             ),
         ]
         self.down_migrations = [
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/1_down.surrealql"
+                "edu_loom/database/migrations/1_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/2_down.surrealql"
+                "edu_loom/database/migrations/2_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/3_down.surrealql"
+                "edu_loom/database/migrations/3_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/4_down.surrealql"
+                "edu_loom/database/migrations/4_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/5_down.surrealql"
+                "edu_loom/database/migrations/5_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/6_down.surrealql"
+                "edu_loom/database/migrations/6_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/7_down.surrealql"
+                "edu_loom/database/migrations/7_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/8_down.surrealql"
+                "edu_loom/database/migrations/8_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/9_down.surrealql"
+                "edu_loom/database/migrations/9_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/10_down.surrealql"
+                "edu_loom/database/migrations/10_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/11_down.surrealql"
+                "edu_loom/database/migrations/11_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/12_down.surrealql"
+                "edu_loom/database/migrations/12_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/13_down.surrealql"
+                "edu_loom/database/migrations/13_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/14_down.surrealql"
+                "edu_loom/database/migrations/14_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/15_down.surrealql"
+                "edu_loom/database/migrations/15_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/16_down.surrealql"
+                "edu_loom/database/migrations/16_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/17_down.surrealql"
+                "edu_loom/database/migrations/17_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/18_down.surrealql"
+                "edu_loom/database/migrations/18_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/19_down.surrealql"
+                "edu_loom/database/migrations/19_down.surrealql"
             ),
             AsyncMigration.from_file(
-                "open_notebook/database/migrations/20_down.surrealql"
+                "edu_loom/database/migrations/20_down.surrealql"
             ),
         ]
         self.runner = AsyncMigrationRunner(

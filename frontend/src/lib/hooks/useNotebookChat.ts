@@ -16,7 +16,7 @@ import {
   NoteResponse,
   ReasoningEffort
 } from '@/lib/types/api'
-import { ContextSelections } from '@/app/(dashboard)/notebooks/[id]/page'
+import { ContextSelections } from '@/app/(feature)/notebooks/[id]/page'
 
 interface UseNotebookChatParams {
   notebookId: string
