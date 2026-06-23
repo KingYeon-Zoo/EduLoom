@@ -1,8 +1,11 @@
 import asyncio
+import json
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -408,13 +411,12 @@ async def execute_chat(request: ExecuteChatRequest):
         state_values["reasoning_effort"] = reasoning_effort
 
         # Add user message to state
-        from langchain_core.messages import HumanMessage
-
         user_message = HumanMessage(content=request.message)
         state_values["messages"].append(user_message)
 
-        # Execute chat graph
-        result = chat_graph.invoke(
+        # Execute chat graph in a thread to avoid blocking the event loop
+        result = await asyncio.to_thread(
+            chat_graph.invoke,
             input=state_values,  # type: ignore[arg-type]
             config=RunnableConfig(
                 configurable={
@@ -451,6 +453,154 @@ async def execute_chat(request: ExecuteChatRequest):
         # Log detailed error with context for debugging
         logger.error(
             f"Error executing chat: {str(e)}\n"
+            f"  Session ID: {request.session_id}\n"
+            f"  Model override: {request.model_override}\n"
+            f"  Traceback:\n{traceback.format_exc()}"
+        )
+        raise HTTPException(status_code=500, detail=f"Error executing chat: {str(e)}")
+
+
+async def stream_notebook_chat_response(
+    session_id: str,
+    full_session_id: str,
+    message: str,
+    notebook: Optional[Notebook],
+    model_override: Optional[str],
+    reasoning_effort: Optional[str],
+    context: Optional[str] = None,
+) -> AsyncGenerator[str, None]:
+    """Stream the notebook chat response as Server-Sent Events."""
+    try:
+        # Get current state
+        current_state = await asyncio.to_thread(
+            chat_graph.get_state,
+            config=RunnableConfig(configurable={"thread_id": full_session_id}),
+        )
+
+        # Prepare state for execution
+        state_values = current_state.values if current_state else {}
+        state_values["messages"] = state_values.get("messages", [])
+        state_values["context"] = context
+        state_values["notebook"] = notebook
+        state_values["model_override"] = model_override
+        state_values["reasoning_effort"] = reasoning_effort
+
+        # Add user message to state
+        user_message = HumanMessage(content=message)
+        state_values["messages"].append(user_message)
+
+        # Send user message event
+        user_event = {"type": "user_message", "content": message, "timestamp": None}
+        yield f"data: {json.dumps(user_event)}\n\n"
+
+        # Execute chat graph (blocking, in thread to not block the async generator)
+        result = await asyncio.to_thread(
+            chat_graph.invoke,
+            input=state_values,  # type: ignore[arg-type]
+            config=RunnableConfig(
+                configurable={
+                    "thread_id": full_session_id,
+                    "model_id": model_override,
+                    "reasoning_effort": reasoning_effort,
+                }
+            ),
+        )
+
+        # Stream AI messages
+        if "messages" in result:
+            for msg in result["messages"]:
+                if hasattr(msg, "type") and msg.type == "ai":
+                    ai_event = {
+                        "type": "ai_message",
+                        "content": msg.content if hasattr(msg, "content") else str(msg),
+                        "timestamp": None,
+                    }
+                    yield f"data: {json.dumps(ai_event)}\n\n"
+
+        # Send generation suggestion if present
+        if result.get("generation_suggestion"):
+            suggestion_event = {
+                "type": "generation_suggestion",
+                "data": result["generation_suggestion"],
+            }
+            yield f"data: {json.dumps(suggestion_event)}\n\n"
+
+        # Send completion signal
+        yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+
+    except Exception as e:
+        from open_notebook.utils.error_classifier import classify_error
+
+        _, user_message = classify_error(e)
+        logger.error(f"Error in notebook chat streaming: {str(e)}")
+        error_event = {"type": "error", "message": user_message}
+        yield f"data: {json.dumps(error_event)}\n\n"
+        # Send complete after error so frontend knows stream is done
+        yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+
+
+@router.post("/chat/execute/stream")
+async def execute_chat_stream(request: ExecuteChatRequest):
+    """Execute a chat request with SSE streaming response."""
+    try:
+        # Verify session exists
+        full_session_id = (
+            request.session_id
+            if request.session_id.startswith("chat_session:")
+            else f"chat_session:{request.session_id}"
+        )
+        session = await ChatSession.get(full_session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Fetch notebook linked to this session
+        notebook_query = await repo_query(
+            "SELECT out FROM refers_to WHERE in = $session_id",
+            {"session_id": ensure_record_id(full_session_id)},
+        )
+        notebook = None
+        if notebook_query:
+            notebook = await Notebook.get(notebook_query[0]["out"])
+
+        # Determine model override
+        model_override = (
+            request.model_override
+            if request.model_override is not None
+            else getattr(session, "model_override", None)
+        )
+
+        # Determine reasoning effort
+        reasoning_effort = normalize_reasoning_effort(
+            request.reasoning_effort
+            if request.reasoning_effort is not None
+            else getattr(session, "reasoning_effort", None)
+        )
+
+        # Update session timestamp
+        await session.save()
+
+        return StreamingResponse(
+            stream_notebook_chat_response(
+                session_id=request.session_id,
+                full_session_id=full_session_id,
+                message=request.message,
+                notebook=notebook,
+                model_override=model_override,
+                reasoning_effort=reasoning_effort,
+                context=request.context,
+            ),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/plain; charset=utf-8",
+            },
+        )
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    except Exception as e:
+        logger.error(
+            f"Error executing chat stream: {str(e)}\n"
             f"  Session ID: {request.session_id}\n"
             f"  Model override: {request.model_override}\n"
             f"  Traceback:\n{traceback.format_exc()}"
