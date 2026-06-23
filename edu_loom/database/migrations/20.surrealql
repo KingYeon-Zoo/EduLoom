@@ -12,6 +12,9 @@ DEFINE FIELD IF NOT EXISTS name ON TABLE learning_path TYPE string;
 DEFINE FIELD IF NOT EXISTS notebook_id ON TABLE learning_path TYPE option<record<notebook>>;
 DEFINE FIELD IF NOT EXISTS summary ON TABLE learning_path TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS steps ON TABLE learning_path TYPE array<object> DEFAULT [];
+-- Each PathStep is a flexible object (title/description/objectives/...); without
+-- FLEXIBLE on the array element, SCHEMAFULL rejects every nested step field.
+DEFINE FIELD IF NOT EXISTS steps.* ON TABLE learning_path TYPE object FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS profile_snapshot ON TABLE learning_path TYPE object FLEXIBLE DEFAULT {};
 DEFINE FIELD IF NOT EXISTS command ON TABLE learning_path TYPE option<record<command>>;
 DEFINE FIELD IF NOT EXISTS created ON TABLE learning_path TYPE datetime DEFAULT time::now();
@@ -25,6 +28,9 @@ DEFINE INDEX IF NOT EXISTS idx_learning_path_notebook ON TABLE learning_path COL
 DEFINE TABLE IF NOT EXISTS learning_assessment SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS notebook_id ON TABLE learning_assessment TYPE option<record<notebook>>;
 DEFINE FIELD IF NOT EXISTS dimensions ON TABLE learning_assessment TYPE array<object> DEFAULT [];
+-- Each AssessmentDimension is a flexible object; FLEXIBLE on the array element
+-- is required or SCHEMAFULL rejects nested dimension fields.
+DEFINE FIELD IF NOT EXISTS dimensions.* ON TABLE learning_assessment TYPE object FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS overall_comment ON TABLE learning_assessment TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS suggestions ON TABLE learning_assessment TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS profile_snapshot ON TABLE learning_assessment TYPE object FLEXIBLE DEFAULT {};

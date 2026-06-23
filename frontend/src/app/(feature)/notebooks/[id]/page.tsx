@@ -62,6 +62,7 @@ export default function NotebookPage() {
   useEffect(() => {
     if (sources && sources.length > 0) {
       setContextSelections(prev => {
+        let changed = false
         const newSourceSelections = { ...prev.sources }
         sources.forEach(source => {
           const currentMode = newSourceSelections[source.id]
@@ -70,12 +71,14 @@ export default function NotebookPage() {
           if (currentMode === undefined) {
             // Initial setup - default based on insights availability
             newSourceSelections[source.id] = hasInsights ? 'insights' : 'full'
+            changed = true
           } else if (currentMode === 'full' && hasInsights) {
             // Source gained insights while in 'full' mode - auto-switch to 'insights'
             newSourceSelections[source.id] = 'insights'
+            changed = true
           }
         })
-        return { ...prev, sources: newSourceSelections }
+        return changed ? { ...prev, sources: newSourceSelections } : prev
       })
     }
   }, [sources])
@@ -83,15 +86,17 @@ export default function NotebookPage() {
   useEffect(() => {
     if (notes && notes.length > 0) {
       setContextSelections(prev => {
+        let changed = false
         const newNoteSelections = { ...prev.notes }
         notes.forEach(note => {
           // Only set default if not already set
           if (!(note.id in newNoteSelections)) {
             // Notes default to 'full'
             newNoteSelections[note.id] = 'full'
+            changed = true
           }
         })
-        return { ...prev, notes: newNoteSelections }
+        return changed ? { ...prev, notes: newNoteSelections } : prev
       })
     }
   }, [notes])
