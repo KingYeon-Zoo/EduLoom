@@ -7,6 +7,7 @@ mermaid.initialize({
   startOnLoad: false,
   theme: 'default',
   securityLevel: 'strict',
+  suppressErrorRendering: true,
 })
 
 interface MermaidDiagramProps {
@@ -33,6 +34,16 @@ export function MermaidDiagram({ code, id }: MermaidDiagramProps) {
           setError(null)
         }
       } catch (e) {
+        // Clean up the temporary element created by Mermaid if it is left in the DOM
+        const tmpEl = document.getElementById(`d${safeId}`)
+        if (tmpEl) {
+          tmpEl.remove()
+        }
+        const errEl = document.getElementById(safeId)
+        if (errEl) {
+          errEl.remove()
+        }
+
         if (!cancelled) {
           setError(e instanceof Error ? e.message : String(e))
         }
