@@ -247,8 +247,8 @@ export function AppSidebar() {
               <Image
                 src="/logo.png"
                 alt="EduLoom"
-                width={32}
-                height={32}
+                width={28}
+                height={28}
                 className="transition-opacity group-hover:opacity-0"
               />
               <Button
@@ -262,11 +262,15 @@ export function AppSidebar() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <Image src="/logo.png" alt={t('common.appName')} width={32} height={32} />
-                <span className="text-base font-medium text-sidebar-foreground">
-                  {t('common.appName')}
-                </span>
+              <div className="flex-1 flex items-center px-1">
+                <Image
+                  src="/pure_logo.png"
+                  alt={t('common.appName')}
+                  width={1672}
+                  height={554}
+                  className="w-full h-auto max-h-14"
+                  priority
+                />
               </div>
               <Button
                 variant="ghost"
@@ -283,17 +287,12 @@ export function AppSidebar() {
 
         {/* Mode badge */}
         {!effectiveCollapsed && (
-          <div className="px-3 pb-2">
-            <div
-              className={cn(
-                'text-xs font-medium px-2 py-1 rounded text-center',
-                mode === 'feature'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-              )}
-            >
-              {mode === 'feature' ? '学习前台' : '管理后台'}
-            </div>
+          <div
+            className={cn(
+              'text-xs font-semibold uppercase tracking-wider p-0.5 rounded text-center bg-transparent text-sidebar-foreground/60 mx-3 mb-1',
+            )}
+          >
+            {mode === 'feature' ? '学习前台' : '管理后台'}
           </div>
         )}
 
@@ -469,7 +468,7 @@ export function AppSidebar() {
                     return (
                       <Tooltip key={item.name}>
                         <TooltipTrigger asChild>
-                          <Link href={item.href}>
+                          <Link href={item.href} prefetch={false}>
                             {button}
                           </Link>
                         </TooltipTrigger>
@@ -479,7 +478,7 @@ export function AppSidebar() {
                   }
 
                   return (
-                    <Link key={item.name} href={item.href}>
+                    <Link key={item.name} href={item.href} prefetch={false}>
                       {button}
                     </Link>
                   )
@@ -530,7 +529,7 @@ export function AppSidebar() {
                     className="w-full justify-center sidebar-menu-item"
                     asChild
                   >
-                    <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
+                    <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'} prefetch={false}>
                       <ArrowLeftRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -545,7 +544,7 @@ export function AppSidebar() {
                 className="w-full justify-start gap-3 sidebar-menu-item"
                 asChild
               >
-                <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
+                <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'} prefetch={false}>
                   <ArrowLeftRight className="h-4 w-4" />
                   {mode === 'feature' ? '切换到管理后台' : '切换到学习前台'}
                 </Link>

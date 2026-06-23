@@ -1,7 +1,8 @@
 import asyncio
+import json
 import os
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, AsyncGenerator, List, Optional
 
 from fastapi import (
     APIRouter,
@@ -12,7 +13,7 @@ from fastapi import (
     Query,
     UploadFile,
 )
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from loguru import logger
 from surreal_commands import execute_command_sync, submit_command
 
@@ -774,6 +775,94 @@ async def get_source_status(source_id: str):
         raise HTTPException(
             status_code=500, detail=f"Error fetching source status: {str(e)}"
         )
+
+
+async def stream_source_status(source_id: str) -> AsyncGenerator[str, None]:
+    """Stream source processing status as SSE events. Only sends when status changes.
+
+    Uses server-side polling with 1s interval (no client overhead).
+    Auto-closes on terminal state or after consecutive errors exceed threshold.
+    """
+    try:
+        import time
+        last_status: Optional[str] = None
+        consecutive_errors = 0
+        MAX_CONSECUTIVE_ERRORS = 5
+        MAX_STREAM_DURATION_SECONDS = 600  # 10-minute global timeout
+        start_time = time.monotonic()
+
+        while True:
+            # Global timeout guard
+            if time.monotonic() - start_time > MAX_STREAM_DURATION_SECONDS:
+                yield f"data: {json.dumps({'type': 'timeout', 'message': 'Stream timeout reached'})}\n\n"
+                yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+                break
+            source = await Source.get(source_id)
+            if not source:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Source not found'})}\n\n"
+                yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+                break
+
+            # Get current status
+            try:
+                status = await source.get_status()
+                processing_info = await source.get_processing_progress()
+                consecutive_errors = 0  # Reset on success
+            except Exception as e:
+                consecutive_errors += 1
+                if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                    yield f"data: {json.dumps({'type': 'error', 'message': f'Failed to get status after {MAX_CONSECUTIVE_ERRORS} attempts: {str(e)}'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+                    break
+                # Exponential backoff on errors: 1s, 2s, 4s, 8s
+                await asyncio.sleep(min(2 ** (consecutive_errors - 1), 8))
+                continue
+
+            # Only send event when status changes (or on first fetch)
+            if status != last_status:
+                last_status = status
+                event = {
+                    "type": "status_update",
+                    "status": status,
+                    "processing_info": processing_info,
+                    "command_id": str(source.command) if source.command else None,
+                }
+                yield f"data: {json.dumps(event)}\n\n"
+
+                # Terminal states — close the stream
+                if status in ("completed", "failed"):
+                    yield f"data: {json.dumps({'type': 'complete', 'status': status})}\n\n"
+                    break
+
+            # Check every second internally (no network overhead for client)
+            await asyncio.sleep(1)
+
+    except asyncio.CancelledError:
+        # Client disconnected — clean exit
+        pass
+    except Exception as e:
+        logger.error(f"Error in source status stream for {source_id}: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+
+
+@router.get("/sources/{source_id}/status/stream")
+async def get_source_status_stream(source_id: str):
+    """Stream source processing status via SSE. Only pushes when status changes."""
+    # Verify source exists
+    source = await Source.get(source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    return StreamingResponse(
+        stream_source_status(source_id),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "text/plain; charset=utf-8",
+        },
+    )
 
 
 @router.put("/sources/{source_id}", response_model=SourceResponse)

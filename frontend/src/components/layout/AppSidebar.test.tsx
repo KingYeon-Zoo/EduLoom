@@ -34,7 +34,8 @@ describe('AppSidebar', () => {
     render(<AppSidebar />)
 
     // With mocked t() returning keys, check for translation key strings
-    expect(screen.getByText('common.appName')).toBeDefined()
+    // App name is now only in the logo's alt text (not visible text)
+    expect(screen.getByAltText('common.appName')).toBeDefined()
     expect(screen.getByText('navigation.sources')).toBeDefined()
     expect(screen.getByText('navigation.notebooks')).toBeDefined()
   })

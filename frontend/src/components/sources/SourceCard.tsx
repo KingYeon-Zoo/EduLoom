@@ -25,7 +25,7 @@ import {
   Loader2,
   Unlink
 } from 'lucide-react'
-import { useSourceStatus } from '@/lib/hooks/use-sources'
+import { useSourceStatus, useSourceStatusStream } from '@/lib/hooks/use-sources'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import type { TFunction } from 'i18next'
 import { cn } from '@/lib/utils'
@@ -134,10 +134,18 @@ export function SourceCard({
     sourceWithStatus.status === 'running' ||
     wasProcessing // Keep polling if we were processing to catch the completion
 
-  const { data: statusData, isLoading: statusLoading } = useSourceStatus(
+  // Prefer SSE streaming for real-time status; fall back to polling if SSE not available
+  const { data: streamStatusData, isStreaming: streamActive } = useSourceStatusStream(
     source.id,
     shouldFetchStatus
   )
+  const { data: pollStatusData, isLoading: pollLoading } = useSourceStatus(
+    source.id,
+    shouldFetchStatus && !streamActive // Only poll if SSE stream isn't active
+  )
+
+  const statusData = streamStatusData ?? pollStatusData
+  const statusLoading = streamActive ? false : pollLoading
 
   // Determine current status
   // If source has a command_id but no status, treat as "new" (just created)

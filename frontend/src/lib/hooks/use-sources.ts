@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { sourcesApi } from '@/lib/api/sources'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
@@ -20,8 +20,7 @@ export function useSources(notebookId?: string) {
     queryKey: QUERY_KEYS.sources(notebookId),
     queryFn: () => sourcesApi.list({ notebook_id: notebookId }),
     enabled: !!notebookId,
-    staleTime: 5 * 1000, // 5 seconds - more responsive for real-time source updates
-    refetchOnWindowFocus: true, // Refetch when user comes back to the tab
+    staleTime: 30 * 1000, // 30 seconds
   })
 }
 
@@ -50,8 +49,7 @@ export function useNotebookSources(notebookId: string) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     enabled: !!notebookId,
-    staleTime: 5 * 1000,
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
   })
 
   // Flatten all pages into a single array (memoized to prevent infinite re-renders)
@@ -81,8 +79,7 @@ export function useSource(id: string) {
     queryKey: QUERY_KEYS.source(id),
     queryFn: () => sourcesApi.get(id),
     enabled: !!id,
-    staleTime: 30 * 1000, // 30 seconds - shorter stale time for more responsive updates
-    refetchOnWindowFocus: true, // Refetch when user comes back to the tab
+    staleTime: 30 * 1000,
   })
 }
 
@@ -237,25 +234,143 @@ export function useSourceStatus(sourceId: string, enabled = true) {
     queryFn: () => sourcesApi.status(sourceId),
     enabled: !!sourceId && enabled,
     refetchInterval: (query) => {
-      // Auto-refresh every 2 seconds if processing
-      // The query.state.data contains the SourceStatusResponse
+      // Auto-refresh every 5 seconds if processing
       const data = query.state.data as SourceStatusResponse | undefined
       if (data?.status === 'running' || data?.status === 'queued' || data?.status === 'new') {
-        return 2000
+        return 5000
       }
-      // No auto-refresh if completed, failed, or unknown
       return false
     },
-    staleTime: 0, // Always consider status data stale for real-time updates
+    staleTime: 2000, // 2-second stale time to avoid refetching immediately after a fresh poll
     retry: (failureCount, error) => {
       // Don't retry on 404 (source not found)
       const axiosError = error as { response?: { status?: number } }
       if (axiosError?.response?.status === 404) {
         return false
       }
-      return failureCount < 3
+      return failureCount < 1
     },
   })
+}
+
+/**
+ * SSE-based source status hook — replaces polling with push-based updates.
+ * Opens a persistent SSE connection that only sends data when status changes.
+ * Connection auto-closes on unmount or when status reaches terminal state.
+ */
+export function useSourceStatusStream(sourceId: string, enabled = true) {
+  const [status, setStatus] = useState<SourceStatusResponse | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+
+  useEffect(() => {
+    if (!sourceId || !enabled) {
+      setStatus(null)
+      setIsStreaming(false)
+      return
+    }
+
+    const controller = new AbortController()
+    let cancelled = false
+    setIsStreaming(true)
+
+    const connectStream = async () => {
+      try {
+        const { getApiUrl } = await import('@/lib/config')
+        const baseUrl = await getApiUrl()
+
+        let token = ''
+        if (typeof window !== 'undefined') {
+          const raw = localStorage.getItem('auth-storage')
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw)
+              token = parsed?.state?.token ?? ''
+            } catch { /* ignore */ }
+          }
+        }
+
+        const response = await fetch(
+          `${baseUrl}/sources/${sourceId}/status/stream`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            signal: controller.signal,
+          }
+        )
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setStatus({ status: 'unknown', message: 'Source not found' } as SourceStatusResponse)
+          }
+          setIsStreaming(false)
+          return
+        }
+
+        const reader = response.body?.getReader()
+        if (!reader) {
+          setIsStreaming(false)
+          return
+        }
+
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!cancelled) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || !trimmed.startsWith('data: ')) continue
+
+            try {
+              const event = JSON.parse(trimmed.slice(6))
+
+              if (event.type === 'status_update') {
+                setStatus({
+                  status: event.status,
+                  message: '',
+                  processing_info: event.processing_info ?? null,
+                  command_id: event.command_id ?? null,
+                } as SourceStatusResponse)
+
+                // Terminal states
+                if (event.status === 'completed' || event.status === 'failed') {
+                  setIsStreaming(false)
+                }
+              } else if (event.type === 'complete') {
+                setIsStreaming(false)
+              } else if (event.type === 'error') {
+                console.warn(`Source status stream error for ${sourceId}:`, event.message)
+                setIsStreaming(false)
+              }
+            } catch {
+              // Skip malformed lines
+            }
+          }
+        }
+        reader.releaseLock()
+      } catch (err: unknown) {
+        const error = err as { name?: string }
+        if (error.name === 'AbortError') return // clean abort, ignore
+        console.error(`SSE stream error for source ${sourceId}:`, err)
+      } finally {
+        if (!cancelled) setIsStreaming(false)
+      }
+    }
+
+    connectStream()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [sourceId, enabled])
+
+  return { data: status, isStreaming }
 }
 
 export function useRetrySource() {

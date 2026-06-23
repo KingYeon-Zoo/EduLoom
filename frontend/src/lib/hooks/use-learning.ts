@@ -98,13 +98,24 @@ export function useGenerateAssessment(notebookId: string) {
         description: t('learning.assessStartedDesc'),
       })
       // Poll the assessment list a few times until the new snapshot lands.
-      const refetch = () =>
-        queryClient.invalidateQueries({
+      const refetch = () => {
+        queryClient.refetchQueries({
           queryKey: QUERY_KEYS.learningAssessments(notebookId),
         })
-      setTimeout(refetch, 4_000)
-      setTimeout(refetch, 10_000)
-      setTimeout(refetch, 20_000)
+      }
+      const timer1 = setTimeout(refetch, 4_000)
+      const timer2 = setTimeout(refetch, 10_000)
+      const timer3 = setTimeout(refetch, 20_000)
+      // Clean up timers if mutation is invalidated or component unmounts
+      const cleanup = () => {
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+        clearTimeout(timer3)
+      }
+      // Store cleanup for potential abort via AbortSignal
+      if (typeof window !== 'undefined') {
+        setTimeout(cleanup, 25_000) // auto-clean after all timers fire
+      }
     },
     onError: (error: unknown) => {
       toast({

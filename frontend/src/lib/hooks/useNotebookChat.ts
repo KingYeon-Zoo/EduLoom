@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/utils/error-handler'
@@ -40,6 +40,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
   const [pendingModelOverride, setPendingModelOverride] = useState<string | null>(null)
   // Pending reasoning effort for when user changes it before a session exists
   const [pendingReasoningEffort, setPendingReasoningEffort] = useState<ReasoningEffort | null>(null)
+  // Track active stream to prevent concurrent sends
+  const activeStreamRef = useRef<{ abort: () => void } | null>(null)
 
   // Fetch sessions for this notebook
   const {
@@ -179,8 +181,16 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     return response.context
   }, [notebookId, sources, notes, contextSelections])
 
-  // Send message (synchronous, no streaming)
+  // Send message with SSE streaming
   const sendMessage = useCallback(async (message: string, modelOverride?: string) => {
+    // Guard against concurrent sends — must set BEFORE any await
+    if (activeStreamRef.current) {
+      toast.error(t('apiErrors.alreadySending') || 'A message is already being sent')
+      return
+    }
+    let aborted = false
+    activeStreamRef.current = { abort: () => { aborted = true } }
+
     let sessionId = currentSessionId
 
     // Auto-create session if none exists
@@ -224,9 +234,9 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     setGenerationSuggestion(null)
 
     try {
-      // Build context and send message
+      // Build context and set up streaming
       const context = await buildContext()
-      const response = await chatApi.sendMessage({
+      const eventStream = chatApi.sendMessageStream({
         session_id: sessionId,
         message,
         context,
@@ -235,19 +245,71 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
           currentSession?.reasoning_effort ?? pendingReasoningEffort ?? undefined
       })
 
-      // Update messages with API response
-      setMessages(response.messages)
-      setGenerationSuggestion(response.generation_suggestion ?? null)
+      // Accumulate AI messages as they stream in
+      const aiMessages: NotebookChatMessage[] = []
+      let complete = false
 
-      // Refetch current session to get updated data
-      await refetchCurrentSession()
+      for await (const event of eventStream) {
+        switch (event.type) {
+          case 'user_message':
+            // User message already added optimistically — confirm it
+            break
+
+          case 'ai_message': {
+            const aiMsg: NotebookChatMessage = {
+              id: `ai-${Date.now()}-${aiMessages.length}`,
+              type: 'ai',
+              content: event.content ?? '',
+              timestamp: event.timestamp ?? new Date().toISOString(),
+            }
+            aiMessages.push(aiMsg)
+
+            // Update UI incrementally — replace optimistic user msg + previous AI with full list
+            setMessages(prev => {
+              const nonTemp = prev.filter(msg => !msg.id.startsWith('temp-'))
+              // Remove any previously streamed AI messages from this turn
+              const cleaned = nonTemp.filter(m => !m.id.startsWith('ai-stream-'))
+              // Tag AI messages with stream marker so they can be replaced on next event
+              const tagged = aiMessages.map((m, i) => ({
+                ...m,
+                id: i === aiMessages.length - 1 ? m.id : `ai-stream-${i}`,
+              }))
+              return [...cleaned, ...tagged]
+            })
+            break
+          }
+
+          case 'generation_suggestion':
+            setGenerationSuggestion(event.data ?? null)
+            break
+
+          case 'complete':
+            complete = true
+            break
+
+          case 'error':
+            toast.error(event.message || t('apiErrors.failedToSendMessage'))
+            setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
+            break
+        }
+      }
+
+      // On completion, remove stream markers and refetch session
+      if (complete && aiMessages.length > 0) {
+        setMessages(prev =>
+          prev.map(m => ({ ...m, id: m.id.startsWith('ai-stream-') ? `ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` : m.id }))
+        )
+        await refetchCurrentSession()
+      }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }, message?: string };
+      if (aborted) return // Silently exit if aborted
+      const error = err as { response?: { data?: { detail?: string } }, message?: string }
       console.error('Error sending message:', error)
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToSendMessage'))
       // Remove optimistic message on error
       setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
     } finally {
+      activeStreamRef.current = null
       setIsSending(false)
     }
   }, [
@@ -255,6 +317,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     currentSessionId,
     currentSession,
     pendingModelOverride,
+    pendingReasoningEffort,
     buildContext,
     refetchCurrentSession,
     queryClient,
