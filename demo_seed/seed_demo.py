@@ -263,8 +263,8 @@ async def generate_text_artifacts(ctx):
             t0 = time.time()
             try:
                 raw = await _run_llm(prof.default_prompt, material)
-                from commands.studio_commands import _strip_code_fence
-                content = _strip_code_fence(raw) if rtype == "mindmap" else raw
+                from commands.studio_commands import _strip_code_fence, repair_mermaid
+                content = repair_mermaid(_strip_code_fence(raw)) if rtype == "mindmap" else raw
                 await _save_artifact(
                     art_name, rtype, str(nb.id), content=content,
                     profile_snapshot=prof.model_dump(),

@@ -18,6 +18,7 @@ outputs land under ``data/studio/<artifact_id>/``.
 """
 
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -82,6 +83,123 @@ def _strip_code_fence(text: str) -> str:
             lines = lines[:-1]
         t = "\n".join(lines).strip()
     return t
+
+
+def repair_mermaid(code: str) -> str:
+    """Repair Mermaid syntax errors in mindmap and graph TD to prevent rendering crashes."""
+    if not code:
+        return code
+    
+    lines = code.splitlines()
+    if not lines:
+        return code
+    
+    # Detect mermaid diagram type
+    first_line_stripped = lines[0].strip()
+    is_mindmap = first_line_stripped.startswith("mindmap")
+    is_graph = first_line_stripped.startswith("graph ") or first_line_stripped.startswith("flowchart ")
+    
+    if not (is_mindmap or is_graph):
+        return code
+
+    repaired_lines = []
+    
+    if is_mindmap:
+        for line in lines:
+            stripped = line.strip()
+            # Preserve leading spaces (indentation)
+            leading_spaces = line[:len(line) - len(line.lstrip())]
+            
+            # Skip empty lines, 'mindmap' header, config lines, and classDef/style
+            if not stripped or stripped.startswith("mindmap") or stripped.startswith("::") or stripped.startswith("classDef") or stripped.startswith("style"):
+                repaired_lines.append(line)
+                continue
+            
+            # Check if node text is already wrapped/quoted
+            # 1. Enclosed with parens/brackets/quotes: (text), [text], {text}, ("text"), ["text"]
+            # 2. explicit node shape with ID: node_id(text), node_id((text)), node_id["text"]
+            has_brackets = False
+            if (stripped.startswith("(") and stripped.endswith(")")) or \
+               (stripped.startswith("[") and stripped.endswith("]")) or \
+               (stripped.startswith("{") and stripped.endswith("}")) or \
+               (stripped.startswith("\"") and stripped.endswith("\"")):
+                has_brackets = True
+            elif re.match(r'^[a-zA-Z0-9_\-]+\s*(?:\(\(|\(\(\(|[\(\[\{])', stripped):
+                if stripped.endswith(")") or stripped.endswith("]") or stripped.endswith("}"):
+                    has_brackets = True
+            
+            if has_brackets:
+                repaired_lines.append(line)
+            else:
+                # Wrap bare text in (" ") to make it safe for spaces/special characters
+                safe_text = stripped.replace('"', '\\"')
+                repaired_lines.append(f'{leading_spaces}("{safe_text}")')
+                
+    elif is_graph:
+        node_id_map = {}
+        node_counter = 0
+        
+        def get_node_id(text_content: str) -> str:
+            nonlocal node_counter
+            text_content = text_content.strip()
+            if text_content in node_id_map:
+                return node_id_map[text_content]
+            
+            # If the text is already a clean identifier, reuse it as ID
+            if re.match(r'^[a-zA-Z0-9_\-]+$', text_content):
+                return text_content
+                
+            new_id = f"node_{node_counter}"
+            node_counter += 1
+            node_id_map[text_content] = new_id
+            return new_id
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("graph ") or stripped.startswith("flowchart "):
+                repaired_lines.append(line)
+                continue
+                
+            # Match edge connections (e.g. -->, ---, -.->, ==>)
+            connector_pattern = r'(\s*(?:-->|---|-.->|==>|-.->|--\s*[^-]+\s*-->)\s*)'
+            parts = re.split(connector_pattern, stripped)
+            
+            if len(parts) > 1:
+                new_parts = []
+                for i, part in enumerate(parts):
+                    if i % 2 == 0:
+                        part_stripped = part.strip()
+                        if not part_stripped:
+                            new_parts.append("")
+                            continue
+                        
+                        # Already parsed format like ID["text"], ID("text")
+                        match = re.match(r'^([a-zA-Z0-9_\-]+)\s*(?:\(\(|\(\(\(|[\(\[\{\"\'])(.*)(?:\)\)|\)\)\)|[\)\]\}\"\'])$', part_stripped)
+                        if match:
+                            new_parts.append(part_stripped)
+                        elif re.match(r'^[a-zA-Z0-9_\-]+$', part_stripped):
+                            new_parts.append(part_stripped)
+                        else:
+                            nid = get_node_id(part_stripped)
+                            safe_text = part_stripped.replace('"', '\\"')
+                            new_parts.append(f'{nid}["{safe_text}"]')
+                    else:
+                        new_parts.append(part)
+                
+                leading_spaces = line[:len(line) - len(line.lstrip())]
+                repaired_lines.append(leading_spaces + "".join(new_parts))
+            else:
+                if not (stripped.startswith("classDef") or stripped.startswith("style") or stripped.startswith("click")):
+                    match = re.match(r'^([a-zA-Z0-9_\-]+)\s*(?:\(\(|\(\(\(|[\(\[\{\"\'])(.*)(?:\)\)|\)\)\)|[\)\]\}\"\'])$', stripped)
+                    if not match and not re.match(r'^[a-zA-Z0-9_\-]+$', stripped):
+                        nid = get_node_id(stripped)
+                        safe_text = stripped.replace('"', '\\"')
+                        leading_spaces = line[:len(line) - len(line.lstrip())]
+                        repaired_lines.append(f'{leading_spaces}{nid}["{safe_text}"]')
+                        continue
+                repaired_lines.append(line)
+                
+    return "\n".join(repaired_lines)
 
 
 # --------------------------------------------------------------------------
@@ -184,7 +302,7 @@ async def generate_mindmap_command(
         mermaid = await _run_llm(
             input_data.system_prompt, input_data.content, input_data.instructions
         )
-        artifact.content = _strip_code_fence(mermaid)
+        artifact.content = repair_mermaid(_strip_code_fence(mermaid))
         await artifact.save()
         logger.info(f"MindMapArchitect done: {artifact.id}")
         return StudioGenerationOutput(
