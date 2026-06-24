@@ -21,6 +21,18 @@ from open_notebook.utils.graph_utils import get_session_message_count
 router = APIRouter()
 
 
+# Lock system to serialize LangGraph state writes per session_id
+_session_locks: dict[str, asyncio.Lock] = {}
+_session_locks_lock = asyncio.Lock()
+
+async def get_session_lock(session_id: str) -> asyncio.Lock:
+    async with _session_locks_lock:
+        if session_id not in _session_locks:
+            _session_locks[session_id] = asyncio.Lock()
+        return _session_locks[session_id]
+
+
+
 # Request/Response models
 class CreateSourceChatSessionRequest(BaseModel):
     source_id: str = Field(..., description="Source ID to create chat session for")
@@ -84,7 +96,7 @@ class SourceChatSessionWithMessagesResponse(SourceChatSessionResponse):
     )
 
 class SendMessageRequest(BaseModel):
-    message: str = Field(..., description="User message content")
+    message: str = Field(..., max_length=50000, description="User message content")
     model_override: Optional[str] = Field(
         None, description="Optional model override for this message"
     )
@@ -115,8 +127,9 @@ async def create_source_chat_session(
             raise HTTPException(status_code=404, detail="Source not found")
 
         # Create new session with model_override support
+        import time
         session = ChatSession(
-            title=request.title or f"Source Chat {asyncio.get_event_loop().time():.0f}",
+            title=request.title or f"Source Chat {time.time():.0f}",
             model_override=request.model_override,
             reasoning_effort=normalize_reasoning_effort(request.reasoning_effort),
         )
@@ -140,7 +153,7 @@ async def create_source_chat_session(
     except Exception as e:
         logger.error(f"Error creating source chat session: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error creating source chat session: {str(e)}"
+            status_code=500, detail="Failed to create source chat session"
         )
 
 
@@ -202,7 +215,7 @@ async def get_source_chat_sessions(source_id: str = Path(..., description="Sourc
     except Exception as e:
         logger.error(f"Error fetching source chat sessions: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error fetching source chat sessions: {str(e)}"
+            status_code=500, detail="Failed to fetch source chat sessions"
         )
 
 
@@ -300,7 +313,7 @@ async def get_source_chat_session(
     except Exception as e:
         logger.error(f"Error fetching source chat session: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error fetching source chat session: {str(e)}"
+            status_code=500, detail="Failed to fetch source chat session"
         )
 
 
@@ -377,7 +390,7 @@ async def update_source_chat_session(
     except Exception as e:
         logger.error(f"Error updating source chat session: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error updating source chat session: {str(e)}"
+            status_code=500, detail="Failed to update source chat session"
         )
 
 
@@ -432,7 +445,7 @@ async def delete_source_chat_session(
     except Exception as e:
         logger.error(f"Error deleting source chat session: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error deleting source chat session: {str(e)}"
+            status_code=500, detail="Failed to delete source chat session"
         )
 
 
@@ -444,72 +457,77 @@ async def stream_source_chat_response(
     reasoning_effort: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
     """Stream the source chat response as Server-Sent Events."""
-    try:
-        effort = normalize_reasoning_effort(reasoning_effort)
-        # Get current state
-        # Use sync get_state() in a thread since SqliteSaver doesn't support async
-        current_state = await asyncio.to_thread(
-            source_chat_graph.get_state,
-            config=RunnableConfig(configurable={"thread_id": session_id}),
-        )
+    lock = await get_session_lock(session_id)
+    async with lock:
+        try:
+            effort = normalize_reasoning_effort(reasoning_effort)
+            # Get current state
+            # Use sync get_state() in a thread since SqliteSaver doesn't support async
+            current_state = await asyncio.to_thread(
+                source_chat_graph.get_state,
+                config=RunnableConfig(configurable={"thread_id": session_id}),
+            )
 
-        # Prepare state for execution
-        state_values = current_state.values if current_state else {}
-        state_values["messages"] = state_values.get("messages", [])
-        state_values["source_id"] = source_id
-        state_values["model_override"] = model_override
-        state_values["reasoning_effort"] = effort
+            # Prepare state for execution
+            state_values = current_state.values if current_state else {}
+            state_values["messages"] = state_values.get("messages", [])
+            state_values["source_id"] = source_id
+            state_values["model_override"] = model_override
+            state_values["reasoning_effort"] = effort
 
-        # Add user message to state
-        user_message = HumanMessage(content=message)
-        state_values["messages"].append(user_message)
+            # Add user message to state
+            user_message = HumanMessage(content=message)
+            state_values["messages"].append(user_message)
 
-        # Send user message event
-        user_event = {"type": "user_message", "content": message, "timestamp": None}
-        yield f"data: {json.dumps(user_event)}\n\n"
+            # Send user message event
+            user_event = {"type": "user_message", "content": message, "timestamp": None}
+            yield f"data: {json.dumps(user_event)}\n\n"
 
-        # Execute source chat graph synchronously (like notebook chat does)
-        result = source_chat_graph.invoke(
-            input=state_values,  # type: ignore[arg-type]
-            config=RunnableConfig(
-                configurable={
-                    "thread_id": session_id,
-                    "model_id": model_override,
-                    "reasoning_effort": effort,
-                }
-            ),
-        )
-
-        # Stream the complete AI response
-        if "messages" in result:
-            for msg in result["messages"]:
-                if hasattr(msg, "type") and msg.type == "ai":
-                    ai_event = {
-                        "type": "ai_message",
-                        "content": msg.content if hasattr(msg, "content") else str(msg),
-                        "timestamp": None,
+            # Execute source chat graph in a thread to avoid blocking the event loop
+            result = await asyncio.to_thread(
+                source_chat_graph.invoke,
+                input=state_values,  # type: ignore[arg-type]
+                config=RunnableConfig(
+                    configurable={
+                        "thread_id": session_id,
+                        "model_id": model_override,
+                        "reasoning_effort": effort,
                     }
-                    yield f"data: {json.dumps(ai_event)}\n\n"
+                ),
+            )
 
-        # Stream context indicators
-        if "context_indicators" in result:
-            context_event = {
-                "type": "context_indicators",
-                "data": result["context_indicators"],
-            }
-            yield f"data: {json.dumps(context_event)}\n\n"
+            # Stream the complete AI response
+            if "messages" in result:
+                for msg in result["messages"]:
+                    if hasattr(msg, "type") and msg.type == "ai":
+                        ai_event = {
+                            "type": "ai_message",
+                            "content": msg.content if hasattr(msg, "content") else str(msg),
+                            "timestamp": None,
+                        }
+                        yield f"data: {json.dumps(ai_event)}\n\n"
 
-        # Send completion signal
-        completion_event = {"type": "complete"}
-        yield f"data: {json.dumps(completion_event)}\n\n"
+            # Stream context indicators
+            if "context_indicators" in result:
+                context_event = {
+                    "type": "context_indicators",
+                    "data": result["context_indicators"],
+                }
+                yield f"data: {json.dumps(context_event)}\n\n"
 
-    except Exception as e:
-        from open_notebook.utils.error_classifier import classify_error
+            # Send completion signal
+            completion_event = {"type": "complete"}
+            yield f"data: {json.dumps(completion_event)}\n\n"
 
-        _, user_message = classify_error(e)
-        logger.error(f"Error in source chat streaming: {str(e)}")
-        error_event = {"type": "error", "message": user_message}
-        yield f"data: {json.dumps(error_event)}\n\n"
+        except Exception as e:
+            from open_notebook.utils.error_classifier import classify_error
+
+            _, user_message = classify_error(e)
+            logger.error(f"Error in source chat streaming: {str(e)}")
+            error_event = {"type": "error", "message": user_message}
+            yield f"data: {json.dumps(error_event)}\n\n"
+            # Send complete after error so frontend knows stream is done
+            yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
 
 @router.post("/sources/{source_id}/chat/sessions/{session_id}/messages")
@@ -591,4 +609,4 @@ async def send_message_to_source_chat(
         raise
     except Exception as e:
         logger.error(f"Error sending message to source chat: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error sending message: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to send message")

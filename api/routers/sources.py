@@ -72,26 +72,43 @@ def generate_unique_filename(original_filename: str, upload_folder: str) -> str:
 
 
 async def save_uploaded_file(upload_file: UploadFile) -> str:
-    """Save uploaded file to uploads folder and return file path."""
+    """Save uploaded file to uploads folder in chunks and return file path.
+    Enforces maximum file size limit (default 100MB) to prevent memory exhaustion and DoS.
+    """
     if not upload_file.filename:
         raise ValueError("No filename provided")
 
     # Generate unique filename
     file_path = generate_unique_filename(upload_file.filename, UPLOADS_FOLDER)
 
-    try:
-        # Save file
-        with open(file_path, "wb") as f:
-            content = await upload_file.read()
-            f.write(content)
+    MAX_UPLOAD_SIZE = int(os.environ.get("MAX_UPLOAD_SIZE", 100 * 1024 * 1024))
 
-        logger.info(f"Saved uploaded file to: {file_path}")
+    try:
+        # Save file in chunks to prevent memory issues
+        with open(file_path, "wb") as f:
+            total_size = 0
+            while True:
+                chunk = await upload_file.read(8192)
+                if not chunk:
+                    break
+                total_size += len(chunk)
+                if total_size > MAX_UPLOAD_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File exceeds maximum allowed size of {MAX_UPLOAD_SIZE // (1024 * 1024)}MB"
+                    )
+                f.write(chunk)
+
+        logger.info(f"Saved uploaded file to: {file_path} (size: {total_size} bytes)")
         return file_path
     except Exception as e:
         logger.error(f"Failed to save uploaded file: {e}")
         # Clean up partial file if it exists
         if os.path.exists(file_path):
-            os.unlink(file_path)
+            try:
+                os.unlink(file_path)
+            except Exception:
+                pass
         raise
 
 
@@ -284,7 +301,7 @@ async def get_sources(
         raise
     except Exception as e:
         logger.error(f"Error fetching sources: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching sources: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch sources")
 
 
 @router.post("/sources", response_model=SourceResponse)
@@ -575,7 +592,7 @@ async def create_source(
                 os.unlink(file_path)
             except Exception:
                 pass
-        raise HTTPException(status_code=500, detail=f"Error creating source: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create source")
 
 
 @router.post("/sources/json", response_model=SourceResponse)
@@ -682,7 +699,7 @@ async def get_source(source_id: str):
         raise
     except Exception as e:
         logger.error(f"Error fetching source {source_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching source: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch source")
 
 
 @router.head("/sources/{source_id}/download")
@@ -773,7 +790,7 @@ async def get_source_status(source_id: str):
     except Exception as e:
         logger.error(f"Error fetching status for source {source_id}: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error fetching source status: {str(e)}"
+            status_code=500, detail="Failed to fetch source status"
         )
 
 
@@ -904,7 +921,7 @@ async def update_source(source_id: str, source_update: SourceUpdate):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error updating source {source_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error updating source: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update source")
 
 
 @router.post("/sources/{source_id}/retry", response_model=SourceResponse)
@@ -1020,7 +1037,7 @@ async def retry_source_processing(source_id: str):
                 f"Failed to submit retry processing command for source {source_id}: {e}"
             )
             raise HTTPException(
-                status_code=500, detail=f"Failed to queue retry processing: {str(e)}"
+                status_code=500, detail="Failed to queue retry processing"
             )
 
     except HTTPException:
@@ -1028,7 +1045,7 @@ async def retry_source_processing(source_id: str):
     except Exception as e:
         logger.error(f"Error retrying source processing for {source_id}: {str(e)}")
         raise HTTPException(
-            status_code=500, detail=f"Error retrying source processing: {str(e)}"
+            status_code=500, detail="Failed to retry source processing"
         )
 
 
@@ -1047,7 +1064,7 @@ async def delete_source(source_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting source {source_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error deleting source: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete source")
 
 
 @router.get("/sources/{source_id}/insights", response_model=List[SourceInsightResponse])
@@ -1130,5 +1147,5 @@ async def create_source_insight(source_id: str, request: CreateSourceInsightRequ
     except Exception as e:
         logger.error(f"Error starting insight generation for source {source_id}: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Error starting insight generation: {str(e)}"
+            status_code=500, detail="Failed to start insight generation"
         )

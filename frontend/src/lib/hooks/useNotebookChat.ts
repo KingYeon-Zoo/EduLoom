@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/utils/error-handler'
@@ -42,6 +42,10 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
   const [pendingReasoningEffort, setPendingReasoningEffort] = useState<ReasoningEffort | null>(null)
   // Track active stream to prevent concurrent sends
   const activeStreamRef = useRef<{ abort: () => void } | null>(null)
+
+  // Memoize context selections to prevent unnecessary rerenders of buildContext
+  const memoizedContextSelections = useMemo(() => contextSelections, [JSON.stringify(contextSelections)])
+
 
   // Fetch sessions for this notebook
   const {
@@ -148,7 +152,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
     // Map source selections
     sources.forEach(source => {
-      const mode = contextSelections.sources[source.id]
+      const mode = memoizedContextSelections.sources[source.id]
       if (mode === 'insights') {
         context_config.sources[source.id] = 'insights'
       } else if (mode === 'full') {
@@ -160,7 +164,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
     // Map note selections
     notes.forEach(note => {
-      const mode = contextSelections.notes[note.id]
+      const mode = memoizedContextSelections.notes[note.id]
       if (mode === 'full') {
         context_config.notes[note.id] = 'full content'
       } else {
@@ -179,7 +183,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     setCharCount(response.char_count)
 
     return response.context
-  }, [notebookId, sources, notes, contextSelections])
+  }, [notebookId, sources, notes, memoizedContextSelections])
 
   // Send message with SSE streaming
   const sendMessage = useCallback(async (message: string, modelOverride?: string) => {

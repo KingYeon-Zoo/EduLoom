@@ -10,7 +10,7 @@ FRONTEND_PORT=3000
 cleanup() {
     echo ""
     echo "========================================="
-    echo "🛑 正在停止所有 Open Notebook 本地服务..."
+    echo "🛑 正在停止所有 EduLoom 本地服务..."
     echo "========================================="
     
     # Kill background jobs of this shell
@@ -30,7 +30,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 echo "========================================="
-echo "🚀 正在启动 Open Notebook 开发服务 (源码本地运行)..."
+echo "🚀 正在启动 EduLoom 开发服务 (源码本地运行)..."
 echo "========================================="
 
 # 1. 确保 uv 存在
