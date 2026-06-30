@@ -297,16 +297,8 @@ export default function SourcesPage() {
           <table
             ref={tableRef}
             tabIndex={0}
-            className="w-full min-w-[800px] outline-none table-fixed"
+            className="w-full min-w-[700px] outline-none table-auto"
           >
-            <colgroup>
-              <col className="w-[120px]" />
-              <col className="w-auto" />
-              <col className="w-[140px]" />
-              <col className="w-[100px]" />
-              <col className="w-[100px]" />
-              <col className="w-[100px]" />
-            </colgroup>
             <thead className="sticky top-0 bg-background z-10">
               <tr className="border-b bg-muted/50">
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
@@ -358,7 +350,7 @@ export default function SourcesPage() {
                       : "hover:bg-muted/50"
                   )}
                 >
-                  <td className="h-12 px-4">
+                  <td className="h-12 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {getSourceIcon(source)}
                       <Badge variant="secondary" className="text-xs">
@@ -368,31 +360,31 @@ export default function SourcesPage() {
                   </td>
                   <td className="h-12 px-4">
                     <div className="flex flex-col overflow-hidden">
-                      <span className="font-medium truncate">
+                      <span className="font-medium truncate" title={source.title || t('sources.untitledSource')}>
                         {source.title || t('sources.untitledSource')}
                       </span>
                       {source.asset?.url && (
-                        <span className="text-xs text-muted-foreground truncate">
+                        <span className="text-xs text-muted-foreground truncate" title={source.asset.url}>
                           {source.asset.url}
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="h-12 px-4 text-muted-foreground text-sm hidden sm:table-cell">
-                    {formatDistanceToNow(new Date(source.created), { 
+                  <td className="h-12 px-4 text-muted-foreground text-sm hidden sm:table-cell whitespace-nowrap">
+                    {formatDistanceToNow(new Date(source.created), {
                       addSuffix: true,
                       locale: getDateLocale(language)
                     })}
                   </td>
-                  <td className="h-12 px-4 text-center hidden md:table-cell">
+                  <td className="h-12 px-4 text-center hidden md:table-cell whitespace-nowrap">
                     <span className="text-sm font-medium">{source.insights_count || 0}</span>
                   </td>
-                  <td className="h-12 px-4 text-center hidden lg:table-cell">
+                  <td className="h-12 px-4 text-center hidden lg:table-cell whitespace-nowrap">
                     <Badge variant={source.embedded ? "default" : "secondary"} className="text-xs">
                       {source.embedded ? t('sources.yes') : t('sources.no')}
                     </Badge>
                   </td>
-                  <td className="h-12 px-4 text-right">
+                  <td className="h-12 px-4 text-right whitespace-nowrap">
                     <Button
                       variant="ghost"
                       size="icon"

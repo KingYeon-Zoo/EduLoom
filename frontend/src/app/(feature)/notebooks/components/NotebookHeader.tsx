@@ -9,7 +9,6 @@ import { useUpdateNotebook } from '@/lib/hooks/use-notebooks'
 import { NotebookDeleteDialog } from './NotebookDeleteDialog'
 import { formatDistanceToNow } from 'date-fns'
 import { getDateLocale } from '@/lib/utils/date-locale'
-import { InlineEdit } from '@/components/common/InlineEdit'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface NotebookHeaderProps {
@@ -20,26 +19,8 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
   const { t, language } = useTranslation()
   const dfLocale = getDateLocale(language)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  
+
   const updateNotebook = useUpdateNotebook()
-
-  const handleUpdateName = async (name: string) => {
-    if (!name || name === notebook.name) return
-    
-    await updateNotebook.mutateAsync({
-      id: notebook.id,
-      data: { name }
-    })
-  }
-
-  const handleUpdateDescription = async (description: string) => {
-    if (description === notebook.description) return
-    
-    await updateNotebook.mutateAsync({
-      id: notebook.id,
-      data: { description: description || undefined }
-    })
-  }
 
   const handleArchiveToggle = () => {
     updateNotebook.mutate({
@@ -54,15 +35,7 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
-              <InlineEdit
-                id="notebook-name"
-                name="notebook-name"
-                value={notebook.name}
-                onSave={handleUpdateName}
-                className="text-2xl font-bold"
-                inputClassName="text-2xl font-bold"
-                placeholder={t('notebooks.namePlaceholder')}
-              />
+              <h1 className="text-2xl font-bold">{notebook.name}</h1>
               {notebook.archived && (
                 <Badge variant="secondary">{t('notebooks.archived')}</Badge>
               )}
@@ -96,22 +69,14 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
               </Button>
             </div>
           </div>
-          
-          <InlineEdit
-            id="notebook-description"
-            name="notebook-description"
-            value={notebook.description || ''}
-            onSave={handleUpdateDescription}
-            className="text-muted-foreground"
-            inputClassName="text-muted-foreground"
-            placeholder={t('notebooks.addDescription')}
-            multiline
-            emptyText={t('notebooks.addDescription')}
-          />
-          
+
+          <p className="text-muted-foreground">
+            {notebook.description || t('notebooks.addDescription')}
+          </p>
+
           <div className="text-sm text-muted-foreground">
-            {t('common.created').replace('{time}', formatDistanceToNow(new Date(notebook.created), { addSuffix: true, locale: dfLocale }))} • 
-            {t('common.updated').replace('{time}', formatDistanceToNow(new Date(notebook.updated), { addSuffix: true, locale: dfLocale }))}
+            {t('notebooks.notebookCreated').replace('{time}', formatDistanceToNow(new Date(notebook.created), { addSuffix: true, locale: dfLocale }))} •
+            {t('notebooks.notebookUpdated').replace('{time}', formatDistanceToNow(new Date(notebook.updated), { addSuffix: true, locale: dfLocale }))}
           </div>
         </div>
       </div>

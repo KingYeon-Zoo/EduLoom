@@ -83,9 +83,9 @@ export default function LearnerProfilePage() {
 
   return (
     <AppShell>
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          <div className="max-w-5xl mx-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-6 h-full flex flex-col">
+          <div className="flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-2xl font-bold">{t('learnerProfile.title')}</h1>
               <div className="flex items-center gap-2">
@@ -127,11 +127,12 @@ export default function LearnerProfilePage() {
             <p className="text-sm text-muted-foreground mb-6">
               {t('learnerProfile.subtitle')}
             </p>
-
+          </div>
+          <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <p className="text-muted-foreground">{t('common.loading')}</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dimKeys.map((dim) => (
                   <DimensionCard
                     key={dim}
