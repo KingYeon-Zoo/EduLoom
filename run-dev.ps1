@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# EduLoom Windows Development Startup Script
+# Open Notebook Windows Development Startup Script
 # UTF-8 Encoding
 
 # Configuration
@@ -42,7 +42,7 @@ function Test-Port($Port, $TimeoutSeconds = 10) {
 function Stop-AllServices {
     Write-Host ""
     Write-Host "========================================="
-    Write-Host "[STOP] Stopping all EduLoom services..."
+    Write-Host "[STOP] Stopping all Open Notebook services..."
     Write-Host "========================================="
 
     foreach ($Proc in $Processes) {
@@ -60,15 +60,14 @@ function Stop-AllServices {
     Write-Host "[OK] All services stopped."
 }
 
-# Ctrl+C handler
-$Action = {
-    Stop-AllServices
-    exit 0
-}
-Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $Action | Out-Null
+# Ctrl+C / exit handler — inline cleanup since event actions run in a separate scope
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    Get-Process -Name "surreal" -ErrorAction SilentlyContinue | Stop-Process -Force
+    Get-Process -Name "uv" -ErrorAction SilentlyContinue | Stop-Process -Force
+} | Out-Null
 
 Write-Host "========================================="
-Write-Host "[START] EduLoom Development Services (Windows)"
+Write-Host "[START] Open Notebook Development Services (Windows)"
 Write-Host "========================================="
 
 # 1. Check uv
@@ -101,6 +100,28 @@ if (-not (Test-Path ".env")) {
     exit 1
 }
 
+# 3.5 Pre-cleanup: kill stale processes from previous runs on required ports
+Write-Status "[CLEAN]" "Cleaning up stale processes from previous runs..."
+$StaleFound = $false
+@($DB_PORT, $API_PORT, $FRONTEND_PORT) | ForEach-Object {
+    $port = $_
+    $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Where-Object { $_.State -eq 'Listen' }
+    foreach ($conn in $connections) {
+        $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
+        if ($proc) {
+            Write-Host "       Stopping stale $($proc.ProcessName) (PID $($proc.Id)) on port $port"
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+            $StaleFound = $true
+        }
+    }
+}
+if ($StaleFound) {
+    Write-Status "[OK]" "Stale processes cleaned. Waiting for ports to release..."
+    Start-Sleep -Seconds 2
+} else {
+    Write-Status "[OK]" "No stale processes found"
+}
+
 # 4. Start SurrealDB
 Write-Status "[DB]" "Starting SurrealDB on port $DB_PORT..."
 if (-not (Test-Path $DB_DIR)) {
@@ -128,7 +149,7 @@ Write-Status "[API]" "Starting FastAPI backend on port $API_PORT..."
 "" | Out-File -FilePath $LogFileApi -Encoding utf8
 
 $ApiProc = Start-Process -FilePath $UvCmd `
-    -ArgumentList "run", "--env-file", ".env", "run_api.py" `
+    -ArgumentList "run", "--env-file", ".env", "--", "run_api.py" `
     -RedirectStandardOutput $LogFileApi `
     -PassThru -NoNewWindow
 
@@ -146,7 +167,7 @@ Write-Status "[WORKER]" "Starting background async task worker..."
 "" | Out-File -FilePath $LogFileWorker -Encoding utf8
 
 $WorkerProc = Start-Process -FilePath $UvCmd `
-    -ArgumentList "run", "--env-file", ".env", "surreal-commands-worker", "--import-modules", "commands" `
+    -ArgumentList "run", "--env-file", ".env", "--", "surreal-commands-worker", "--import-modules", "commands", "start" `
     -RedirectStandardOutput $LogFileWorker `
     -PassThru -NoNewWindow
 
@@ -157,8 +178,8 @@ Write-Status "[OK]" "Async worker started"
 Write-Status "[WEB]" "Starting Next.js frontend on port $FRONTEND_PORT..."
 
 Push-Location frontend
-if (-not (Test-Path "node_modules")) {
-    Write-Status "[INSTALL]" "Installing frontend dependencies..."
+if (-not (Test-Path "node_modules") -or -not (Test-Path "node_modules\.bin\next.cmd")) {
+    Write-Status "[INSTALL]" "Installing frontend dependencies (node_modules missing or incomplete)..."
     npm install
 }
 Pop-Location

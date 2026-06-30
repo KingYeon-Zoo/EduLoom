@@ -12,12 +12,27 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
+const noop = () => {}
+
+const defaultStore = {
+  isCollapsed: false,
+  forcedCollapse: false,
+  hasManuallyToggled: false,
+  overlayOpen: false,
+  toggleCollapse: vi.fn(),
+  setCollapsed: noop,
+  setForcedCollapse: noop,
+  setHasManuallyToggled: noop,
+  setOverlayOpen: noop,
+}
+
 describe('AppSidebar', () => {
   it('renders correctly when expanded', () => {
+    vi.mocked(useSidebarStore).mockReturnValue(defaultStore as any)
+
     render(<AppSidebar />)
 
     // With mocked t() returning keys, check for translation key strings
-    expect(screen.getByText('common.appName')).toBeDefined()
     expect(screen.getByText('navigation.sources')).toBeDefined()
     expect(screen.getByText('navigation.notebooks')).toBeDefined()
   })
@@ -25,6 +40,7 @@ describe('AppSidebar', () => {
   it('toggles collapse state when clicking handle', () => {
     const toggleCollapse = vi.fn()
     vi.mocked(useSidebarStore).mockReturnValue({
+      ...defaultStore,
       isCollapsed: false,
       toggleCollapse,
     } as any)
@@ -38,8 +54,8 @@ describe('AppSidebar', () => {
 
   it('shows collapsed view when isCollapsed is true', () => {
     vi.mocked(useSidebarStore).mockReturnValue({
+      ...defaultStore,
       isCollapsed: true,
-      toggleCollapse: vi.fn(),
     } as any)
 
     render(<AppSidebar />)

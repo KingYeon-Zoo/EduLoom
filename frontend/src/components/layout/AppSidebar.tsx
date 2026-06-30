@@ -247,8 +247,8 @@ export function AppSidebar() {
               <Image
                 src="/logo.png"
                 alt="EduLoom"
-                width={32}
-                height={32}
+                width={28}
+                height={28}
                 className="transition-opacity group-hover:opacity-0"
               />
               <Button
@@ -262,11 +262,15 @@ export function AppSidebar() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <Image src="/logo.png" alt={t('common.appName')} width={32} height={32} />
-                <span className="text-base font-medium text-sidebar-foreground">
-                  {t('common.appName')}
-                </span>
+              <div className="flex-1 flex items-center px-1">
+                <Image
+                  src="/EduLoom_logo.png"
+                  alt={t('common.appName')}
+                  width={1499}
+                  height={363}
+                  className="w-full h-auto max-h-14"
+                  priority
+                />
               </div>
               <Button
                 variant="ghost"
@@ -281,19 +285,13 @@ export function AppSidebar() {
           )}
         </div>
 
+        {/* Brand accent gradient */}
+        {!effectiveCollapsed && <div className="sidebar-brand-accent mb-1" />}
+
         {/* Mode badge */}
         {!effectiveCollapsed && (
-          <div className="px-3 pb-2">
-            <div
-              className={cn(
-                'text-xs font-medium px-2 py-1 rounded text-center',
-                mode === 'feature'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-              )}
-            >
-              {mode === 'feature' ? '学习前台' : '管理后台'}
-            </div>
+          <div className="text-xs font-semibold uppercase tracking-wider p-0.5 rounded text-center bg-transparent text-sidebar-foreground/60 mx-3 mb-1">
+            {mode === 'feature' ? '学习前台' : '管理后台'}
           </div>
         )}
 
