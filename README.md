@@ -9,11 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com/)
-[![SurrealDB](https://img.shields.io/badge/SurrealDB-Graph%2BVector-ff00a0.svg)](https://surrealdb.com/)
-
-*第十五届中国软件杯大赛 · A03 赛题 —— 基于大模型的个性化资源生成与学习多智能体系统*
-
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com/
 </div>
 
 ---
