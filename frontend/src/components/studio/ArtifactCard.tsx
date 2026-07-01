@@ -160,7 +160,13 @@ function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact;
 
     case 'mindmap':
       if (preview) {
-        return (
+        return artifact.content ? (
+          <div className="max-h-[200px] overflow-hidden">
+            <div style={{ transform: 'scale(0.45)', transformOrigin: 'top left', width: '222%' }}>
+              <MermaidDiagram code={artifact.content} id={`${artifact.id}-preview`} />
+            </div>
+          </div>
+        ) : (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Network className="h-10 w-10 mb-2 opacity-40" />
             <p className="text-sm">{t('studio.clickToViewMindmap') || '思维导图 — 点击查看详情'}</p>
@@ -176,12 +182,7 @@ function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact;
 
     case 'video':
       if (preview) {
-        return (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <Video className="h-10 w-10 mb-2 opacity-40" />
-            <p className="text-sm">{t('studio.clickToPlayVideo') || '点击播放视频'}</p>
-          </div>
-        )
+        return <VideoThumbnail artifact={artifact} />
       }
       return <VideoPlayer artifact={artifact} />
 
@@ -194,6 +195,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
   const { t } = useTranslation()
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [deckUrl, setDeckUrl] = useState<string>()
+  const [imgError, setImgError] = useState(false)
 
   const urls = artifact.file_urls
   const imageEndpoints = urls.slice(0, Math.max(0, urls.length - 1))
@@ -228,6 +230,14 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
   }
 
   if (preview && imageUrls.length > 0) {
+    if (imgError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <Presentation className="h-10 w-10 mb-2 opacity-40" />
+          <p className="text-sm">{t('studio.clickToViewPpt') || '课件 — 点击查看详情'}</p>
+        </div>
+      )
+    }
     return (
       <div className="space-y-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -235,6 +245,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
           src={imageUrls[0]}
           alt={`${artifact.name} ${t('studio.slide')} 1`}
           className="w-full rounded border"
+          onError={() => setImgError(true)}
         />
         {imageUrls.length > 1 && (
           <p className="text-xs text-muted-foreground text-center">
@@ -256,6 +267,9 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
               src={url}
               alt={`${artifact.name} ${t('studio.slide')} ${i + 1}`}
               className="w-full rounded border"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
             />
           ))}
         </div>
@@ -269,6 +283,42 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
         </a>
       )}
     </div>
+  )
+}
+
+function VideoThumbnail({ artifact }: { artifact: StudioArtifact }) {
+  const { t } = useTranslation()
+  const [url, setUrl] = useState<string>()
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    resolveStudioAssetUrl(artifact.file_urls[0]).then((u) => {
+      if (!cancelled) {
+        if (u) setUrl(u)
+        else setError(true)
+      }
+    })
+    return () => { cancelled = true }
+  }, [artifact.file_urls])
+
+  if (error || !url) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+        <Video className="h-10 w-10 mb-2 opacity-40" />
+        <p className="text-sm">{t('studio.clickToPlayVideo') || '点击播放视频'}</p>
+      </div>
+    )
+  }
+
+  return (
+    <video
+      src={url}
+      preload="metadata"
+      className="w-full rounded border max-h-[180px] object-cover"
+      onError={() => setError(true)}
+      muted
+    />
   )
 }
 
