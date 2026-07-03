@@ -77,7 +77,7 @@ echo "✅ 后端 API 已启动。"
 
 # 5. 启动 Background Worker
 echo "⚙️ 正在启动后台异步任务 Worker..."
-$UV_CMD run --env-file .env surreal-commands-worker --import-modules commands > worker.log 2>&1 &
+PYTHONIOENCODING=utf-8 $UV_CMD run --env-file .env surreal-commands-worker --import-modules commands > worker.log 2>&1 &
 echo "✅ 异步任务 Worker 已启动。"
 
 # 6. 启动 Next.js 前端

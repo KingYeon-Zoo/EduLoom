@@ -29,7 +29,7 @@ sleep 3
 
 # Start background worker in background
 echo "Starting background worker..."
-uv run --env-file .env surreal-commands-worker --import-modules commands &
+PYTHONIOENCODING=utf-8 uv run --env-file .env surreal-commands-worker --import-modules commands &
 sleep 2
 
 # Start frontend (foreground)
