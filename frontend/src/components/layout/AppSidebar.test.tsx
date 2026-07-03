@@ -60,7 +60,9 @@ describe('AppSidebar', () => {
 
     render(<AppSidebar />)
 
-    // In collapsed mode, app name shouldn't be visible (as text)
+    // In collapsed mode, the collapsed logo icon (with alt="EduLoom") should be present
+    expect(screen.queryByAltText('EduLoom')).toBeDefined()
+    // In collapsed mode, the full logo (common.appName) shouldn't be visible as text
     expect(screen.queryByText('common.appName')).toBeNull()
   })
 })

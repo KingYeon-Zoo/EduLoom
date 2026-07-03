@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { getApiErrorMessage } from '@/lib/utils/error-handler'
@@ -28,6 +28,7 @@ interface AskState {
 
 export function useAsk() {
   const { t } = useTranslation()
+  const abortControllerRef = useRef<AbortController | null>(null)
   const [state, setState] = useState<AskState>({
     isStreaming: false,
     strategy: null,
@@ -36,7 +37,17 @@ export function useAsk() {
     error: null
   })
 
+  const cancel = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setState(prev => ({ ...prev, isStreaming: false }))
+  }, [])
+
   const sendAsk = useCallback(async (question: string, models: AskModels) => {
+    // Abort any in-flight request
+    cancel()
     // Validate inputs
     if (!question.trim()) {
       toast.error(t('apiErrors.pleaseEnterQuestion'))
@@ -58,12 +69,15 @@ export function useAsk() {
     })
 
     try {
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       const response = await searchApi.askKnowledgeBase({
         question,
         strategy_model: models.strategy,
         answer_model: models.answer,
         final_answer_model: models.finalAnswer
-      })
+      }, controller.signal)
 
       if (!response) {
         throw new Error('No response body received from server')
@@ -137,7 +151,12 @@ export function useAsk() {
       setState(prev => ({ ...prev, isStreaming: false }))
 
     } catch (error) {
-      const err = error as { message?: string }
+      const err = error as { message?: string; name?: string }
+      // Don't show error toast for user-initiated cancellations
+      if (err.name === 'AbortError') {
+        setState(prev => ({ ...prev, isStreaming: false }))
+        return
+      }
       const errorMessage = err.message || 'An unexpected error occurred'
       console.error('Ask error:', error)
 
@@ -150,8 +169,10 @@ export function useAsk() {
       toast.error(t('apiErrors.askFailed'), {
         description: getApiErrorMessage(errorMessage, (key) => t(key))
       })
+    } finally {
+      abortControllerRef.current = null
     }
-  }, [t])
+  }, [t, cancel])
 
   const reset = useCallback(() => {
     setState({
@@ -166,6 +187,7 @@ export function useAsk() {
   return {
     ...state,
     sendAsk,
+    cancel,
     reset
   }
 }

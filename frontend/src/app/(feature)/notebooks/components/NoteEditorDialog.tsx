@@ -120,9 +120,11 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={cn(
-          "sm:max-w-3xl w-full max-h-[90vh] overflow-hidden p-0",
-          isEditorFullscreen && "!max-w-screen !max-h-screen border-none w-screen h-screen"
-      )}>
+          "w-[75vw] max-w-[1440px] max-h-[90vh] overflow-hidden p-0",
+          isEditorFullscreen && "!w-screen !h-screen !max-w-screen !max-h-screen border-none"
+      )}
+        style={!isEditorFullscreen ? { aspectRatio: '16 / 10' } : undefined}
+      >
         <DialogTitle className="sr-only">
           {isEditing ? t('sources.editNote') : t('sources.createNote')}
         </DialogTitle>
@@ -134,22 +136,32 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
           ) : (
             <>
               <div className="border-b px-6 py-4">
-                <InlineEdit
-                  id="note-title"
-                  name="title"
-                  value={watchTitle ?? ''}
-                  onSave={(value) => setValue('title', value || '')}
-                  placeholder={t('sources.addTitle')}
-                  emptyText={t('sources.untitledNote')}
-                  className="text-xl font-semibold"
-                  inputClassName="text-xl font-semibold"
-                />
+                <div className="max-w-[calc(100%-80px)]">
+                  <InlineEdit
+                    id="note-title"
+                    name="title"
+                    value={watchTitle ?? ''}
+                    onSave={(value) => setValue('title', value || '')}
+                    placeholder={t('sources.addTitle')}
+                    emptyText={t('sources.untitledNote')}
+                    className="text-xl font-semibold"
+                    inputClassName="text-xl font-semibold"
+                  />
+                </div>
               </div>
 
-              <div className={cn(
+              <div
+                className={cn(
                   "flex-1 overflow-y-auto",
-                  !isEditorFullscreen && "px-6 py-4")
-              }>
+                  !isEditorFullscreen && "px-6 py-4"
+                )}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !isSaving && !noteLoading) {
+                    e.preventDefault()
+                    handleSubmit(onSubmit)()
+                  }
+                }}
+              >
                 <Controller
                   control={control}
                   name="content"
@@ -159,10 +171,9 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
                       textareaId="note-content"
                       value={field.value}
                       onChange={field.onChange}
-                      height={420}
                       placeholder={t('sources.writeNotePlaceholder')}
                       className={cn(
-                          "w-full h-full min-h-[420px] max-h-[500px] overflow-hidden [&_.w-md-editor]:!static [&_.w-md-editor]:!w-full [&_.w-md-editor]:!h-full [&_.w-md-editor-content]:overflow-y-auto",
+                          "w-full h-full [&_.w-md-editor]:!static [&_.w-md-editor]:!w-full [&_.w-md-editor]:!h-full [&_.w-md-editor-content]:overflow-y-auto",
                           !isEditorFullscreen && "rounded-md border"
                       )}
                     />

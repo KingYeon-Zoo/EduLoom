@@ -60,10 +60,11 @@ import {
   Database,
   AlertCircle,
   MessageSquare,
+  X,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { getDateLocale } from '@/lib/utils/date-locale'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { SourceInsightDialog } from '@/components/source/SourceInsightDialog'
 import { NotebookAssociations } from '@/components/source/NotebookAssociations'
@@ -82,6 +83,7 @@ export function SourceDetailContent({
   onClose
 }: SourceDetailContentProps) {
   const { t, language } = useTranslation()
+  const { success, error: showError } = useToast()
   const queryClient = useQueryClient()
   const [source, setSource] = useState<SourceDetailResponse | null>(null)
   const [insights, setInsights] = useState<SourceInsightResponse[]>([])
@@ -150,7 +152,7 @@ export function SourceDetailContent({
 
   const createInsight = async () => {
     if (!selectedTransformation) {
-      toast.error(t('sources.selectTransformation'))
+      showError(t('sources.selectTransformation'))
       return
     }
 
@@ -160,7 +162,7 @@ export function SourceDetailContent({
         transformation_id: selectedTransformation
       })
       // Show toast for async operation
-      toast.success(t('sources.insightGenerationStarted'))
+      success(t('sources.insightGenerationStarted'))
       setSelectedTransformation('')
 
       // Poll for command completion if we have a command_id
@@ -188,7 +190,7 @@ export function SourceDetailContent({
       }
     } catch (err) {
       console.error('Failed to create insight:', err)
-      toast.error(t('common.error'))
+      showError(t('common.error'))
     } finally {
       setCreatingInsight(false)
     }
@@ -201,12 +203,12 @@ export function SourceDetailContent({
     try {
       setDeletingInsight(true)
       await insightsApi.delete(insightToDelete)
-      toast.success(t('common.success'))
+      success(t('common.success'))
       setInsightToDelete(null)
       await fetchInsights()
     } catch (err) {
       console.error('Failed to delete insight:', err)
-      toast.error(t('common.error'))
+      showError(t('common.error'))
     } finally {
       setDeletingInsight(false)
     }
@@ -217,11 +219,11 @@ export function SourceDetailContent({
 
     try {
       await sourcesApi.update(sourceId, { title })
-      toast.success(t('common.success'))
+      success(t('common.success'))
       setSource({ ...source, title })
     } catch (err) {
       console.error('Failed to update source title:', err)
-      toast.error(t('common.error'))
+      showError(t('common.error'))
       await fetchSource()
     }
   }
@@ -232,11 +234,11 @@ export function SourceDetailContent({
     try {
       setIsEmbedding(true)
       const response = await embeddingApi.embedContent(sourceId, 'source')
-      toast.success(response.message || t('common.success'))
+      success(response.message || t('common.success'))
       await fetchSource()
     } catch (err) {
       console.error('Failed to embed content:', err)
-      toast.error(t('common.error'))
+      showError(t('common.error'))
     } finally {
       setIsEmbedding(false)
     }
@@ -288,14 +290,14 @@ export function SourceDetailContent({
       document.body.removeChild(link)
       window.URL.revokeObjectURL(blobUrl)
       setFileAvailable(true)
-      toast.success(t('common.success'))
+      success(t('common.success'))
     } catch (err) {
       console.error('Failed to download file:', err)
       if (isAxiosError(err) && err.response?.status === 404) {
         setFileAvailable(false)
-        toast.error(t('sources.fileUnavailable'))
+        showError(t('sources.fileUnavailable'))
       } else {
-        toast.error(t('common.error'))
+        showError(t('common.error'))
       }
     } finally {
       setIsDownloadingFile(false)
@@ -320,7 +322,7 @@ export function SourceDetailContent({
     if (source?.asset?.url) {
       navigator.clipboard.writeText(source.asset.url)
       setCopied(true)
-      toast.success(t('sources.urlCopied'))
+      success(t('sources.urlCopied'))
       setTimeout(() => setCopied(false), 2000)
     }
   }, [source, t])
@@ -360,11 +362,11 @@ export function SourceDetailContent({
     if (confirm(t('sources.deleteSourceConfirm') || t('common.confirm'))) {
       try {
         await sourcesApi.delete(source.id)
-        toast.success(t('common.success'))
+        success(t('common.success'))
         onClose?.()
       } catch (error) {
         console.error('Failed to delete source:', error)
-        toast.error(t('common.error'))
+        showError(t('common.error'))
       }
     }
   }
@@ -388,9 +390,9 @@ export function SourceDetailContent({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="pb-4 px-2">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
+      <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex-1 min-w-0">
             <InlineEdit
               value={source.title || ''}
               onSave={handleUpdateTitle}
@@ -403,7 +405,7 @@ export function SourceDetailContent({
               {t('sources.id')}: {source.id}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 shrink-0">
             {getSourceIcon()}
             <Badge variant="secondary" className="text-sm">
               {getSourceType()}
@@ -419,11 +421,11 @@ export function SourceDetailContent({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="ml-1">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-52">
                 {source.asset?.file_path && (
                   <>
                     <DropdownMenuItem
@@ -457,12 +459,25 @@ export function SourceDetailContent({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Close button — positioned inside header, properly spaced */}
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="ml-2 rounded-sm hover:bg-muted"
+                aria-label={t('common.close')}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tabs Content */}
-      <div className="flex-1 overflow-y-auto px-2">
+      <div className="flex-1 overflow-y-auto min-h-0 px-6">
         <Tabs defaultValue="content" className="w-full">
           <TabsList className="grid w-full grid-cols-3 sticky top-0 z-10">
             <TabsTrigger value="content">{t('sources.content')}</TabsTrigger>
@@ -823,12 +838,12 @@ export function SourceDetailContent({
         onDelete={async (insightId) => {
           try {
             await insightsApi.delete(insightId)
-            toast.success(t('common.success'))
+            success(t('common.success'))
             setSelectedInsight(null)
             await fetchInsights()
           } catch (err) {
             console.error('Failed to delete insight:', err)
-            toast.error(t('common.error'))
+            showError(t('common.error'))
           }
         }}
       />

@@ -396,7 +396,7 @@ function ContentSelectionPanel({
 
 export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDialogProps) {
   const { t } = useTranslation()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const queryClient = useQueryClient()
   const [expandedNotebooks, setExpandedNotebooks] = useState<string[]>([])
   const [selections, setSelections] = useState<Record<string, NotebookSelection>>({})
@@ -781,20 +781,12 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
 
   const handleSubmit = useCallback(async () => {
     if (!selectedEpisodeProfile) {
-      toast({
-        title: t('podcasts.profileRequired'),
-        description: t('podcasts.profileRequiredDesc'),
-        variant: 'destructive',
-      })
+      error(t('podcasts.profileRequired'), t('podcasts.profileRequiredDesc'))
       return
     }
 
     if (!episodeName.trim()) {
-      toast({
-        title: t('podcasts.nameRequired'),
-        description: t('podcasts.nameRequiredDesc'),
-        variant: 'destructive',
-      })
+      error(t('podcasts.nameRequired'), t('podcasts.nameRequiredDesc'))
       return
     }
 
@@ -802,11 +794,7 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
     try {
       const content = await buildContentFromSelections()
       if (!content.trim()) {
-        toast({
-          title: t('podcasts.addContext'),
-          description: t('podcasts.addContextDesc'),
-          variant: 'destructive',
-        })
+        error(t('podcasts.addContext'), t('podcasts.addContextDesc'))
         return
       }
 
@@ -820,23 +808,16 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
 
       await generatePodcast.mutateAsync(payload)
 
-      toast({
-        title: t('common.success'),
-        description: t('podcasts.podcastTaskStarted'),
-      })
+      success(t('common.success'), t('podcasts.podcastTaskStarted'))
 
       // Delay closing dialog slightly to ensure refetch completes
       setTimeout(() => {
         onOpenChange(false)
         resetState()
       }, 500)
-    } catch (error) {
-      console.error('Failed to generate podcast', error)
-      toast({
-        title: t('podcasts.generationFailed'),
-        description: error instanceof Error ? error.message : t('common.refreshPage'),
-        variant: 'destructive',
-      })
+    } catch (err) {
+      console.error('Failed to generate podcast', err)
+      error(t('podcasts.generationFailed'), err instanceof Error ? err.message : t('common.refreshPage'))
     } finally {
       setIsBuildingContext(false)
     }
@@ -848,7 +829,8 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
     onOpenChange,
     resetState,
     selectedEpisodeProfile,
-    toast,
+    success,
+    error,
     t,
   ])
 

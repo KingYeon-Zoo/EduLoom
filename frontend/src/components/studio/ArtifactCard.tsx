@@ -128,7 +128,10 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
 
       {/* Full content dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent
+          className="w-[70vw] max-w-[1344px] flex flex-col overflow-hidden"
+          style={{ aspectRatio: '4 / 3', maxHeight: '85vh' }}
+        >
           <DialogHeader>
             <DialogTitle>{artifact.name}</DialogTitle>
             <DialogDescription>
@@ -196,6 +199,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [deckUrl, setDeckUrl] = useState<string>()
   const [imgError, setImgError] = useState(false)
+  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set())
 
   const urls = artifact.file_urls
   const imageEndpoints = urls.slice(0, Math.max(0, urls.length - 1))
@@ -260,18 +264,28 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
     <div className="space-y-3">
       {imageUrls.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          {imageUrls.map((url, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={url}
-              alt={`${artifact.name} ${t('studio.slide')} ${i + 1}`}
-              className="w-full rounded border"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none'
-              }}
-            />
-          ))}
+          {imageUrls.map((url, i) => {
+            if (brokenImages.has(i)) {
+              return (
+                <div key={i} className="flex flex-col items-center justify-center py-4 border rounded bg-muted/30 text-muted-foreground">
+                  <Presentation className="h-6 w-6 mb-1 opacity-40" />
+                  <span className="text-xs">{t('studio.slide')} {i + 1}: {t('common.error')}</span>
+                </div>
+              )
+            }
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={url}
+                alt={`${artifact.name} ${t('studio.slide')} ${i + 1}`}
+                className="w-full rounded border"
+                onError={() => {
+                  setBrokenImages(prev => new Set(prev).add(i))
+                }}
+              />
+            )
+          })}
         </div>
       )}
       {deckUrl && (

@@ -44,7 +44,7 @@ export function useArtifacts(resourceType: ResourceType) {
 
 export function useGenerateArtifact(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -53,24 +53,23 @@ export function useGenerateArtifact(resourceType: ResourceType) {
       await queryClient.refetchQueries({
         queryKey: QUERY_KEYS.studioArtifacts(resourceType),
       })
-      toast({
-        title: t('studio.generationStarted'),
-        description: t('studio.generationStartedDesc'),
-      })
+      success(
+        t('studio.generationStarted'),
+        t('studio.generationStartedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToStartGeneration'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToStartGeneration'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeleteArtifact(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -79,21 +78,20 @@ export function useDeleteArtifact(resourceType: ResourceType) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.studioArtifacts(resourceType),
       })
-      toast({ title: t('studio.artifactDeleted') })
+      success(t('studio.artifactDeleted'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToDelete'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToDelete'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useRetryArtifact(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -102,14 +100,13 @@ export function useRetryArtifact(resourceType: ResourceType) {
       await queryClient.refetchQueries({
         queryKey: QUERY_KEYS.studioArtifacts(resourceType),
       })
-      toast({ title: t('studio.retryStarted') })
+      success(t('studio.retryStarted'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToRetry'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToRetry'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -130,7 +127,7 @@ export function useStudioProfiles(resourceType: ResourceType) {
 
 export function useCreateStudioProfile(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -139,21 +136,20 @@ export function useCreateStudioProfile(resourceType: ResourceType) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.studioProfiles(resourceType),
       })
-      toast({ title: t('studio.profileCreated') })
+      success(t('studio.profileCreated'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToSaveProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToSaveProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useUpdateStudioProfile(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -168,21 +164,20 @@ export function useUpdateStudioProfile(resourceType: ResourceType) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.studioProfiles(resourceType),
       })
-      toast({ title: t('studio.profileUpdated') })
+      success(t('studio.profileUpdated'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToSaveProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToSaveProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeleteStudioProfile(resourceType: ResourceType) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -191,14 +186,13 @@ export function useDeleteStudioProfile(resourceType: ResourceType) {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.studioProfiles(resourceType),
       })
-      toast({ title: t('studio.profileDeleted') })
+      success(t('studio.profileDeleted'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('studio.failedToDeleteProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('studio.failedToDeleteProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }

@@ -21,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
@@ -63,18 +64,11 @@ function deriveMode(pathname: string | null): AppMode {
 
 const getFeatureNav = (t: TFunction) => [
   {
-    title: t('navigation.collect'),
-    items: [
-      { name: t('navigation.sources'), href: '/sources', icon: FileText },
-    ],
-  },
-  {
-    title: t('navigation.process'),
+    title: t('navigation.learn'),
     items: [
       { name: t('navigation.notebooks'), href: '/notebooks', icon: Book },
+      { name: t('navigation.sources'), href: '/sources', icon: FileText },
       { name: t('navigation.askAndSearch'), href: '/search', icon: Search },
-      { name: t('navigation.learnerProfile'), href: '/profile', icon: UserCog },
-      { name: t('navigation.learning'), href: '/learning', icon: Compass },
     ],
   },
   {
@@ -86,6 +80,13 @@ const getFeatureNav = (t: TFunction) => [
       { name: t('navigation.videos'), href: '/videos', icon: Video },
       { name: t('navigation.mindmaps'), href: '/mindmaps', icon: Network },
       { name: t('navigation.ppt'), href: '/ppt', icon: Presentation },
+    ],
+  },
+  {
+    title: t('navigation.personal'),
+    items: [
+      { name: t('navigation.learnerProfile'), href: '/profile', icon: UserCog },
+      { name: t('navigation.learning'), href: '/learning', icon: Compass },
     ],
   },
 ] as const
@@ -291,7 +292,7 @@ export function AppSidebar() {
         {/* Mode badge */}
         {!effectiveCollapsed && (
           <div className="text-xs font-semibold uppercase tracking-wider p-0.5 rounded text-center bg-transparent text-sidebar-foreground/60 mx-3 mb-1">
-            {mode === 'feature' ? '学习前台' : '管理后台'}
+            {mode === 'feature' ? t('navigation.featureMode') : t('navigation.adminMode')}
           </div>
         )}
 
@@ -355,7 +356,7 @@ export function AppSidebar() {
                     className="gap-2"
                   >
                     <FileText className="h-4 w-4" />
-                    {t('common.source')}
+                    {t('navigation.sources')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={(event) => {
@@ -365,8 +366,9 @@ export function AppSidebar() {
                     className="gap-2"
                   >
                     <Book className="h-4 w-4" />
-                    {t('common.notebook')}
+                    {t('navigation.notebooks')}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={(event) => {
                       event.preventDefault()
@@ -375,8 +377,9 @@ export function AppSidebar() {
                     className="gap-2"
                   >
                     <Mic className="h-4 w-4" />
-                    {t('common.podcast')}
+                    {t('navigation.podcasts')}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={(event) => {
                       event.preventDefault()
@@ -534,7 +537,7 @@ export function AppSidebar() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  {mode === 'feature' ? '切换到管理后台' : '切换到学习前台'}
+                  {mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -545,7 +548,7 @@ export function AppSidebar() {
               >
                 <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
                   <ArrowLeftRight className="h-4 w-4" />
-                  {mode === 'feature' ? '切换到管理后台' : '切换到学习前台'}
+                  {mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}
                 </Link>
               </Button>
             )}

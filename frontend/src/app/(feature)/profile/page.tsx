@@ -160,6 +160,12 @@ export default function LearnerProfilePage() {
             rows={8}
             value={conversation}
             onChange={(e) => setConversation(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && conversation.trim() && !extractMutation.isPending) {
+                e.preventDefault()
+                handleExtract()
+              }
+            }}
             placeholder={t('learnerProfile.conversationPlaceholder')}
           />
           <DialogFooter>
@@ -233,6 +239,12 @@ function DimensionCard({ label, entries, onSave }: DimensionCardProps) {
                     const next = [...draft]
                     next[idx] = { ...next[idx], content: e.target.value }
                     setDraft(next)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      commit()
+                    }
                   }}
                 />
                 <Button

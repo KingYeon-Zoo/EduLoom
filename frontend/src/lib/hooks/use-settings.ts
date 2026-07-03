@@ -15,24 +15,23 @@ export function useSettings() {
 
 export function useUpdateSettings() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: Partial<SettingsResponse>) => settingsApi.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings })
-      toast({
-        title: t('common.success'),
-        description: t('common.saveSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('common.saveSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), 'common.error'),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), 'common.error'),
+      )
     },
   })
 }

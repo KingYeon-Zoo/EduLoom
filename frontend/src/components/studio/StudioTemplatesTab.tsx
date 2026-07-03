@@ -135,7 +135,10 @@ export function StudioTemplatesTab({ resourceType }: { resourceType: ResourceTyp
               {editing ? t('studio.editPreset') : t('studio.newPreset')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <form
+            onSubmit={(e) => { e.preventDefault(); if (name.trim() && prompt.trim()) handleSave() }}
+            className="space-y-4 py-2"
+          >
             <div className="space-y-2">
               <Label htmlFor="preset-name">{t('studio.presetName')}</Label>
               <Input
@@ -158,10 +161,16 @@ export function StudioTemplatesTab({ resourceType }: { resourceType: ResourceTyp
                 id="preset-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && name.trim() && prompt.trim()) {
+                    e.preventDefault()
+                    handleSave()
+                  }
+                }}
                 rows={6}
               />
             </div>
-          </div>
+          </form>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t('common.cancel')}

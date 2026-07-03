@@ -18,70 +18,49 @@ export function useLearnerProfile() {
 
 export function useUpdateLearnerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: LearnerProfileUpdate) => learnerProfileApi.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.learnerProfile })
-      toast({
-        title: t('common.success'),
-        description: t('common.saveSuccess'),
-      })
+      success(t('common.success'), t('common.saveSuccess'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), 'common.error'),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorMessage(err, (key) => t(key), 'common.error'))
     },
   })
 }
 
 export function useExtractLearnerProfile() {
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: ProfileExtractRequest) => learnerProfileApi.extract(data),
     onSuccess: () => {
-      toast({
-        title: t('common.success'),
-        description: t('learnerProfile.extractSubmitted'),
-      })
+      success(t('common.success'), t('learnerProfile.extractSubmitted'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), 'common.error'),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorMessage(err, (key) => t(key), 'common.error'))
     },
   })
 }
 
 export function useResetLearnerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: () => learnerProfileApi.reset(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.learnerProfile })
-      toast({
-        title: t('common.success'),
-        description: t('learnerProfile.resetSuccess'),
-      })
+      success(t('common.success'), t('learnerProfile.resetSuccess'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), 'common.error'),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorMessage(err, (key) => t(key), 'common.error'))
     },
   })
 }

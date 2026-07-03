@@ -78,7 +78,7 @@ export function useCredential(credentialId: string) {
  */
 export function useCreateCredential() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -86,17 +86,10 @@ export function useCreateCredential() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CREDENTIAL_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.providers })
-      toast({
-        title: t('common.success'),
-        description: t('apiKeys.configSaveSuccess'),
-      })
+      success(t('common.success'), t('apiKeys.configSaveSuccess'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('common.error')))
     },
   })
 }
@@ -106,7 +99,7 @@ export function useCreateCredential() {
  */
 export function useUpdateCredential() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -120,17 +113,10 @@ export function useUpdateCredential() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CREDENTIAL_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.providers })
-      toast({
-        title: t('common.success'),
-        description: t('apiKeys.configUpdateSuccess'),
-      })
+      success(t('common.success'), t('apiKeys.configUpdateSuccess'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('common.error')))
     },
   })
 }
@@ -140,7 +126,7 @@ export function useUpdateCredential() {
  */
 export function useDeleteCredential() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -155,17 +141,10 @@ export function useDeleteCredential() {
       queryClient.invalidateQueries({ queryKey: CREDENTIAL_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.models })
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.providers })
-      toast({
-        title: t('common.success'),
-        description: t('apiKeys.configDeleteSuccess'),
-      })
+      success(t('common.success'), t('apiKeys.configDeleteSuccess'))
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('common.error')))
     },
   })
 }
@@ -174,7 +153,7 @@ export function useDeleteCredential() {
  * Hook to test a credential's connection
  */
 export function useTestCredential() {
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
   const [testResults, setTestResults] = useState<Record<string, TestConnectionResult>>({})
 
@@ -183,24 +162,13 @@ export function useTestCredential() {
     onSuccess: (result, credentialId) => {
       setTestResults(prev => ({ ...prev, [credentialId]: result }))
       if (result.success) {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.testSuccess'),
-        })
+        success(t('common.success'), t('apiKeys.testSuccess'))
       } else {
-        toast({
-          title: t('common.error'),
-          description: result.message || t('apiKeys.testFailed'),
-          variant: 'destructive',
-        })
+        error(t('common.error'), result.message || t('apiKeys.testFailed'))
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.testFailed')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('apiKeys.testFailed')))
     },
   })
 
@@ -222,17 +190,13 @@ export function useTestCredential() {
  * Hook to discover models for a credential
  */
 export function useDiscoverModels() {
-  const { toast } = useToast()
+  const { error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (credentialId: string) => credentialsApi.discover(credentialId),
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.syncFailed')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('apiKeys.syncFailed')))
     },
   })
 }
@@ -242,7 +206,7 @@ export function useDiscoverModels() {
  */
 export function useRegisterModels() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -258,25 +222,18 @@ export function useRegisterModels() {
       queryClient.invalidateQueries({ queryKey: CREDENTIAL_QUERY_KEYS.all })
 
       if (result.created > 0) {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.syncSuccess')
+        success(
+          t('common.success'),
+          t('apiKeys.syncSuccess')
             .replace('{discovered}', (result.created + result.existing).toString())
-            .replace('{new}', result.created.toString()),
-        })
+            .replace('{new}', result.created.toString())
+        )
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.syncNoNew').replace('{count}', result.existing.toString()),
-        })
+        success(t('common.success'), t('apiKeys.syncNoNew').replace('{count}', result.existing.toString()))
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.syncFailed')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('apiKeys.syncFailed')))
     },
   })
 }
@@ -286,7 +243,7 @@ export function useRegisterModels() {
  */
 export function useMigrateFromEnv() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -302,34 +259,20 @@ export function useMigrateFromEnv() {
       const errorCount = result.errors?.length ?? 0
 
       if (errorCount > 0 && migratedCount === 0) {
-        toast({
-          title: t('common.error'),
-          description: t('apiKeys.migrationErrors').replace('{count}', errorCount.toString()),
-          variant: 'destructive',
-        })
+        error(t('common.error'), t('apiKeys.migrationErrors').replace('{count}', errorCount.toString()))
       } else if (migratedCount > 0 && errorCount > 0) {
-        toast({
-          title: t('common.success'),
-          description: `${t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString())}. ${t('apiKeys.migrationErrors').replace('{count}', errorCount.toString())}`,
-        })
+        success(
+          t('common.success'),
+          `${t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString())}. ${t('apiKeys.migrationErrors').replace('{count}', errorCount.toString())}`
+        )
       } else if (migratedCount > 0) {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString()),
-        })
+        success(t('common.success'), t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString()))
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.migrationNothingToMigrate'),
-        })
+        success(t('common.success'), t('apiKeys.migrationNothingToMigrate'))
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('common.error')))
     },
   })
 }
@@ -339,7 +282,7 @@ export function useMigrateFromEnv() {
  */
 export function useMigrateFromProviderConfig() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -355,34 +298,20 @@ export function useMigrateFromProviderConfig() {
       const errorCount = result.errors?.length ?? 0
 
       if (errorCount > 0 && migratedCount === 0) {
-        toast({
-          title: t('common.error'),
-          description: t('apiKeys.migrationErrors').replace('{count}', errorCount.toString()),
-          variant: 'destructive',
-        })
+        error(t('common.error'), t('apiKeys.migrationErrors').replace('{count}', errorCount.toString()))
       } else if (migratedCount > 0 && errorCount > 0) {
-        toast({
-          title: t('common.success'),
-          description: `${t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString())}. ${t('apiKeys.migrationErrors').replace('{count}', errorCount.toString())}`,
-        })
+        success(
+          t('common.success'),
+          `${t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString())}. ${t('apiKeys.migrationErrors').replace('{count}', errorCount.toString())}`
+        )
       } else if (migratedCount > 0) {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString()),
-        })
+        success(t('common.success'), t('apiKeys.migrationSuccess').replace('{count}', migratedCount.toString()))
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('apiKeys.migrationNothingToMigrate'),
-        })
+        success(t('common.success'), t('apiKeys.migrationNothingToMigrate'))
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(t('common.error'), getApiErrorKey(err, t('common.error')))
     },
   })
 }

@@ -116,7 +116,10 @@ export function TransformationEditorDialog({ open, onOpenChange, transformation 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] overflow-hidden p-0">
+      <DialogContent
+        className="w-[70vw] max-w-[1344px] overflow-hidden p-0"
+        style={{ aspectRatio: '4 / 3', maxHeight: '85vh' }}
+      >
         <DialogTitle className="sr-only">
           {isEditing ? t('common.edit') : t('transformations.createNew')}
         </DialogTitle>

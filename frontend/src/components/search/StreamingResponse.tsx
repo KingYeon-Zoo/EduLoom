@@ -11,7 +11,7 @@ import remarkGfm from 'remark-gfm'
 import { convertReferencesToMarkdownLinks, createReferenceLinkComponent } from '@/lib/utils/source-references'
 import { useModalManager } from '@/lib/hooks/use-modal-manager'
 import { useTranslation } from '@/lib/hooks/use-translation'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 
 interface StrategyData {
   reasoning: string
@@ -35,6 +35,7 @@ export function StreamingResponse({
   const [answersOpen, setAnswersOpen] = useState(false)
   const { openModal } = useModalManager()
   const { t } = useTranslation()
+  const { error } = useToast()
 
   const handleReferenceClick = (type: string, id: string) => {
     const modalType = type === 'source_insight' ? 'insight' : type as 'source' | 'note' | 'insight'
@@ -46,7 +47,7 @@ export function StreamingResponse({
       // This try-catch is here for future enhancements or unexpected errors.
     } catch {
       const typeLabel = type === 'source_insight' ? 'insight' : type
-      toast.error(t('common.itemNotFound').replace('{type}', typeLabel))
+      error(t('common.itemNotFound').replace('{type}', typeLabel))
     }
   }
 

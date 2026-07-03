@@ -48,7 +48,7 @@ export function GenerateArtifactDialog({
   initialNotebookId,
 }: GenerateArtifactDialogProps) {
   const { t } = useTranslation()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { data: notebooks } = useNotebooks()
   const { profiles } = useStudioProfiles(resourceType)
   const generate = useGenerateArtifact(resourceType)
@@ -88,9 +88,9 @@ export function GenerateArtifactDialog({
         setInstructions(result.suggested_instructions)
       }
       setRecommendReason(result.reason || '')
-      toast({ title: t('studio.recommendApplied') })
+      success(t('studio.recommendApplied'))
     } catch {
-      toast({ title: t('studio.recommendFailed'), variant: 'destructive' })
+      error(t('studio.recommendFailed'))
     }
   }
 
@@ -117,7 +117,10 @@ export function GenerateArtifactDialog({
           <DialogDescription>{t('studio.generateDesc')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (canSubmit) handleSubmit() }}
+          className="space-y-4 py-2"
+        >
           <div className="space-y-2">
             <Label htmlFor="artifact-name">{t('studio.nameLabel')}</Label>
             <Input
@@ -204,11 +207,17 @@ export function GenerateArtifactDialog({
               id="artifact-instructions"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && canSubmit) {
+                  e.preventDefault()
+                  handleSubmit()
+                }
+              }}
               placeholder={t('studio.instructionsPlaceholder')}
               rows={3}
             />
           </div>
-        </div>
+        </form>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

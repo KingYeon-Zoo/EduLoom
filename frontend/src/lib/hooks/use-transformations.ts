@@ -34,31 +34,30 @@ export function useTransformation(id?: string, options?: { enabled?: boolean }) 
 
 export function useCreateTransformation() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: CreateTransformationRequest) => transformationsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
-      toast({
-        title: t('common.success'),
-        description: t('transformations.createSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('transformations.createSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key)),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key)),
+      )
     },
   })
 }
 
 export function useUpdateTransformation() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -67,57 +66,54 @@ export function useUpdateTransformation() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformation(id) })
-      toast({
-        title: t('common.success'),
-        description: t('transformations.updateSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('transformations.updateSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key)),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key)),
+      )
     },
   })
 }
 
 export function useDeleteTransformation() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (id: string) => transformationsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
-      toast({
-        title: t('common.success'),
-        description: t('transformations.deleteSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('transformations.deleteSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key)),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key)),
+      )
     },
   })
 }
 
 export function useExecuteTransformation() {
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: ExecuteTransformationRequest) => transformationsApi.execute(data),
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key)),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key)),
+      )
     },
   })
 }
@@ -131,24 +127,23 @@ export function useDefaultPrompt() {
 
 export function useUpdateDefaultPrompt() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (prompt: { transformation_instructions: string }) => transformationsApi.updateDefaultPrompt(prompt),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.defaultPrompt })
-      toast({
-        title: t('common.success'),
-        description: t('transformations.updateSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('transformations.updateSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key)),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key)),
+      )
     },
   })
 }

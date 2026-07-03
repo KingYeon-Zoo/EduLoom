@@ -12,7 +12,7 @@ import { useNotebookSources } from '@/lib/hooks/use-sources'
 import { useNotes } from '@/lib/hooks/use-notes'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useNotebookColumnsStore } from '@/lib/stores/notebook-columns-store'
-import { useIsDesktop } from '@/lib/hooks/use-media-query'
+import { useIsDesktop, useMediaQuery } from '@/lib/hooks/use-media-query'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -44,10 +44,20 @@ export default function NotebookPage() {
   const { data: notes, isLoading: notesLoading } = useNotes(notebookId)
 
   // Get collapse states for dynamic layout
-  const { sourcesCollapsed, notesCollapsed } = useNotebookColumnsStore()
+  const { sourcesCollapsed, notesCollapsed, setSources } = useNotebookColumnsStore()
 
   // Detect desktop to avoid double-mounting ChatColumn
   const isDesktop = useIsDesktop()
+  const isXl = useMediaQuery('(min-width: 1280px)')
+
+  // Auto-collapse Sources column on medium screens (1024-1280px) to prevent crowding
+  useEffect(() => {
+    if (isDesktop && !isXl) {
+      setSources(true)
+    } else if (isXl) {
+      setSources(false)
+    }
+  }, [isDesktop, isXl, setSources])
 
   // Mobile tab state (Sources, Notes, or Chat)
   const [mobileActiveTab, setMobileActiveTab] = useState<'sources' | 'notes' | 'chat'>('chat')

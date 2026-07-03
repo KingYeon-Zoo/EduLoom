@@ -15,11 +15,12 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { getDateLocale } from '@/lib/utils/date-locale'
 import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { getApiErrorKey } from '@/lib/utils/error-handler'
 
 export default function SourcesPage() {
   const { t, language } = useTranslation()
+  const { success, error: showError } = useToast()
   const [sources, setSources] = useState<SourceListResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -76,7 +77,7 @@ export default function SourcesPage() {
     } catch (err) {
       console.error('Failed to fetch sources:', err)
       setError(t('sources.failedToLoad'))
-      toast.error(t('sources.failedToLoad'))
+      showError(t('sources.failedToLoad'))
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -240,14 +241,14 @@ export default function SourcesPage() {
 
     try {
       await sourcesApi.delete(deleteDialog.source.id)
-      toast.success(t('sources.deleteSuccess'))
+      success(t('sources.deleteSuccess'))
       // Remove the deleted source from the list
       setSources(prev => prev.filter(s => s.id !== deleteDialog.source?.id))
       setDeleteDialog({ open: false, source: null })
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       console.error('Failed to delete source:', error)
-      toast.error(t(getApiErrorKey(error.response?.data?.detail || error.message)))
+      showError(t(getApiErrorKey(error.response?.data?.detail || error.message)))
     }
   }
 
@@ -294,6 +295,8 @@ export default function SourcesPage() {
         </div>
 
         <div ref={scrollContainerRef} className="flex-1 rounded-md border overflow-auto">
+          {/* Desktop: table view */}
+          <div className="hidden sm:block">
           <table
             ref={tableRef}
             tabIndex={0}
@@ -312,7 +315,7 @@ export default function SourcesPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleSort('created')}
-                    className="h-8 px-2 hover:bg-muted"
+                    className="h-8 px-2 hover:bg-sidebar-accent transition-colors duration-150"
                   >
                     {t('common.created_label')}
                     <ArrowUpDown className={cn(
@@ -408,6 +411,69 @@ export default function SourcesPage() {
               )}
             </tbody>
           </table>
+          </div>
+
+          {/* Mobile: card view */}
+          <div className="sm:hidden">
+          {sources.map((source, index) => (
+            <div
+              key={source.id}
+              onClick={() => handleRowClick(index, source.id)}
+              onMouseEnter={() => setSelectedIndex(index)}
+              className={cn(
+                "p-4 border-b transition-colors cursor-pointer",
+                selectedIndex === index
+                  ? "bg-accent"
+                  : "hover:bg-muted/50"
+              )}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {getSourceIcon(source)}
+                  <Badge variant="secondary" className="text-xs">
+                    {getSourceType(source)}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => handleDeleteClick(e, source)}
+                  className="text-destructive hover:text-destructive -mr-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="font-medium text-sm truncate" title={source.title || t('sources.untitledSource')}>
+                {source.title || t('sources.untitledSource')}
+              </p>
+              {source.asset?.url && (
+                <p className="text-xs text-muted-foreground truncate mt-0.5" title={source.asset.url}>
+                  {source.asset.url}
+                </p>
+              )}
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                <span>
+                  {formatDistanceToNow(new Date(source.created), {
+                    addSuffix: true,
+                    locale: getDateLocale(language)
+                  })}
+                </span>
+                {source.insights_count > 0 && (
+                  <span>{source.insights_count} {t('sources.insights')}</span>
+                )}
+                <Badge variant={source.embedded ? "default" : "secondary"} className="text-[10px]">
+                  {source.embedded ? t('sources.yes') : t('sources.no')}
+                </Badge>
+              </div>
+            </div>
+          ))}
+          {loadingMore && (
+            <div className="flex items-center justify-center py-4">
+              <LoadingSpinner />
+              <span className="ml-2 text-sm text-muted-foreground">{t('sources.loadingMore')}</span>
+            </div>
+          )}
+          </div>
         </div>
       </div>
 

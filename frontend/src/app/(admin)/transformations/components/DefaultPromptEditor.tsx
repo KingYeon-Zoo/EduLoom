@@ -62,6 +62,12 @@ export function DefaultPromptEditor() {
                 name="default-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !isLoading && !updateDefaultPrompt.isPending) {
+                    e.preventDefault()
+                    handleSave()
+                  }
+                }}
                 placeholder={t('transformations.defaultPromptPlaceholder')}
                 className="min-h-[200px] font-mono text-sm"
                 disabled={isLoading}

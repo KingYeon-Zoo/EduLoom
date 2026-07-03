@@ -1,10 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { NotebookResponse } from '@/lib/types/api'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
-import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Trash2, ArrowLeft } from 'lucide-react'
 import { useUpdateNotebook } from '@/lib/hooks/use-notebooks'
 import { NotebookDeleteDialog } from './NotebookDeleteDialog'
 import { formatDistanceToNow } from 'date-fns'
@@ -17,6 +23,7 @@ interface NotebookHeaderProps {
 
 export function NotebookHeader({ notebook }: NotebookHeaderProps) {
   const { t, language } = useTranslation()
+  const router = useRouter()
   const dfLocale = getDateLocale(language)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -35,6 +42,19 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => router.push('/notebooks')}
+                    aria-label={t('common.back')}
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('common.back')}</TooltipContent>
+              </Tooltip>
               <h1 className="text-2xl font-bold">{notebook.name}</h1>
               {notebook.archived && (
                 <Badge variant="secondary">{t('notebooks.archived')}</Badge>
@@ -70,9 +90,9 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
             </div>
           </div>
 
-          <p className="text-muted-foreground">
-            {notebook.description || t('notebooks.addDescription')}
-          </p>
+          {notebook.description && (
+            <p className="text-muted-foreground">{notebook.description}</p>
+          )}
 
           <div className="text-sm text-muted-foreground">
             {t('notebooks.notebookCreated').replace('{time}', formatDistanceToNow(new Date(notebook.created), { addSuffix: true, locale: dfLocale }))} •

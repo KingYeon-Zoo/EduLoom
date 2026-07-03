@@ -98,48 +98,46 @@ export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
 
 export function useRetryPodcastEpisode() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (episodeId: string) => podcastsApi.retryEpisode(episodeId),
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.retryStarted'),
-        description: t('podcasts.retryStartedDesc'),
-      })
+      success(
+        t('podcasts.retryStarted'),
+        t('podcasts.retryStartedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToRetry'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToRetry'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeletePodcastEpisode() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (episodeId: string) => podcastsApi.deleteEpisode(episodeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.episodeDeleted'),
-        description: t('podcasts.episodeDeletedDesc'),
-      })
+      success(
+        t('podcasts.episodeDeleted'),
+        t('podcasts.episodeDeletedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToDeleteEpisode'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToDeleteEpisode'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -158,7 +156,7 @@ export function useEpisodeProfiles() {
 
 export function useCreateEpisodeProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -167,24 +165,23 @@ export function useCreateEpisodeProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.profileCreated'),
-        description: t('podcasts.profileCreatedDesc'),
-      })
+      success(
+        t('podcasts.profileCreated'),
+        t('podcasts.profileCreatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToCreateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToCreateProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useUpdateEpisodeProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -198,24 +195,23 @@ export function useUpdateEpisodeProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.profileUpdated'),
-        description: t('podcasts.profileUpdatedDesc'),
-      })
+      success(
+        t('podcasts.profileUpdated'),
+        t('podcasts.profileUpdatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToUpdateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToUpdateProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeleteEpisodeProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -223,24 +219,23 @@ export function useDeleteEpisodeProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.profileDeleted'),
-        description: t('podcasts.profileDeletedDesc'),
-      })
+      success(
+        t('podcasts.profileDeleted'),
+        t('podcasts.profileDeletedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToDeleteProfile'),
-        description: getApiErrorKey(error, t('podcasts.failedToDeleteProfileDesc')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToDeleteProfile'),
+        getApiErrorKey(err, t('podcasts.failedToDeleteProfileDesc')),
+      )
     },
   })
 }
 
 export function useDuplicateEpisodeProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -249,17 +244,16 @@ export function useDuplicateEpisodeProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.profileDuplicated'),
-        description: t('podcasts.profileDuplicatedDesc'),
-      })
+      success(
+        t('podcasts.profileDuplicated'),
+        t('podcasts.profileDuplicatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToDuplicateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToDuplicateProfile'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -286,7 +280,7 @@ export function useSpeakerProfiles(episodeProfiles?: EpisodeProfile[]) {
 
 export function useCreateSpeakerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -296,24 +290,23 @@ export function useCreateSpeakerProfile() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.speakerProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.speakerCreated'),
-        description: t('podcasts.speakerCreatedDesc'),
-      })
+      success(
+        t('podcasts.speakerCreated'),
+        t('podcasts.speakerCreatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToCreateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToCreateSpeaker'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useUpdateSpeakerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -328,24 +321,23 @@ export function useUpdateSpeakerProfile() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.speakerProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.speakerUpdated'),
-        description: t('podcasts.speakerUpdatedDesc'),
-      })
+      success(
+        t('podcasts.speakerUpdated'),
+        t('podcasts.speakerUpdatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToUpdateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToUpdateSpeaker'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeleteSpeakerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -354,24 +346,23 @@ export function useDeleteSpeakerProfile() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.speakerProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodeProfiles })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.speakerDeleted'),
-        description: t('podcasts.speakerDeletedDesc'),
-      })
+      success(
+        t('podcasts.speakerDeleted'),
+        t('podcasts.speakerDeletedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToDeleteSpeaker'),
-        description: getApiErrorKey(error, t('podcasts.failedToDeleteSpeakerDesc')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToDeleteSpeaker'),
+        getApiErrorKey(err, t('podcasts.failedToDeleteSpeakerDesc')),
+      )
     },
   })
 }
 
 export function useDuplicateSpeakerProfile() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -379,24 +370,23 @@ export function useDuplicateSpeakerProfile() {
       podcastsApi.duplicateSpeakerProfile(profileId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.speakerProfiles })
-      toast({
-        title: t('podcasts.speakerDuplicated'),
-        description: t('podcasts.speakerDuplicatedDesc'),
-      })
+      success(
+        t('podcasts.speakerDuplicated'),
+        t('podcasts.speakerDuplicatedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToDuplicateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToDuplicateSpeaker'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useGeneratePodcast() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -405,17 +395,16 @@ export function useGeneratePodcast() {
     onSuccess: async (response) => {
       // Immediately refetch to show the new episode
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      toast({
-        title: t('podcasts.generationStarted'),
-        description: t('podcasts.generationStartedDesc').replace('{name}', response.episode_name),
-      })
+      success(
+        t('podcasts.generationStarted'),
+        t('podcasts.generationStartedDesc').replace('{name}', response.episode_name),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('podcasts.failedToStartGeneration'),
-        description: getApiErrorKey(error, t('podcasts.tryAgainMoment')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToStartGeneration'),
+        getApiErrorKey(err, t('podcasts.tryAgainMoment')),
+      )
     },
   })
 }

@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
-import { Search, ChevronDown, AlertCircle, Settings, Save, MessageCircleQuestion } from 'lucide-react'
+import { Search, ChevronDown, AlertCircle, Settings, Save, MessageCircleQuestion, Square } from 'lucide-react'
 import { useSearch } from '@/lib/hooks/use-search'
 import { useAsk } from '@/lib/hooks/use-ask'
 import { useModelDefaults, useModels } from '@/lib/hooks/use-models'
@@ -82,9 +82,13 @@ export default function SearchPage() {
   // Track if we've already auto-triggered from URL params
   const hasAutoTriggeredRef = useRef(false)
   const lastUrlParamsRef = useRef({ q: '', mode: '' })
+  // Snapshot the query that was actually searched (not the live input value)
+  const searchedQueryRef = useRef('')
 
   const handleSearch = useCallback(() => {
     if (!searchQuery.trim()) return
+
+    searchedQueryRef.current = searchQuery.trim()
 
     searchMutation.mutate({
       query: searchQuery,
@@ -200,7 +204,7 @@ export default function SearchPage() {
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <div className="text-center space-y-2">
-                    <MessageCircleQuestion className="h-12 w-12 mx-auto opacity-20" />
+                    <MessageCircleQuestion className="h-12 w-12 mx-auto text-muted-foreground/25" />
                     <p className="text-sm">{t('searchPage.askPlaceholder')}</p>
                   </div>
                 </div>
@@ -219,20 +223,20 @@ export default function SearchPage() {
                     {searchMutation.data.results.length === 0 ? (
                       <Card>
                         <CardContent className="pt-6 text-center text-muted-foreground">
-                          {t('searchPage.noResultsFor').replace('{query}', searchQuery)}
+                          {t('searchPage.noResultsFor').replace('{query}', searchedQueryRef.current)}
                         </CardContent>
                       </Card>
                     ) : (
                       <div className="space-y-2">
                         {searchMutation.data.results.map((result, index) => {
-                          if (!result.parent_id) {
-                            console.warn('Search result with null parent_id:', result)
+                          if (!result.parent_id || typeof result.parent_id !== 'string') {
+                            console.warn('Search result with invalid parent_id:', result)
                             return null
                           }
                           const [type, id] = result.parent_id.split(':')
                           const modalType = type === 'source_insight' ? 'insight' : type as 'source' | 'note' | 'insight'
                           return (
-                            <Card key={index}>
+                            <Card key={index} className="card-hover clickable-card">
                               <CardContent className="pt-4">
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="flex-1">
@@ -273,7 +277,7 @@ export default function SearchPage() {
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <div className="text-center space-y-2">
-                    <Search className="h-12 w-12 mx-auto opacity-20" />
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground/25" />
                     <p className="text-sm">{t('searchPage.searchPlaceholder')}</p>
                   </div>
                 </div>
@@ -286,12 +290,12 @@ export default function SearchPage() {
             {activeTab === 'ask' ? (
               <div className="space-y-3">
                 {/* Row 1: Title — synced with Search options row */}
-                <div className="min-h-[56px] flex flex-col justify-center">
+                <div className="h-[64px] flex flex-col justify-center">
                   <h3 className="text-lg font-semibold leading-tight">{t('searchPage.askYourKb')}</h3>
                   <p className="text-sm text-muted-foreground">{t('searchPage.askYourKbDesc')}</p>
                 </div>
                 {/* Row 2: Textarea + Ask button — synced with Search input row */}
-                <div className="flex gap-2 items-end min-h-[68px]">
+                <div className="flex gap-2 items-end h-[68px]">
                   <Textarea
                     id="ask-question"
                     name="ask-question"
@@ -306,26 +310,42 @@ export default function SearchPage() {
                     }}
                     disabled={ask.isStreaming}
                     rows={2}
-                    className="flex-1 min-h-[68px] max-h-[136px] resize-none overflow-y-auto"
+                    className="flex-1 h-[68px] resize-none overflow-y-auto"
                     aria-label={t('common.accessibility.enterQuestion')}
                   />
-                  <Button
-                    onClick={handleAsk}
-                    disabled={ask.isStreaming || !askQuestion.trim()}
-                    className="flex-shrink-0 h-[68px]"
-                  >
-                    {ask.isStreaming ? (
-                      <>
+                  {ask.isStreaming ? (
+                    <>
+                      <Button
+                        disabled
+                        variant="default"
+                        className="flex-shrink-0 h-[68px]"
+                      >
                         <LoadingSpinner size="sm" className="mr-2" />
                         {t('searchPage.processing')}
-                      </>
-                    ) : (
-                      t('searchPage.ask')
-                    )}
-                  </Button>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={ask.cancel}
+                        className="flex-shrink-0 h-[68px]"
+                      >
+                        <Square className="h-4 w-4 mr-2" />
+                        {t('common.cancel')}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={handleAsk}
+                      disabled={!askQuestion.trim()}
+                      className="w-full sm:w-auto flex-shrink-0 h-[68px]"
+                      aria-label={t('searchPage.ask')}
+                    >
+                      <MessageCircleQuestion className="h-4 w-4 mr-2" />
+                      {t('searchPage.ask')}
+                    </Button>
+                  )}
                 </div>
                 {/* Row 3: Hint + actions — synced with Search hint row */}
-                <div className="flex items-center justify-between gap-2 flex-wrap min-h-[24px]">
+                <div className="flex items-center justify-between gap-2 flex-wrap h-[24px]">
                   <p className="text-xs text-muted-foreground">{t('searchPage.pressToSubmit')}</p>
                   <div className="flex items-center gap-2">
                     {!hasEmbeddingModel ? (
@@ -383,7 +403,7 @@ export default function SearchPage() {
             ) : (
               <div className="space-y-3">
                 {/* Row 1: Search Options — synced with Ask title row */}
-                <div className="flex flex-wrap gap-6 min-h-[56px] items-center">
+                <div className="flex flex-wrap gap-6 h-[64px] items-center overflow-hidden">
                   {/* Search Type */}
                   <div className="space-y-2 flex-1 min-w-0" role="group" aria-labelledby="search-type-label">
                     <span id="search-type-label" className="text-lg font-semibold leading-tight">{t('searchPage.searchType')}</span>
@@ -455,7 +475,7 @@ export default function SearchPage() {
                 </div>
 
                 {/* Row 2: Search Input — synced with Ask textarea row */}
-                <div className="flex flex-col sm:flex-row gap-2 min-h-[68px]">
+                <div className="flex flex-col sm:flex-row gap-2 h-[68px]">
                   <Input
                     id="search-query"
                     name="search-query"
@@ -472,10 +492,10 @@ export default function SearchPage() {
                     onClick={handleSearch}
                     disabled={searchMutation.isPending || !searchQuery.trim()}
                     aria-label={t('common.accessibility.searchKBBtn')}
-                    className="w-full sm:w-auto h-[68px]"
+                    className="w-full sm:w-auto flex-shrink-0 h-[68px]"
                   >
                     {searchMutation.isPending ? (
-                      <LoadingSpinner size="sm" />
+                      <LoadingSpinner size="sm" className="mr-2" />
                     ) : (
                       <Search className="h-4 w-4 mr-2" />
                     )}
@@ -483,7 +503,7 @@ export default function SearchPage() {
                   </Button>
                 </div>
                 {/* Row 3: Hint — synced with Ask hint row */}
-                <p className="text-xs text-muted-foreground min-h-[24px] flex items-center">{t('searchPage.pressToSearch')}</p>
+                <p className="text-xs text-muted-foreground h-[24px] flex items-center">{t('searchPage.pressToSearch')}</p>
               </div>
             )}
           </div>

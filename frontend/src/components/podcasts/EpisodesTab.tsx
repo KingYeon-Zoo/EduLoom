@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { AlertCircle, Loader2, RefreshCcw } from 'lucide-react'
+import { AlertCircle, Loader2, Mic, RefreshCcw } from 'lucide-react'
 
 import { useDeletePodcastEpisode, usePodcastEpisodes, useRetryPodcastEpisode } from '@/lib/hooks/use-podcasts'
 import { EpisodeCard } from '@/components/podcasts/EpisodeCard'
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { GeneratePodcastDialog } from '@/components/podcasts/GeneratePodcastDialog'
+import { EmptyState } from '@/components/common/EmptyState'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import type { TFunction } from 'i18next'
 
@@ -135,11 +136,16 @@ export function EpisodesTab() {
       ) : null}
 
       {emptyState ? (
-        <div className="rounded-lg border border-dashed bg-muted/30 p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t('podcasts.noEpisodesYet')}
-          </p>
-        </div>
+        <EmptyState
+          icon={Mic}
+          title={t('podcasts.noEpisodesYet')}
+          description={t('podcasts.createFirst')}
+          action={
+            <Button onClick={() => setShowGenerateDialog(true)}>
+              {t('podcasts.generateBtn')}
+            </Button>
+          }
+        />
       ) : null}
 
       {getSTATUS_ORDER(t).map(({ key, title, description }) => {

@@ -26,7 +26,7 @@ import { SessionManager } from '@/components/source/SessionManager'
 import { MessageActions } from '@/components/source/MessageActions'
 import { convertReferencesToCompactMarkdown, createCompactReferenceLinkComponent } from '@/lib/utils/source-references'
 import { useModalManager } from '@/lib/hooks/use-modal-manager'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface NotebookContextStats {
@@ -91,6 +91,7 @@ export function ChatPanel({
   onDismissSuggestion,
 }: ChatPanelProps) {
   const { t } = useTranslation()
+  const { error } = useToast()
   const router = useRouter()
   const chatInputId = useId()
   const [input, setInput] = useState('')
@@ -108,7 +109,7 @@ export function ChatPanel({
       // The modal component itself will handle displaying "not found" states.
       // This try-catch is here for future enhancements or unexpected errors.
     } catch {
-      toast.error(t('common.noResults'))
+      error(t('common.noResults'))
     }
   }
 
@@ -164,7 +165,7 @@ export function ChatPanel({
 
   return (
     <>
-    <Card className="flex flex-col h-full flex-1 overflow-hidden">
+    <Card className="flex flex-col h-full flex-1 min-w-0 overflow-hidden">
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -217,7 +218,7 @@ export function ChatPanel({
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${
+                  className={`flex gap-3 min-w-0 ${
                     message.type === 'human' ? 'justify-end' : 'justify-start'
                   }`}
                 >
@@ -228,7 +229,11 @@ export function ChatPanel({
                       </div>
                     </div>
                   )}
-                  <div className="flex flex-col gap-2 max-w-[80%]">
+                  <div
+                    className={`flex flex-col gap-2 min-w-0 overflow-hidden ${
+                      message.type === 'human' ? 'max-w-[80%]' : 'flex-1'
+                    }`}
+                  >
                     <div
                       className={`rounded-lg px-4 py-2 ${
                         message.type === 'human'
@@ -452,6 +457,9 @@ function AIMessageContent({
           tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
           th: ({ children }) => <th className="border border-border px-3 py-2 text-left font-semibold">{children}</th>,
           td: ({ children }) => <td className="border border-border px-3 py-2">{children}</td>,
+          pre: ({ children }) => (
+            <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 text-sm">{children}</pre>
+          ),
         }}
       >
         {markdownWithCompactRefs}
