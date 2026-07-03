@@ -7,7 +7,7 @@ set -e
 echo "=== Open Notebook Dev Startup ==="
 
 # Check SurrealDB connectivity
-SURREAL_PORT=${SURREAL_PORT:-8018}
+SURREAL_PORT=${SURREAL_PORT:-8000}
 echo "Checking SurrealDB on port $SURREAL_PORT..."
 if ! nc -z localhost "$SURREAL_PORT" 2>/dev/null; then
   echo "❌ SurrealDB not reachable on port $SURREAL_PORT. Please start it first."
