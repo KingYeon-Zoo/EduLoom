@@ -41,7 +41,7 @@ export function CollapsibleColumn({
                 'cursor-pointer group',
                 'py-6'
               )}
-              aria-label={t('common.expand', { label: collapsedLabel })}
+              aria-label={t('common.expand').replace('{label}', collapsedLabel)}
             >
               <CollapsedIcon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
               <div
@@ -53,7 +53,7 @@ export function CollapsibleColumn({
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">
-            <p>{t('common.expand', { label: collapsedLabel })}</p>
+            <p>{t('common.expand').replace('{label}', collapsedLabel)}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -92,13 +92,13 @@ function CollapseButtonInner({ onToggle, label }: { onToggle: () => void; label:
               onToggle()
             }}
             className="h-7 w-7 hover:bg-accent"
-            aria-label={t('common.collapse', { label })}
+            aria-label={t('common.collapse').replace('{label}', label)}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{t('common.collapse', { label })}</p>
+          <p>{t('common.collapse').replace('{label}', label)}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

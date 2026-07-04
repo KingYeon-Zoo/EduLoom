@@ -691,7 +691,7 @@ function DeleteCredentialDialog({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {t('apiKeys.linkedModelsCount', { count: credential.model_count })}
+              {t('apiKeys.linkedModelsCount').replace('{count}', String(credential.model_count))}
               {otherCredentials.length > 0 && (
                 <div className="mt-2">
                   <Label>{t('apiKeys.migrateModelsTo')}</Label>

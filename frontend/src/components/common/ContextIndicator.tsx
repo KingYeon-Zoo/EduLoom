@@ -6,14 +6,11 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
-// Helper to format a numeric count into a translated string.
-// Uses i18next pluralization then substitutes the raw count.
-function formatCount(t: ReturnType<typeof useTranslation>['t'], baseKey: string, rawCount: number): string {
-  return t(baseKey, { count: rawCount })
+// Project convention: use .replace() for interpolation, not i18next {{}} syntax.
+function fmtReplace(t: ReturnType<typeof useTranslation>['t'], key: string, count: number): string {
+  return t(key).replace('{count}', String(count))
 }
-
-// Format counts like tokens/chars with K/M suffix; uses simple replace since counts are strings.
-function formatSuffixed(t: ReturnType<typeof useTranslation>['t'], key: string, raw: number): string {
+function fmtSuffixed(t: ReturnType<typeof useTranslation>['t'], key: string, raw: number): string {
   return t(key).replace('{count}', formatNumber(raw))
 }
 
@@ -71,7 +68,7 @@ export function ContextIndicator({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{formatCount(t, 'common.insightsFor', sourcesInsights)}</p>
+                <p>{fmtReplace(t, 'common.insightsFor', sourcesInsights)}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -85,7 +82,7 @@ export function ContextIndicator({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{formatCount(t, 'common.fullSource', sourcesFull)}</p>
+                <p>{fmtReplace(t, 'common.fullSource', sourcesFull)}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -104,7 +101,7 @@ export function ContextIndicator({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{formatCount(t, 'common.fullNote', notesCount)}</p>
+                <p>{fmtReplace(t, 'common.fullNote', notesCount)}</p>
               </TooltipContent>
             </Tooltip>
           </>
@@ -114,13 +111,13 @@ export function ContextIndicator({
       {(tokenCount !== undefined || charCount !== undefined) && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {tokenCount !== undefined && tokenCount > 0 && (
-            <span>{formatSuffixed(t, 'common.tokensCount', tokenCount)}</span>
+            <span>{fmtSuffixed(t, 'common.tokensCount', tokenCount)}</span>
           )}
           {tokenCount !== undefined && charCount !== undefined && tokenCount > 0 && charCount > 0 && (
             <span>/</span>
           )}
           {charCount !== undefined && charCount > 0 && (
-            <span>{formatSuffixed(t, 'common.charsCount', charCount)}</span>
+            <span>{fmtSuffixed(t, 'common.charsCount', charCount)}</span>
           )}
         </div>
       )}
