@@ -36,17 +36,17 @@ import { ModelSelector } from '@/components/common/ModelSelector'
 import type { TFunction } from 'i18next'
 
 const episodeProfileSchema = (t: TFunction) => z.object({
-  name: z.string().min(1, t('podcasts.nameRequired') || 'Name is required'),
+  name: z.string().min(1, t('podcasts.nameRequired')),
   description: z.string().optional(),
-  speaker_config: z.string().min(1, t('podcasts.profileRequired') || 'Speaker profile is required'),
-  outline_llm: z.string().min(1, t('podcasts.outlineModelRequired') || 'Outline model is required'),
-  transcript_llm: z.string().min(1, t('podcasts.transcriptModelRequired') || 'Transcript model is required'),
+  speaker_config: z.string().min(1, t('podcasts.speakerProfileRequired')),
+  outline_llm: z.string().min(1, t('podcasts.outlineModelRequired')),
+  transcript_llm: z.string().min(1, t('podcasts.transcriptModelRequired')),
   language: z.string().nullable().optional(),
-  default_briefing: z.string().min(1, t('podcasts.defaultBriefingRequired') || 'Default briefing is required'),
+  default_briefing: z.string().min(1, t('podcasts.defaultBriefingRequired')),
   num_segments: z.number()
-    .int(t('podcasts.segmentsInteger') || 'Must be an integer')
-    .min(3, t('podcasts.segmentsMin') || 'At least 3 segments')
-    .max(20, t('podcasts.segmentsMax') || 'Maximum 20 segments'),
+    .int(t('podcasts.segmentsInteger'))
+    .min(3, t('podcasts.segmentsMin'))
+    .max(20, t('podcasts.segmentsMax')),
 })
 
 export type EpisodeProfileFormValues = z.infer<ReturnType<typeof episodeProfileSchema>>

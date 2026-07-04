@@ -14,13 +14,6 @@ import { InlineEdit } from '@/components/common/InlineEdit'
 import { cn } from "@/lib/utils";
 import { useTranslation } from '@/lib/hooks/use-translation'
 
-const createNoteSchema = z.object({
-  title: z.string().optional(),
-  content: z.string().min(1, 'Content is required'),
-})
-
-type CreateNoteFormData = z.infer<typeof createNoteSchema>
-
 interface NoteEditorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -34,6 +27,13 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
   const updateNote = useUpdateNote()
   const queryClient = useQueryClient()
   const isEditing = Boolean(note)
+
+  const createNoteSchema = z.object({
+    title: z.string().optional(),
+    content: z.string().min(1, t('common.contentRequired')),
+  })
+
+  type CreateNoteFormData = z.infer<typeof createNoteSchema>
 
   // Ensure note ID has 'note:' prefix for API calls
   const noteIdWithPrefix = note?.id

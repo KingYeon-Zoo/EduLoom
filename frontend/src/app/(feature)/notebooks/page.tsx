@@ -66,7 +66,7 @@ export default function NotebooksPage() {
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={t('notebooks.searchPlaceholder')}
               autoComplete="off"
-              aria-label={t('common.accessibility.searchNotebooks') || "Search notebooks"}
+              aria-label={t('common.searchNotebooks')}
               className="w-full sm:w-64"
             />
             <Button onClick={() => setCreateDialogOpen(true)}>

@@ -313,7 +313,7 @@ function CredentialFormDialog({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
                   tabIndex={-1}
                 >
-                  {showApiKey ? 'Hide' : 'Show'}
+                  {showApiKey ? t('apiKeys.hide') : t('apiKeys.show')}
                 </button>
               </div>
               {isEditing && <p className="text-xs text-muted-foreground">{t('apiKeys.apiKeyEditHint')}</p>}
@@ -691,13 +691,13 @@ function DeleteCredentialDialog({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              This credential has {credential.model_count} linked model(s).
+              {t('apiKeys.linkedModelsCount', { count: credential.model_count })}
               {otherCredentials.length > 0 && (
                 <div className="mt-2">
-                  <Label>Migrate models to:</Label>
+                  <Label>{t('apiKeys.migrateModelsTo')}</Label>
                   <Select value={migrateToId} onValueChange={setMigrateToId}>
                     <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select credential" />
+                      <SelectValue placeholder={t('apiKeys.selectCredential')} />
                     </SelectTrigger>
                     <SelectContent>
                       {otherCredentials.map(c => (
@@ -718,7 +718,7 @@ function DeleteCredentialDialog({
           {credential.model_count > 0 && migrateToId && (
             <Button onClick={handleMigrate} disabled={deleteCredential.isPending}>
               {deleteCredential.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Migrate & Delete
+              {t('apiKeys.migrateAndDelete')}
             </Button>
           )}
           <Button
@@ -727,7 +727,7 @@ function DeleteCredentialDialog({
             disabled={deleteCredential.isPending}
           >
             {deleteCredential.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            {credential.model_count > 0 ? 'Delete with Models' : t('common.delete')}
+            {credential.model_count > 0 ? t('apiKeys.deleteWithModels') : t('common.delete')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -806,7 +806,7 @@ function CredentialItem({
             {credential.has_api_key && (
               <Badge variant="outline" className="text-[10px]">
                 <Key className="h-2.5 w-2.5 mr-0.5" />
-                Key
+                {t('apiKeys.keyShort')}
               </Badge>
             )}
           </div>
@@ -823,7 +823,7 @@ function CredentialItem({
               title={t('apiKeys.testConnection')}
             >
               {isTestPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
-              <span className="hidden sm:inline text-xs">Test</span>
+              <span className="hidden sm:inline text-xs">{t('apiKeys.testShort')}</span>
             </Button>
             <Button
               variant="ghost" size="sm"
@@ -832,7 +832,7 @@ function CredentialItem({
               title={t('apiKeys.syncModels')}
             >
               <Bot className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">Models</span>
+              <span className="hidden sm:inline text-xs">{t('apiKeys.modelsShort')}</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)} disabled={!!credential.decryption_error} title={t('common.edit')}>
               <Edit className="h-4 w-4" />

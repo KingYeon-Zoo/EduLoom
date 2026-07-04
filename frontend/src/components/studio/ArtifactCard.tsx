@@ -172,7 +172,7 @@ function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact;
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Network className="h-10 w-10 mb-2 opacity-40" />
-            <p className="text-sm">{t('studio.clickToViewMindmap') || '思维导图 — 点击查看详情'}</p>
+            <p className="text-sm">{t('studio.clickToViewMindmap')}</p>
           </div>
         )
       }
@@ -226,7 +226,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
       return (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
           <Presentation className="h-10 w-10 mb-2 opacity-40" />
-          <p className="text-sm">{t('studio.clickToViewPpt') || '课件 — 点击查看详情'}</p>
+          <p className="text-sm">{t('studio.clickToViewPpt')}</p>
         </div>
       )
     }
@@ -238,7 +238,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
       return (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
           <Presentation className="h-10 w-10 mb-2 opacity-40" />
-          <p className="text-sm">{t('studio.clickToViewPpt') || '课件 — 点击查看详情'}</p>
+          <p className="text-sm">{t('studio.clickToViewPpt')}</p>
         </div>
       )
     }
@@ -253,7 +253,7 @@ function PptViewer({ artifact, preview = false }: { artifact: StudioArtifact; pr
         />
         {imageUrls.length > 1 && (
           <p className="text-xs text-muted-foreground text-center">
-            +{imageUrls.length - 1} {t('studio.moreSlides') || 'more slides'}
+            +{imageUrls.length - 1} {t('studio.moreSlides')}
           </p>
         )}
       </div>
@@ -320,7 +320,7 @@ function VideoThumbnail({ artifact }: { artifact: StudioArtifact }) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Video className="h-10 w-10 mb-2 opacity-40" />
-        <p className="text-sm">{t('studio.clickToPlayVideo') || '点击播放视频'}</p>
+        <p className="text-sm">{t('studio.clickToPlayVideo')}</p>
       </div>
     )
   }

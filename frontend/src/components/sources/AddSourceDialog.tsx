@@ -27,46 +27,6 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 
 const MAX_BATCH_SIZE = 50
 
-const createSourceSchema = z.object({
-  type: z.enum(['link', 'upload', 'text']),
-  title: z.string().optional(),
-  url: z.string().optional(),
-  content: z.string().optional(),
-  file: z.any().optional(),
-  notebooks: z.array(z.string()).optional(),
-  transformations: z.array(z.string()).optional(),
-  embed: z.boolean(),
-  async_processing: z.boolean(),
-}).refine((data) => {
-  if (data.type === 'link') {
-    return !!data.url && data.url.trim() !== ''
-  }
-  if (data.type === 'text') {
-    return !!data.content && data.content.trim() !== ''
-  }
-  if (data.type === 'upload') {
-    if (data.file instanceof FileList) {
-      return data.file.length > 0
-    }
-    return !!data.file
-  }
-  return true
-}, {
-  message: 'Please provide the required content for the selected source type',
-  path: ['type'],
-}).refine((data) => {
-  // Make title mandatory for text sources
-  if (data.type === 'text') {
-    return !!data.title && data.title.trim() !== ''
-  }
-  return true
-}, {
-  message: 'Title is required for text sources',
-  path: ['title'],
-})
-
-type CreateSourceFormData = z.infer<typeof createSourceSchema>
-
 interface AddSourceDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -85,10 +45,10 @@ interface BatchProgress {
   currentItem?: string
 }
 
-export function AddSourceDialog({ 
-  open, 
-  onOpenChange, 
-  defaultNotebookId 
+export function AddSourceDialog({
+  open,
+  onOpenChange,
+  defaultNotebookId
 }: AddSourceDialogProps) {
   const { t } = useTranslation()
   const { success, error, warning } = useToast()
@@ -98,6 +58,45 @@ export function AddSourceDialog({
     { number: 2, title: t('navigation.notebooks'), description: t('notebooks.searchPlaceholder') },
     { number: 3, title: t('navigation.process'), description: t('sources.processDescription') },
   ]
+
+  const createSourceSchema = z.object({
+    type: z.enum(['link', 'upload', 'text']),
+    title: z.string().optional(),
+    url: z.string().optional(),
+    content: z.string().optional(),
+    file: z.any().optional(),
+    notebooks: z.array(z.string()).optional(),
+    transformations: z.array(z.string()).optional(),
+    embed: z.boolean(),
+    async_processing: z.boolean(),
+  }).refine((data) => {
+    if (data.type === 'link') {
+      return !!data.url && data.url.trim() !== ''
+    }
+    if (data.type === 'text') {
+      return !!data.content && data.content.trim() !== ''
+    }
+    if (data.type === 'upload') {
+      if (data.file instanceof FileList) {
+        return data.file.length > 0
+      }
+      return !!data.file
+    }
+    return true
+  }, {
+    message: t('sources.contentRequired'),
+    path: ['type'],
+  }).refine((data) => {
+    if (data.type === 'text') {
+      return !!data.title && data.title.trim() !== ''
+    }
+    return true
+  }, {
+    message: t('sources.titleRequiredForText'),
+    path: ['title'],
+  })
+
+  type CreateSourceFormData = z.infer<typeof createSourceSchema>
 
   // Simplified state management
   const [currentStep, setCurrentStep] = useState(1)

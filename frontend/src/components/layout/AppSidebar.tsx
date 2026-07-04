@@ -247,7 +247,7 @@ export function AppSidebar() {
             <div className="relative flex items-center justify-center w-full">
               <Image
                 src="/logo.png"
-                alt="EduLoom"
+                alt={t('common.appName')}
                 width={28}
                 height={28}
                 className="transition-opacity group-hover:opacity-0"

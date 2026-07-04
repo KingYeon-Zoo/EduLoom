@@ -31,21 +31,21 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 const speakerConfigSchema = (t: TFunction) => z.object({
-  name: z.string().min(1, t('common.nameRequired') || 'Name is required'),
-  voice_id: z.string().min(1, t('podcasts.voiceIdRequired') || 'Voice ID is required'),
-  backstory: z.string().min(1, t('podcasts.backstoryRequired') || 'Backstory is required'),
-  personality: z.string().min(1, t('podcasts.personalityRequired') || 'Personality is required'),
+  name: z.string().min(1, t('common.nameRequired')),
+  voice_id: z.string().min(1, t('podcasts.voiceIdRequired')),
+  backstory: z.string().min(1, t('podcasts.backstoryRequired')),
+  personality: z.string().min(1, t('podcasts.personalityRequired')),
   voice_model: z.string().nullable().optional(),
 })
 
 const speakerProfileSchema = (t: TFunction) => z.object({
-  name: z.string().min(1, t('common.nameRequired') || 'Name is required'),
+  name: z.string().min(1, t('common.nameRequired')),
   description: z.string().optional(),
-  voice_model: z.string().min(1, t('podcasts.voiceModelRequired') || 'Voice model is required'),
+  voice_model: z.string().min(1, t('podcasts.voiceModelRequired')),
   speakers: z
     .array(speakerConfigSchema(t))
-    .min(1, t('podcasts.speakerCountMin') || 'At least one speaker is required')
-    .max(4, t('podcasts.speakerCountMax') || 'You can configure up to 4 speakers'),
+    .min(1, t('podcasts.speakerCountMin'))
+    .max(4, t('podcasts.speakerCountMax')),
 })
 
 export type SpeakerProfileFormValues = z.infer<ReturnType<typeof speakerProfileSchema>>

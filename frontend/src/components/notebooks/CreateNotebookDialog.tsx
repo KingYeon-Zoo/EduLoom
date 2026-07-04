@@ -20,13 +20,6 @@ import { Label } from '@/components/ui/label'
 import { useCreateNotebook } from '@/lib/hooks/use-notebooks'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
-const createNotebookSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-})
-
-type CreateNotebookFormData = z.infer<typeof createNotebookSchema>
-
 interface CreateNotebookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -35,6 +28,14 @@ interface CreateNotebookDialogProps {
 export function CreateNotebookDialog({ open, onOpenChange }: CreateNotebookDialogProps) {
   const { t } = useTranslation()
   const createNotebook = useCreateNotebook()
+
+  const createNotebookSchema = z.object({
+    name: z.string().min(1, t('common.nameRequired')),
+    description: z.string().optional(),
+  })
+
+  type CreateNotebookFormData = z.infer<typeof createNotebookSchema>
+
   const {
     register,
     handleSubmit,

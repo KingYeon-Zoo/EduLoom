@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useDoubaoVoices } from '@/lib/hooks/use-podcasts'
 import { Info } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTranslation } from '@/lib/hooks/use-translation'
 
 const CUSTOM = '__custom__'
 
@@ -22,6 +23,7 @@ interface VoiceSelectorProps {
  * current value isn't a built-in voice, custom mode is shown automatically.
  */
 export function VoiceSelector({ label, value, onChange }: VoiceSelectorProps) {
+  const { t } = useTranslation()
   const { data, isLoading } = useDoubaoVoices()
   const voices = data?.voices ?? []
 
@@ -56,18 +58,18 @@ export function VoiceSelector({ label, value, onChange }: VoiceSelectorProps) {
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoading ? '加载音色…' : '选择音色'} />
+              <SelectValue placeholder={isLoading ? t('podcasts.loadingVoices') : t('podcasts.selectVoice')} />
             </SelectTrigger>
             <SelectContent>
               {voices.map((v) => (
                 <SelectItem key={v.id} value={v.id} title={v.description}>
                   {v.name}
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {v.gender === 'male' ? '男' : '女'}
+                    {v.gender === 'male' ? t('podcasts.male') : t('podcasts.female')}
                   </span>
                 </SelectItem>
               ))}
-              <SelectItem value={CUSTOM}>自定义音色…</SelectItem>
+              <SelectItem value={CUSTOM}>{t('podcasts.customVoice')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -92,7 +94,7 @@ export function VoiceSelector({ label, value, onChange }: VoiceSelectorProps) {
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="zh_female_xxx_uranus_bigtts"
+          placeholder={t('podcasts.customVoicePlaceholder')}
           autoComplete="off"
         />
       ) : null}

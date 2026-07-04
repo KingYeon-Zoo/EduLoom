@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChevronLeft, LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface CollapsibleColumnProps {
   isCollapsed: boolean
@@ -21,6 +22,7 @@ export function CollapsibleColumn({
   collapsedLabel,
   children,
 }: CollapsibleColumnProps) {
+  const { t } = useTranslation()
   const isCJK = /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/.test(collapsedLabel);
 
   if (isCollapsed) {
@@ -39,7 +41,7 @@ export function CollapsibleColumn({
                 'cursor-pointer group',
                 'py-6'
               )}
-              aria-label={`Expand ${collapsedLabel}`}
+              aria-label={t('common.expand', { label: collapsedLabel })}
             >
               <CollapsedIcon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
               <div
@@ -51,7 +53,7 @@ export function CollapsibleColumn({
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">
-            <p>Expand {collapsedLabel}</p>
+            <p>{t('common.expand', { label: collapsedLabel })}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -67,29 +69,38 @@ export function CollapsibleColumn({
 
 // Factory function to create a collapse button for card headers
 export function createCollapseButton(onToggle: () => void, label: string) {
+  // Note: this factory function is not a React component, so it needs its own t function.
+  // We import directly \u2014 but since it's not a hook context, we return JSX that works at call site.
   return (
     <div className="hidden lg:block">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggle()
-              }}
-              className="h-7 w-7 hover:bg-accent"
-              aria-label={`Collapse ${label}`}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Collapse {label}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <CollapseButtonInner onToggle={onToggle} label={label} />
     </div>
+  )
+}
+
+function CollapseButtonInner({ onToggle, label }: { onToggle: () => void; label: string }) {
+  const { t } = useTranslation()
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle()
+            }}
+            className="h-7 w-7 hover:bg-accent"
+            aria-label={t('common.collapse', { label })}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{t('common.collapse', { label })}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

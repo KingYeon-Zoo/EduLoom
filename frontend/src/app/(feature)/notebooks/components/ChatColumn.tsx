@@ -84,7 +84,7 @@ export function ChatColumn({ notebookId, contextSelections, sources, sourcesLoad
           <div className="text-center text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-sm">{t('chat.unableToLoadChat')}</p>
-            <p className="text-xs mt-2">{t('common.refreshPage') || 'Please try refreshing the page'}</p>
+            <p className="text-xs mt-2">{t('common.refreshPage')}</p>
           </div>
         </CardContent>
       </Card>

@@ -59,15 +59,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
-              <CardTitle className="text-red-900 dark:text-red-100">{t?.common?.error || 'Something went wrong'}</CardTitle>
+              <CardTitle className="text-red-900 dark:text-red-100">{t.common.error}</CardTitle>
               <CardDescription>
-                {t?.common?.refreshPage || 'An unexpected error occurred. Please try refreshing the page.'}
+                {t.common.refreshPage}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-xs bg-muted p-3 rounded border">
-                  <summary className="cursor-pointer font-medium">{t?.common?.errorDetails || 'Error Details'}</summary>
+                  <summary className="cursor-pointer font-medium">{t.common.errorDetails}</summary>
                   <pre className="mt-2 whitespace-pre-wrap break-all">
                     {this.state.error.toString()}
                   </pre>
@@ -79,13 +79,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 variant="outline"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {t?.common?.retry || 'Try Again'}
+                {t.common.retry}
               </Button>
               <Button 
                 onClick={() => window.location.reload()} 
                 className="w-full"
               >
-                {t?.common?.refresh || 'Refresh Page'}
+                {t.common.refresh}
               </Button>
             </CardContent>
           </Card>

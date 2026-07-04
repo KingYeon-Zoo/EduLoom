@@ -95,7 +95,7 @@ export function AddExistingSourceDialog({
       // the API only returns sources, no need to filter
       const sources = response.results.map(r => ({
         id: r.parent_id,
-        title: r.title || 'Untitled',
+        title: r.title || t('common.untitled'),
         topics: [],
         asset: null,
         embedded: false,
