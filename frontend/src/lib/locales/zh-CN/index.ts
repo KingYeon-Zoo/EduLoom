@@ -149,9 +149,6 @@ export const zhCN = {
     charsCount: "{count} 字符",
     searchNotebooks: "搜索笔记本",
     untitled: "未命名",
-    enterMarkdown: "输入 Markdown...",
-    expandSection: "展开{label}",
-    collapseSection: "折叠{label}",
   },
   apiErrors: {
     notebookNotFound: "找不到笔记本",
@@ -1155,7 +1152,6 @@ export const zhCN = {
     selectCredential: "选择凭证",
     linkedModelsCount: "此凭证关联了 {count} 个模型。",
     migrateModelsTo: "迁移模型到：",
-    credentialProduction: "{provider} 生产环境",
   },
   setupBanner: {
     encryptionRequired: "未配置加密密钥",

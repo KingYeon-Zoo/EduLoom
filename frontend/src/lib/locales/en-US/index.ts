@@ -152,9 +152,6 @@ export const enUS = {
     charsCount: "{count} chars",
     searchNotebooks: "Search notebooks",
     untitled: "Untitled",
-    enterMarkdown: "Enter markdown...",
-    expandSection: "Expand {label}",
-    collapseSection: "Collapse {label}",
   },
   apiErrors: {
     notebookNotFound: "Notebook not found",
@@ -1167,7 +1164,6 @@ export const enUS = {
     linkedModelsCount: "This credential has {count} linked model.",
     linkedModelsCount_other: "This credential has {count} linked models.",
     migrateModelsTo: "Migrate models to:",
-    credentialProduction: "{provider} Production",
   },
   setupBanner: {
     encryptionRequired: "Encryption key not configured",
