@@ -259,20 +259,17 @@ export function LoginForm() {
   const isSubmitDisabled = isAuthLoading || !username.trim() || !password || (mode === 'login' && !captchaCode.trim()) || (mode === 'register' && !confirmPassword)
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative bg-gradient-to-tr from-slate-900 via-slate-800 to-indigo-950 p-4 overflow-hidden">
-      {/* Decorative gradient balls */}
-      <div className="absolute w-[35rem] h-[35rem] -top-40 -left-40 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute w-[35rem] h-[35rem] -bottom-40 -right-40 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+    <>
       
-      <Card className="w-full max-w-md border-white/10 bg-slate-950/60 backdrop-blur-xl shadow-2xl rounded-2xl transition-all duration-300 relative z-10">
+      <Card className="w-full border-border bg-card text-card-foreground backdrop-blur-xl shadow-2xl rounded-2xl transition-all duration-300">
         <CardHeader className="space-y-2 text-center pb-4">
           <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-2">
             <span className="text-white font-extrabold text-xl font-mono tracking-tight">EL</span>
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold text-card-foreground">
             {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-muted-foreground">
             {mode === 'login' 
               ? (language === 'zh-CN' ? '系统默认管理员账号为 admin / admin' : 'Default admin account is admin / admin')
               : t('auth.registerDesc')}
@@ -285,7 +282,7 @@ export function LoginForm() {
             {/* Username Input */}
             <div className="space-y-1">
               <div className="relative">
-                <span className="absolute left-3 top-3 text-slate-400">
+                <span className="absolute left-3 top-3 text-muted-foreground">
                   <User className="h-4 w-4" />
                 </span>
                 <Input
@@ -294,7 +291,7 @@ export function LoginForm() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={isAuthLoading}
-                  className="pl-9 bg-slate-900/50 border-slate-700/60 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
@@ -302,7 +299,7 @@ export function LoginForm() {
             {/* Password Input */}
             <div className="space-y-1">
               <div className="relative">
-                <span className="absolute left-3 top-3 text-slate-400">
+                <span className="absolute left-3 top-3 text-muted-foreground">
                   <Lock className="h-4 w-4" />
                 </span>
                 <Input
@@ -311,7 +308,7 @@ export function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isAuthLoading}
-                  className="pl-9 bg-slate-900/50 border-slate-700/60 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
@@ -320,7 +317,7 @@ export function LoginForm() {
             {mode === 'register' && (
               <div className="space-y-1">
                 <div className="relative">
-                  <span className="absolute left-3 top-3 text-slate-400">
+                  <span className="absolute left-3 top-3 text-muted-foreground">
                     <Lock className="h-4 w-4" />
                   </span>
                   <Input
@@ -329,7 +326,7 @@ export function LoginForm() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isAuthLoading}
-                    className="pl-9 bg-slate-900/50 border-slate-700/60 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -344,10 +341,10 @@ export function LoginForm() {
                   value={captchaCode}
                   onChange={(e) => setCaptchaCode(e.target.value)}
                   disabled={isAuthLoading}
-                  className="bg-slate-900/50 border-slate-700/60 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono tracking-widest text-center"
+                  className="bg-background border-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary font-mono tracking-widest text-center"
                   maxLength={6}
                 />
-                <div className="relative h-10 flex items-center justify-between border border-slate-700/60 rounded-md overflow-hidden bg-slate-900/40">
+                <div className="relative h-10 flex items-center justify-between border border-input rounded-md overflow-hidden bg-background">
                   {captchaSvg ? (
                     <div 
                       className="w-full h-full flex items-center justify-center cursor-pointer select-none"
@@ -362,7 +359,7 @@ export function LoginForm() {
                     type="button"
                     onClick={fetchCaptcha}
                     disabled={captchaLoading}
-                    className="absolute right-2 p-1 text-slate-400 hover:text-white rounded-md transition-colors"
+                    className="absolute right-2 p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
                   >
                     <RefreshCw className={`h-3 w-3 ${captchaLoading ? 'animate-spin' : ''}`} />
                   </button>
@@ -389,7 +386,7 @@ export function LoginForm() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-10 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg shadow-indigo-600/20 transition-all duration-200"
+              className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg shadow-lg transition-all duration-200"
               disabled={isSubmitDisabled}
             >
               {isAuthLoading ? (
@@ -407,20 +404,20 @@ export function LoginForm() {
         <CardFooter className="flex flex-col space-y-3 pt-0 pb-6">
           <button
             onClick={() => handleModeSwitch(mode === 'login' ? 'register' : 'login')}
-            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+            className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
             type="button"
           >
             {mode === 'login' ? t('auth.goToRegister') : t('auth.goToLogin')}
           </button>
           
           {configInfo && (
-            <div className="text-[10px] text-center text-slate-500 pt-2 border-t border-slate-800/80 w-full font-mono">
+            <div className="text-[10px] text-center text-muted-foreground pt-2 border-t border-border w-full font-mono">
               <div>Version {configInfo.version}</div>
               <div className="opacity-60">{configInfo.apiUrl}</div>
             </div>
           )}
         </CardFooter>
       </Card>
-    </div>
+    </>
   )
 }
