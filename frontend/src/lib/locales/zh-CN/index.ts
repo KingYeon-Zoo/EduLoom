@@ -227,6 +227,8 @@ export const zhCN = {
     captchaError: "验证码错误，请重试",
     passwordsDoNotMatch: "两次输入的密码不一致",
     registerSuccess: "注册成功，请登录",
+    splashSubtitle: "点击任意处开始",
+    brandSlogan: "你的 AI 智能研究助手",
   },
   navigation: {
     learn: "学习",

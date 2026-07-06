@@ -227,6 +227,8 @@ export const enUS = {
     captchaError: "Invalid captcha, please try again",
     passwordsDoNotMatch: "Passwords do not match",
     registerSuccess: "Registration successful, please sign in",
+    splashSubtitle: "Click anywhere to begin",
+    brandSlogan: "Your AI-powered research companion",
   },
   navigation: {
     learn: "Learn",
