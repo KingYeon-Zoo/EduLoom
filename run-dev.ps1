@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Open Notebook Windows Development Startup Script
+# EduLoom Windows Development Startup Script
 # UTF-8 Encoding
 
 # Configuration
@@ -42,7 +42,7 @@ function Test-Port($Port, $TimeoutSeconds = 10) {
 function Stop-AllServices {
     Write-Host ""
     Write-Host "========================================="
-    Write-Host "[STOP] Stopping all Open Notebook services..."
+    Write-Host "[STOP] Stopping all EduLoom services..."
     Write-Host "========================================="
 
     foreach ($Proc in $Processes) {
@@ -67,7 +67,7 @@ Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
 } | Out-Null
 
 Write-Host "========================================="
-Write-Host "[START] Open Notebook Development Services (Windows)"
+Write-Host "[START] EduLoom Development Services (Windows)"
 Write-Host "========================================="
 
 # 1. Check uv

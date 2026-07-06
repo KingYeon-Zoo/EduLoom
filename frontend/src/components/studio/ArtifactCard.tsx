@@ -166,7 +166,7 @@ function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact;
         return artifact.content ? (
           <div className="max-h-[200px] overflow-hidden">
             <div style={{ transform: 'scale(0.45)', transformOrigin: 'top left', width: '222%' }}>
-              <MermaidDiagram code={artifact.content} id={`${artifact.id}-preview`} />
+              <MermaidDiagram code={artifact.content} id={`${artifact.id}-preview`} interactive={false} />
             </div>
           </div>
         ) : (

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -205,7 +205,7 @@ export function ChatPanel({
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 min-w-[300px]">
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -231,14 +231,16 @@ export function ChatPanel({
                   )}
                   <div
                     className={`flex flex-col gap-2 min-w-0 overflow-hidden ${
-                      message.type === 'human' ? 'max-w-[80%]' : 'flex-1'
+                      message.type === 'human' 
+                        ? 'max-w-[80%]' 
+                        : 'flex-1 max-w-[85%] lg:max-w-[80%]'
                     }`}
                   >
                     <div
-                      className={`rounded-lg px-4 py-2 ${
+                      className={`rounded-lg px-4 py-2 min-w-0 ${
                         message.type === 'human'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'bg-primary text-primary-foreground w-fit ml-auto break-words'
+                          : 'bg-muted w-fit max-w-full'
                       }`}
                     >
                       {message.type === 'ai' ? (
@@ -315,6 +317,7 @@ export function ChatPanel({
             )}
             <div ref={messagesEndRef} />
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
         {/* Context Indicators */}
@@ -432,7 +435,7 @@ function AIMessageContent({
   const LinkComponent = createCompactReferenceLinkComponent(onReferenceClick)
 
   return (
-    <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-semibold prose-a:text-blue-600 prose-a:break-all prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-p:mb-4 prose-p:leading-7 prose-li:mb-2">
+    <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none break-words [word-break:break-word] overflow-wrap-anywhere prose-headings:font-semibold prose-a:text-blue-600 prose-a:break-all prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-p:mb-4 prose-p:leading-7 prose-li:mb-2">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
