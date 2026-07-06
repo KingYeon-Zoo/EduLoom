@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface Ripple {
@@ -73,6 +73,15 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
     },
     [prefersReducedMotion],
   )
+
+  // Clear ripple buffer on window resize to avoid stale positions
+  useEffect(() => {
+    const handleResize = () => {
+      setRipples(Array(8).fill(null))
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const parallaxX = (mousePos.x - 0.5) * 10
   const parallaxY = (mousePos.y - 0.5) * 10
