@@ -21,17 +21,13 @@ function LoginPage() {
       {phase === 'flash' && (
         <FlashOverlay onComplete={() => setPhase('flip')} />
       )}
-      {phase === 'flip' && (
-        <FlipTransition onComplete={() => setPhase('login')}>
-          <LoginLayout>
-            <LoginForm />
-          </LoginLayout>
-        </FlipTransition>
-      )}
-      {phase === 'login' && (
+      {(phase === 'flip' || phase === 'login') && (
         <LoginLayout>
           <LoginForm />
         </LoginLayout>
+      )}
+      {phase === 'flip' && (
+        <FlipTransition onComplete={() => setPhase('login')} />
       )}
     </>
   )

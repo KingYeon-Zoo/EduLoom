@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
 interface FlipTransitionProps {
-  children: ReactNode
+  children?: ReactNode
   onComplete: () => void
 }
 

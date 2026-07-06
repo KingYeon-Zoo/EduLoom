@@ -1,0 +1,52 @@
+diff --git a/frontend/src/components/auth/LoginLayout.tsx b/frontend/src/components/auth/LoginLayout.tsx
+new file mode 100644
+index 0000000..c2de01b
+--- /dev/null
++++ b/frontend/src/components/auth/LoginLayout.tsx
+@@ -0,0 +1,46 @@
++'use client'
++
++import type { ReactNode } from 'react'
++import { BrandIllustration } from './BrandIllustration'
++import { useTranslation } from '@/lib/hooks/use-translation'
++
++interface LoginLayoutProps {
++  children: ReactNode
++}
++
++export function LoginLayout({ children }: LoginLayoutProps) {
++  const { t } = useTranslation()
++
++  return (
++    <div className="flex min-h-screen">
++      {/* Left panel — brand illustration + ambient glow */}
++      <div className="hidden md:flex flex-[2] relative items-center justify-center overflow-hidden
++                      bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950">
++        {/* Ambient glow orbs */}
++        <div
++          className="absolute -top-[10%] -left-[10%] w-[30rem] h-[30rem]
++                     bg-indigo-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"
++          style={{ animationDuration: '6s' }}
++        />
++        <div
++          className="absolute -bottom-[5%] -right-[10%] w-[25rem] h-[25rem]
++                     bg-violet-500/8 rounded-full blur-3xl animate-pulse pointer-events-none"
++          style={{ animationDuration: '8s' }}
++        />
++
++        {/* Content */}
++        <div className="relative z-10 flex flex-col items-center justify-center w-full">
++          <BrandIllustration />
++          <p className="mt-4 text-lg text-white/60 text-center font-sans">
++            {t('auth.brandSlogan')}
++          </p>
++        </div>
++      </div>
++
++      {/* Right panel — login form slot */}
++      <div className="flex-1 flex items-center justify-center bg-background p-4">
++        <div className="w-full max-w-sm">{children}</div>
++      </div>
++    </div>
++  )
++}

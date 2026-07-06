@@ -1,0 +1,54 @@
+diff --git a/frontend/src/lib/locales/en-US/index.ts b/frontend/src/lib/locales/en-US/index.ts
+index 74c52d1..94a1bfc 100644
+--- a/frontend/src/lib/locales/en-US/index.ts
++++ b/frontend/src/lib/locales/en-US/index.ts
+@@ -220,20 +220,22 @@ export const enUS = {
+     registerTitle: "Create Account",
+     registerDesc: "Register a new EduLoom account",
+     register: "Register",
+     registering: "Registering...",
+     confirmPasswordPlaceholder: "Confirm Password",
+     goToRegister: "Don't have an account? Register",
+     goToLogin: "Already have an account? Sign In",
+     captchaError: "Invalid captcha, please try again",
+     passwordsDoNotMatch: "Passwords do not match",
+     registerSuccess: "Registration successful, please sign in",
++    splashSubtitle: "Click anywhere to begin",
++    brandSlogan: "Your AI-powered research companion",
+   },
+   navigation: {
+     learn: "Learn",
+     create: "Create",
+     personal: "Personal",
+     manage: "Manage",
+     sources: "Sources",
+     notebooks: "Notebooks",
+     askAndSearch: "Ask and Search",
+     learnerProfile: "Learner Profile",
+diff --git a/frontend/src/lib/locales/zh-CN/index.ts b/frontend/src/lib/locales/zh-CN/index.ts
+index 7b3a924..d1f4491 100644
+--- a/frontend/src/lib/locales/zh-CN/index.ts
++++ b/frontend/src/lib/locales/zh-CN/index.ts
+@@ -220,20 +220,22 @@ export const zhCN = {
+     registerTitle: "创建账号",
+     registerDesc: "注册一个新的 EduLoom 账号",
+     register: "注册",
+     registering: "正在注册...",
+     confirmPasswordPlaceholder: "确认密码",
+     goToRegister: "没有账号？去注册",
+     goToLogin: "已有账号？去登录",
+     captchaError: "验证码错误，请重试",
+     passwordsDoNotMatch: "两次输入的密码不一致",
+     registerSuccess: "注册成功，请登录",
++    splashSubtitle: "点击任意处开始",
++    brandSlogan: "你的 AI 智能研究助手",
+   },
+   navigation: {
+     learn: "学习",
+     create: "创作",
+     personal: "个人中心",
+     manage: "管理",
+     sources: "资料库",
+     notebooks: "笔记本",
+     askAndSearch: "AI 问答",
+     learnerProfile: "学习画像",
