@@ -90,7 +90,39 @@ export function ChatPanel({
   generationSuggestion,
   onDismissSuggestion,
 }: ChatPanelProps) {
-  const { t } = useTranslation()
+  const { t, language, i18n } = useTranslation()
+  const [loadingIndex, setLoadingIndex] = useState(0)
+
+  // ChatGPT-style rotating thinking message status
+  useEffect(() => {
+    if (!isStreaming) {
+      setLoadingIndex(0)
+      return
+    }
+    const interval = setInterval(() => {
+      setLoadingIndex((prev) => (prev + 1) % 4)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [isStreaming])
+
+  const zhLoadingTexts = [
+    '正在思考...',
+    '正在检索知识库向量...',
+    '正在整理资料...',
+    '正在整合生成回复...'
+  ]
+
+  const enLoadingTexts = [
+    'Thinking...',
+    'Searching knowledge base vector...',
+    'Synthesizing context...',
+    'Generating response...'
+  ]
+
+  const currentLanguage = language || i18n?.language || 'zh-CN'
+  const loadingTexts = currentLanguage.startsWith('zh') ? zhLoadingTexts : enLoadingTexts
+  const currentLoadingText = loadingTexts[loadingIndex]
+
   const { error } = useToast()
   const router = useRouter()
   const chatInputId = useId()
@@ -310,8 +342,10 @@ export function ChatPanel({
                     <Bot className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="rounded-lg px-4 py-2 bg-muted">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="rounded-lg px-4 py-2 bg-muted/40 border border-border/30 flex items-center min-h-[40px]">
+                  <span className="text-sm text-muted-foreground/75 animate-pulse select-none font-medium">
+                    {currentLoadingText}
+                  </span>
                 </div>
               </div>
             )}

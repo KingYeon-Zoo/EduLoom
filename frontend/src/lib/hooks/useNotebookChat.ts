@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/utils/error-handler'
@@ -28,6 +28,7 @@ interface UseNotebookChatParams {
 export function useNotebookChat({ notebookId, sources, notes, contextSelections }: UseNotebookChatParams) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<NotebookChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
@@ -211,6 +212,12 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
       }
     }
 
+    // Clear any existing typing animation timer
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current)
+      typingTimerRef.current = null
+    }
+
     // Add user message optimistically
     const userMessage: NotebookChatMessage = {
       id: `temp-${Date.now()}`,
@@ -222,6 +229,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     setIsSending(true)
     // Clear any prior tutoring suggestion when a new turn starts.
     setGenerationSuggestion(null)
+
+    let hasStartedTyping = false
 
     try {
       // Build context and send message
@@ -235,9 +244,60 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
           currentSession?.reasoning_effort ?? pendingReasoningEffort ?? undefined
       })
 
-      // Update messages with API response
-      setMessages(response.messages)
-      setGenerationSuggestion(response.generation_suggestion ?? null)
+      // Pseudo-streaming (typing effect)
+      const finalMessages = response.messages
+      const lastMsg = finalMessages[finalMessages.length - 1]
+
+      if (lastMsg && lastMsg.type === 'ai') {
+        hasStartedTyping = true
+        const fullContent = lastMsg.content
+        let currentText = ''
+        const textLength = fullContent.length
+
+        // Insert a temporary empty AI message for the typing effect
+        const tempAiMessage: NotebookChatMessage = {
+          id: `temp-ai-${Date.now()}`,
+          type: 'ai',
+          content: '',
+          timestamp: new Date().toISOString()
+        }
+        setMessages(prev => [...prev, tempAiMessage])
+
+        let index = 0
+        // Complete the typing effect step-by-step to simulate real-time generation
+        // For a true gradual generation experience, output 1 character at a time.
+        // For very long texts (>500 chars), speed up slightly to 2 characters to keep waiting time reasonable.
+        const step = textLength > 500 ? 2 : 1
+        const speed = 35 // 35ms per tick (slower and more organic)
+
+        typingTimerRef.current = setInterval(() => {
+          index += step
+          if (index >= textLength) {
+            if (typingTimerRef.current) {
+              clearInterval(typingTimerRef.current)
+              typingTimerRef.current = null
+            }
+            // Switch to final actual messages from API response
+            setMessages(finalMessages)
+            setGenerationSuggestion(response.generation_suggestion ?? null)
+            setIsSending(false)
+          } else {
+            currentText = fullContent.substring(0, index)
+            setMessages(prev =>
+              prev.map(msg =>
+                msg.id === tempAiMessage.id
+                  ? { ...msg, content: currentText }
+                  : msg
+              )
+            )
+          }
+        }, speed)
+      } else {
+        // Fallback for non-AI final message
+        setMessages(finalMessages)
+        setGenerationSuggestion(response.generation_suggestion ?? null)
+        setIsSending(false)
+      }
 
       // Refetch current session to get updated data
       await refetchCurrentSession()
@@ -246,9 +306,11 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
       console.error('Error sending message:', error)
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToSendMessage'))
       // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-') && !msg.id.startsWith('temp-ai-')))
     } finally {
-      setIsSending(false)
+      if (!hasStartedTyping) {
+        setIsSending(false)
+      }
     }
   }, [
     notebookId,
@@ -263,8 +325,22 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
   // Switch session
   const switchSession = useCallback((sessionId: string) => {
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current)
+      typingTimerRef.current = null
+    }
     setCurrentSessionId(sessionId)
   }, [])
+
+  // Clean up typing timer on unmount or session change
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearInterval(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
+    }
+  }, [currentSessionId])
 
   // Create session
   const createSession = useCallback((title?: string) => {
