@@ -16,27 +16,16 @@ interface SplashScreenProps {
 }
 
 /**
- * Loom meteor configs — two crossing groups create a weaving fabric effect:
- *   warp (经线): 左下 → 右上 ↗  (bottom-left to top-right)
- *   weft (纬线): 右下 → 左上 ↖  (bottom-right to top-left)
- * Dense coverage: 12 per group = 24 total, varied timing & position.
+ * Meteor shower — single direction: 左下 → 右上 ↗
+ * Dense stream (48 trails) traversing the full viewport.
  */
-const WARP = Array.from({ length: 12 }, (_, i) => ({
-  id: `warp-${i}`,
-  left: `${2 + (i * 8.5) % 96}%`,
-  top: `${90 + (i * 9) % 20}%`,        // start near bottom
-  delay: `${(i * 0.45) % 4}s`,
-  duration: `${2.2 + (i * 0.35) % 2.5}s`,
-  width: `${50 + (i * 25) % 90}px`,
-}))
-
-const WEFT = Array.from({ length: 12 }, (_, i) => ({
-  id: `weft-${i}`,
-  left: `${2 + (i * 8.5) % 96}%`,
-  top: `${90 + ((i + 6) * 9) % 20}%`,  // offset phase from warp
-  delay: `${0.5 + (i * 0.45) % 4}s`,
-  duration: `${2.2 + ((i + 3) * 0.35) % 2.5}s`,
-  width: `${50 + ((i + 3) * 25) % 90}px`,
+const METEORS = Array.from({ length: 48 }, (_, i) => ({
+  id: `m-${i}`,
+  left: `${-5 + (i * 2.2) % 110}%`,       // spread from off-screen left to off-screen right
+  top: `${85 + (i * 3.7) % 30}%`,          // start near bottom, varied height
+  delay: `${(i * 0.18) % 3}s`,             // tight stagger for continuous stream
+  duration: `${1.8 + (i * 0.08) % 1.2}s`,  // slightly varied speed
+  width: `${40 + (i * 11) % 80}px`,        // varied trail length
 }))
 
 export function SplashScreen({ onClick }: SplashScreenProps) {
@@ -137,47 +126,26 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
         />
       )}
 
-      {/* ── Loom meteor shower (warp ↗ + weft ↖) ── */}
-      {!prefersReducedMotion && (
-        <>
-          {WARP.map((m) => (
-            <div
-              key={m.id}
-              className="absolute pointer-events-none"
-              style={{
-                left: m.left,
-                top: m.top,
-                width: m.width,
-                height: '1.5px',
-                background:
-                  'linear-gradient(90deg, rgba(199,210,254,0) 0%, rgba(199,210,254,0.8) 55%, rgba(255,255,255,1) 100%)',
-                borderRadius: '1px',
-                boxShadow: '0 0 4px rgba(199,210,254,0.6)',
-                animation: `meteor-warp ${m.duration} ${m.delay} linear infinite`,
-                opacity: 0,
-              }}
-            />
-          ))}
-          {WEFT.map((m) => (
-            <div
-              key={m.id}
-              className="absolute pointer-events-none"
-              style={{
-                left: m.left,
-                top: m.top,
-                width: m.width,
-                height: '1.5px',
-                background:
-                  'linear-gradient(270deg, rgba(199,210,254,0) 0%, rgba(199,210,254,0.8) 55%, rgba(255,255,255,1) 100%)',
-                borderRadius: '1px',
-                boxShadow: '0 0 4px rgba(199,210,254,0.6)',
-                animation: `meteor-weft ${m.duration} ${m.delay} linear infinite`,
-                opacity: 0,
-              }}
-            />
-          ))}
-        </>
-      )}
+      {/* ── Meteor shower (bottom-left → top-right ↗) ── */}
+      {!prefersReducedMotion &&
+        METEORS.map((m) => (
+          <div
+            key={m.id}
+            className="absolute pointer-events-none"
+            style={{
+              left: m.left,
+              top: m.top,
+              width: m.width,
+              height: '1.5px',
+              background:
+                'linear-gradient(90deg, rgba(199,210,254,0) 0%, rgba(199,210,254,0.8) 55%, rgba(255,255,255,1) 100%)',
+              borderRadius: '1px',
+              boxShadow: '0 0 4px rgba(199,210,254,0.6)',
+              animation: `meteor-warp ${m.duration} ${m.delay} linear infinite`,
+              opacity: 0,
+            }}
+          />
+        ))}
 
       {/* ── Ripple layer ── */}
       {!prefersReducedMotion &&
