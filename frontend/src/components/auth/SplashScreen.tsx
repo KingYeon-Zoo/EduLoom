@@ -28,6 +28,14 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false
 
+  // Detect touch devices (no hover capability) for center glow fallback
+  const isTouchDevice =
+    typeof window !== 'undefined'
+      ? window.matchMedia('(hover: none)').matches
+      : false
+
+  const showCenterGlow = prefersReducedMotion || isTouchDevice
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -99,7 +107,7 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
         )}
 
       {/* Center glow for reduced-motion / touch devices */}
-      {prefersReducedMotion && (
+      {showCenterGlow && (
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
                      w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl animate-pulse pointer-events-none"
