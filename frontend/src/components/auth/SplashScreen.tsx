@@ -1,0 +1,129 @@
+'use client'
+
+import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from '@/lib/hooks/use-translation'
+
+interface Ripple {
+  id: number
+  x: number
+  y: number
+  opacity: number
+  scale: number
+}
+
+interface SplashScreenProps {
+  onClick: () => void
+}
+
+export function SplashScreen({ onClick }: SplashScreenProps) {
+  const { t } = useTranslation()
+  const [ripples, setRipples] = useState<(Ripple | null)[]>(() => Array(8).fill(null))
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
+  const nextSlotRef = useRef(0)
+  const idCounterRef = useRef(0)
+
+  // Check prefers-reduced-motion on mount (safe since this is client-only)
+  const prefersReducedMotion =
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+
+      // Normalized position for parallax (0 to 1)
+      setMousePos({
+        x: x / rect.width,
+        y: y / rect.height,
+      })
+
+      if (prefersReducedMotion) return
+
+      const id = idCounterRef.current++
+      const slot = nextSlotRef.current
+      nextSlotRef.current = (slot + 1) % 8
+
+      setRipples((prev) => {
+        const next = [...prev]
+        next[slot] = { id, x, y, opacity: 1, scale: 1 }
+        return next
+      })
+
+      // Fade out ripple after one frame
+      requestAnimationFrame(() => {
+        setRipples((prev) => {
+          const next = [...prev]
+          if (next[slot]?.id === id) {
+            next[slot] = { ...next[slot]!, opacity: 0, scale: 2 }
+          }
+          return next
+        })
+      })
+    },
+    [prefersReducedMotion],
+  )
+
+  const parallaxX = (mousePos.x - 0.5) * 10
+  const parallaxY = (mousePos.y - 0.5) * 10
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer overflow-hidden
+                 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950"
+      onMouseMove={handleMouseMove}
+      onClick={onClick}
+    >
+      {/* Ripple layer */}
+      {!prefersReducedMotion &&
+        ripples.map((ripple, i) =>
+          ripple ? (
+            <div
+              key={`${ripple.id}-${i}`}
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                left: ripple.x - 60,
+                top: ripple.y - 60,
+                width: 120,
+                height: 120,
+                background:
+                  'radial-gradient(circle, oklch(0.546 0.245 262.881 / 0.2) 0%, transparent 70%)',
+                opacity: ripple.opacity,
+                transform: `scale(${ripple.scale})`,
+                transition: 'opacity 800ms ease-out, transform 800ms ease-out',
+              }}
+            />
+          ) : null,
+        )}
+
+      {/* Center glow for reduced-motion / touch devices */}
+      {prefersReducedMotion && (
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                     w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl animate-pulse pointer-events-none"
+          style={{ animationDuration: '4s' }}
+        />
+      )}
+
+      {/* Brand text with parallax */}
+      <div
+        className="text-center select-none"
+        style={{
+          transform: prefersReducedMotion
+            ? 'none'
+            : `translate(${parallaxX}px, ${parallaxY}px)`,
+          transition: 'transform 0.1s ease-out',
+        }}
+      >
+        <h1 className="font-heading text-6xl font-bold text-white tracking-wide">
+          EduLoom
+        </h1>
+        <p className="mt-4 text-lg text-white/60 font-sans">
+          {t('auth.splashSubtitle')}
+        </p>
+      </div>
+    </div>
+  )
+}
