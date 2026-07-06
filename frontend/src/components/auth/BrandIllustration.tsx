@@ -1,0 +1,51 @@
+// frontend/src/components/auth/BrandIllustration.tsx
+export function BrandIllustration() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-8">
+      {/* Abstract geometric brand illustration */}
+      <svg
+        viewBox="0 0 400 300"
+        className="w-full max-w-md"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="EduLoom brand illustration"
+      >
+        {/* Central glowing orb */}
+        <defs>
+          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="oklch(0.725 0.153 78.68)" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="oklch(0.546 0.245 262.881)" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="oklch(0.546 0.245 262.881)" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="oklch(0.546 0.245 262.881)" stopOpacity="0.2" />
+          </radialGradient>
+        </defs>
+        {/* Background glow */}
+        <circle cx="200" cy="150" r="120" fill="url(#centerGlow)" />
+        {/* Connected nodes — knowledge graph metaphor */}
+        <line x1="120" y1="90" x2="200" y2="150" stroke="oklch(0.546 0.245 262.881 / 0.4)" strokeWidth="1.5" />
+        <line x1="280" y1="80" x2="200" y2="150" stroke="oklch(0.546 0.245 262.881 / 0.4)" strokeWidth="1.5" />
+        <line x1="140" y1="210" x2="200" y2="150" stroke="oklch(0.725 0.153 78.68 / 0.3)" strokeWidth="1.5" />
+        <line x1="270" y1="200" x2="200" y2="150" stroke="oklch(0.725 0.153 78.68 / 0.3)" strokeWidth="1.5" />
+        <line x1="200" y1="60" x2="200" y2="150" stroke="oklch(0.64 0.21 266.85 / 0.35)" strokeWidth="1.5" />
+        <line x1="200" y1="260" x2="200" y2="150" stroke="oklch(0.64 0.21 266.85 / 0.35)" strokeWidth="1.5" />
+        {/* Nodes */}
+        <circle cx="120" cy="90" r="8" fill="url(#nodeGlow)" />
+        <circle cx="280" cy="80" r="10" fill="url(#nodeGlow)" />
+        <circle cx="140" cy="210" r="7" fill="url(#nodeGlow)" />
+        <circle cx="270" cy="200" r="9" fill="url(#nodeGlow)" />
+        <circle cx="200" cy="60" r="6" fill="url(#nodeGlow)" />
+        <circle cx="200" cy="260" r="7" fill="url(#nodeGlow)" />
+        {/* Central node — larger, amber accent */}
+        <circle cx="200" cy="150" r="16" fill="url(#nodeGlow)" />
+        <circle cx="200" cy="150" r="8" fill="oklch(0.725 0.153 78.68)" opacity="0.7" />
+        {/* Small floating particles */}
+        <circle cx="90" cy="150" r="2" fill="oklch(0.89 0.01 268.12 / 0.3)" />
+        <circle cx="310" cy="130" r="2.5" fill="oklch(0.89 0.01 268.12 / 0.25)" />
+        <circle cx="170" cy="40" r="1.5" fill="oklch(0.89 0.01 268.12 / 0.2)" />
+        <circle cx="240" cy="270" r="2" fill="oklch(0.89 0.01 268.12 / 0.2)" />
+      </svg>
+    </div>
+  )
+}
