@@ -202,7 +202,7 @@ export function LoginForm() {
   // Show loading while checking if auth is required
   if (!hasHydrated || isCheckingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center">
         <LoadingSpinner />
       </div>
     )
@@ -211,7 +211,7 @@ export function LoginForm() {
   // If we still don't know if auth is required (connection error), show error
   if (authRequired === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-destructive/50 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-destructive flex items-center justify-center gap-2">
