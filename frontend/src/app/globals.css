@@ -251,23 +251,43 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   Splash Screen — Meteor Shower Keyframes
+   Splash Screen — Loom Meteor Shower Keyframes
+   经线 (warp): 左下 → 右上 ↗
+   纬线 (weft): 右下 → 左上 ↖
+   两组交织形成"织机" loom 效果
    ═══════════════════════════════════════════════════════ */
 
-@keyframes meteor-fall {
+@keyframes meteor-warp {
   0% {
     opacity: 0;
-    transform: rotate(-40deg) translateX(0) translateY(0);
+    transform: rotate(35deg) translateX(0) translateY(0);
   }
-  5% {
+  4% {
     opacity: 1;
   }
-  70% {
+  65% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: rotate(-40deg) translateX(-600px) translateY(500px);
+    transform: rotate(35deg) translateX(700px) translateY(-700px);
+  }
+}
+
+@keyframes meteor-weft {
+  0% {
+    opacity: 0;
+    transform: rotate(-35deg) translateX(0) translateY(0);
+  }
+  4% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-35deg) translateX(-700px) translateY(-700px);
   }
 }
 
