@@ -353,7 +353,7 @@ export function LoginForm() {
                       title={language === 'zh-CN' ? '点击刷新验证码' : 'Click to refresh captcha'}
                     />
                   ) : (
-                    <span className="text-xs text-slate-500 pl-3">Loading...</span>
+                    <span className="text-xs text-muted-foreground pl-3">Loading...</span>
                   )}
                   <button
                     type="button"
