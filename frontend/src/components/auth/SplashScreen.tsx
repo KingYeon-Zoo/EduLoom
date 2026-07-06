@@ -15,20 +15,29 @@ interface SplashScreenProps {
   onClick: () => void
 }
 
+/** Generate randomized meteor configs once — stable across renders */
+const METEORS = Array.from({ length: 8 }, (_, i) => ({
+  id: i,
+  left: `${5 + (i * 13) % 90}%`,       // spread across viewport width
+  top: `${-5 - (i * 7) % 20}%`,         // start above viewport
+  delay: `${(i * 0.7) % 3.5}s`,
+  duration: `${2 + (i * 0.6) % 3}s`,
+  width: `${60 + (i * 20) % 100}px`,    // varied trail length
+}))
+
 export function SplashScreen({ onClick }: SplashScreenProps) {
   const { t } = useTranslation()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [ripples, setRipples] = useState<(Ripple | null)[]>(() => Array(8).fill(null))
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
   const nextSlotRef = useRef(0)
   const idCounterRef = useRef(0)
 
-  // Check prefers-reduced-motion on mount (safe since this is client-only)
   const prefersReducedMotion =
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false
 
-  // Detect touch devices (no hover capability) for center glow fallback
   const isTouchDevice =
     typeof window !== 'undefined'
       ? window.matchMedia('(hover: none)').matches
@@ -42,11 +51,13 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
 
-      // Normalized position for parallax (0 to 1)
-      setMousePos({
-        x: x / rect.width,
-        y: y / rect.height,
-      })
+      setMousePos({ x: x / rect.width, y: y / rect.height })
+
+      // Update CSS custom properties for spotlight (no React re-render)
+      if (containerRef.current) {
+        containerRef.current.style.setProperty('--spotlight-x', `${x}px`)
+        containerRef.current.style.setProperty('--spotlight-y', `${y}px`)
+      }
 
       if (prefersReducedMotion) return
 
@@ -60,7 +71,6 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
         return next
       })
 
-      // Fade out ripple after one frame
       requestAnimationFrame(() => {
         setRipples((prev) => {
           const next = [...prev]
@@ -74,11 +84,8 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
     [prefersReducedMotion],
   )
 
-  // Clear ripple buffer on window resize to avoid stale positions
   useEffect(() => {
-    const handleResize = () => {
-      setRipples(Array(8).fill(null))
-    }
+    const handleResize = () => setRipples(Array(8).fill(null))
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -88,12 +95,56 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
 
   return (
     <div
+      ref={containerRef}
       className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer overflow-hidden
                  bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950"
       onMouseMove={handleMouseMove}
       onClick={onClick}
+      style={
+        {
+          '--spotlight-x': '50%',
+          '--spotlight-y': '50%',
+        } as React.CSSProperties
+      }
     >
-      {/* Ripple layer */}
+      {/* ── Spotlight lens — follows mouse, brightens/magnifies area ── */}
+      {!prefersReducedMotion && (
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background: `radial-gradient(
+              circle 140px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+              rgba(255, 255, 255, 0.07) 0%,
+              rgba(168, 180, 255, 0.04) 40%,
+              transparent 70%
+            )`,
+            transition: 'opacity 0.2s ease-out',
+          }}
+        />
+      )}
+
+      {/* ── Meteor shower ── */}
+      {!prefersReducedMotion &&
+        METEORS.map((m) => (
+          <div
+            key={m.id}
+            className="absolute pointer-events-none"
+            style={{
+              left: m.left,
+              top: m.top,
+              width: m.width,
+              height: '2px',
+              background:
+                'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(199,210,254,1) 100%)',
+              borderRadius: '1px',
+              transform: 'rotate(-40deg)',
+              animation: `meteor-fall ${m.duration} ${m.delay} linear infinite`,
+              opacity: 0,
+            }}
+          />
+        ))}
+
+      {/* ── Ripple layer ── */}
       {!prefersReducedMotion &&
         ripples.map((ripple, i) =>
           ripple ? (
@@ -115,7 +166,7 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
           ) : null,
         )}
 
-      {/* Center glow for reduced-motion / touch devices */}
+      {/* ── Center glow for reduced-motion / touch devices ── */}
       {showCenterGlow && (
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
@@ -124,9 +175,9 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
         />
       )}
 
-      {/* Brand text with parallax */}
+      {/* ── Brand text with parallax ── */}
       <div
-        className="text-center select-none"
+        className="text-center select-none relative z-10"
         style={{
           transform: prefersReducedMotion
             ? 'none'
