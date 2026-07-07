@@ -259,7 +259,7 @@
 @keyframes meteor-warp {
   0% {
     opacity: 0;
-    transform: rotate(35deg) translateX(0) translateY(0);
+    transform: translateX(-100px) rotate(35deg);
   }
   3% {
     opacity: 1;
@@ -269,7 +269,7 @@
   }
   100% {
     opacity: 0;
-    transform: rotate(35deg) translateX(800px) translateY(-800px);
+    transform: translateX(1000px) rotate(35deg);
   }
 }
 
