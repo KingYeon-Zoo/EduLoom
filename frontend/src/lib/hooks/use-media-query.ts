@@ -7,10 +7,16 @@ import { useState, useEffect } from 'react'
  * Returns false during SSR to avoid hydration mismatches.
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false)
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches
+    }
+    return false
+  })
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(query)
+    // Sync in case the lazy initializer missed (SSR or first paint)
     setMatches(mediaQuery.matches)
 
     const handler = (event: MediaQueryListEvent) => {

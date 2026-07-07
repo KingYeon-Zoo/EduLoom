@@ -150,6 +150,10 @@ export const enUS = {
     searchNotebooks: "Search notebooks",
     untitled: "Untitled",
   },
+  sidebar: {
+    expand: "Expand sidebar",
+    collapse: "Collapse sidebar",
+  },
   apiErrors: {
     notebookNotFound: "Notebook not found",
     sourceNotFound: "Source not found",

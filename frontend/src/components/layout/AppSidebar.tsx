@@ -54,7 +54,8 @@ import {
   ArrowLeftRight,
 } from 'lucide-react'
 
-// Routes belonging to the management/admin side
+// ── Helpers ──
+
 const ADMIN_PREFIXES = ['/settings', '/transformations', '/advanced']
 
 function deriveMode(pathname: string | null): AppMode {
@@ -105,6 +106,308 @@ const getAdminNav = (t: TFunction) => [
 
 type CreateTarget = 'source' | 'notebook' | 'podcast' | 'report' | 'quiz' | 'video' | 'mindmap' | 'ppt'
 
+// ── Collapsed panel — always rendered, z-10 ──
+
+function CollapsedBar({
+  t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen,
+  handleCreateSelection, logout,
+}: {
+  t: ReturnType<typeof useTranslation>['t']
+  pathname: string | null
+  mode: AppMode
+  handleToggle: () => void
+  navigation: ReturnType<typeof getFeatureNav>
+  createMenuOpen: boolean
+  setCreateMenuOpen: (v: boolean) => void
+  handleCreateSelection: (target: CreateTarget) => void
+  logout: () => void
+}) {
+  return (
+    <div className="flex h-full flex-col bg-sidebar">
+      {/* Header — hamburger toggle */}
+      <div className="flex h-16 items-center justify-center px-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggle}
+              className="text-sidebar-foreground hover:bg-sidebar-accent"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {t('sidebar.expand')}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 py-2 overflow-y-auto px-2">
+        {/* Create button */}
+        {mode === 'feature' && (
+          <div className="mb-4 px-0">
+            <DropdownMenu open={createMenuOpen} onOpenChange={setCreateMenuOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      onClick={() => setCreateMenuOpen(true)}
+                      variant="default"
+                      size="sm"
+                      className="w-full justify-center px-2 bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+                      aria-label={t('common.create')}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">{t('common.create')}</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" side="right" className="w-48">
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('source') }} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('notebook') }} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('podcast') }} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('report') }} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('quiz') }} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('video') }} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('mindmap') }} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('ppt') }} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {/* Nav items — icons with tooltips */}
+        {navigation.map((section, idx) => (
+          <div key={section.title} className="space-y-1">
+            {idx > 0 && <Separator className="my-3" />}
+            {section.items.map((item) => {
+              const isActive = item.href === '/settings'
+                ? pathname === '/settings'
+                : (pathname?.startsWith(item.href) || false)
+              return (
+                <Tooltip key={item.name}>
+                  <TooltipTrigger asChild>
+                    <Link href={item.href}>
+                      <Button
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        className={cn(
+                          'w-full justify-center px-2 gap-3 text-sidebar-foreground sidebar-menu-item',
+                          isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{item.name}</TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-3 space-y-3 px-2">
+        <div className="flex flex-col gap-2 items-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-center sidebar-menu-item" asChild>
+                <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
+                  <ArrowLeftRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild><div><ThemeToggle iconOnly /></div></TooltipTrigger>
+            <TooltipContent side="right">{t('common.theme')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild><div><LanguageToggle iconOnly /></div></TooltipTrigger>
+            <TooltipContent side="right">{t('common.language')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" className="w-full justify-center sidebar-menu-item" onClick={logout} aria-label={t('common.signOut')}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t('common.signOut')}</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Expanded panel — slides in/out via translateX, z-20 ──
+
+function ExpandedBar({
+  t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen,
+  handleCreateSelection, isMac, logout,
+}: {
+  t: ReturnType<typeof useTranslation>['t']
+  pathname: string | null
+  mode: AppMode
+  handleToggle: () => void
+  navigation: ReturnType<typeof getFeatureNav>
+  createMenuOpen: boolean
+  setCreateMenuOpen: (v: boolean) => void
+  handleCreateSelection: (target: CreateTarget) => void
+  isMac: boolean
+  logout: () => void
+}) {
+  return (
+    <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border">
+      {/* Header — logo + collapse toggle */}
+      <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex-1 flex items-center px-1">
+          <Image
+            src="/EduLoom_logo.png"
+            alt={t('common.appName')}
+            width={1499}
+            height={363}
+            className="w-full h-auto max-h-14"
+            priority
+          />
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggle}
+              className="text-sidebar-foreground hover:bg-sidebar-accent"
+              data-testid="sidebar-toggle"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {t('sidebar.collapse')}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Brand accent */}
+      <div className="sidebar-brand-accent mb-1" />
+
+      {/* Mode badge */}
+      <div className="text-xs font-semibold uppercase tracking-wider p-0.5 rounded text-center bg-transparent text-sidebar-foreground/60 mx-3 mb-1">
+        {mode === 'feature' ? t('navigation.featureMode') : t('navigation.adminMode')}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 py-2 overflow-y-auto px-3">
+        {mode === 'feature' && (
+          <div className="mb-4 px-3">
+            <DropdownMenu open={createMenuOpen} onOpenChange={setCreateMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  onClick={() => setCreateMenuOpen(true)}
+                  variant="default"
+                  size="sm"
+                  className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('common.create')}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="bottom" className="w-48">
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('source') }} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('notebook') }} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('podcast') }} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('report') }} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('quiz') }} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('video') }} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('mindmap') }} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('ppt') }} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {navigation.map((section, idx) => (
+          <div key={section.title} className="space-y-1">
+            {idx > 0 && <Separator className="my-3" />}
+            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              {section.title}
+            </h3>
+            {section.items.map((item) => {
+              const isActive = item.href === '/settings'
+                ? pathname === '/settings'
+                : (pathname?.startsWith(item.href) || false)
+              return (
+                <Link key={item.name} href={item.href}>
+                  <Button
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    className={cn(
+                      'w-full justify-start gap-3 text-sidebar-foreground sidebar-menu-item',
+                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Button>
+                </Link>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-3 space-y-3">
+        <div className="px-3 py-1.5 text-xs text-sidebar-foreground/60">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Command className="h-3 w-3" />
+              {t('common.quickActions')}
+            </span>
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              {isMac ? <span className="text-xs">⌘</span> : <span>Ctrl+</span>}K
+            </kbd>
+          </div>
+          <p className="mt-1 text-[10px] text-sidebar-foreground/40">
+            {t('common.quickActionsDesc')}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 items-stretch">
+          <Button variant="outline" className="w-full justify-start gap-3 sidebar-menu-item" asChild>
+            <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
+              <ArrowLeftRight className="h-4 w-4" />
+              {mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}
+            </Link>
+          </Button>
+          <ThemeToggle />
+          <LanguageToggle />
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-3 sidebar-menu-item"
+            onClick={logout}
+            aria-label={t('common.signOut')}
+          >
+            <LogOut className="h-4 w-4" />
+            {t('common.signOut')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main AppSidebar — two stacked panels with GPU transform ──
+
 export function AppSidebar() {
   const { t } = useTranslation()
   const pathname = usePathname()
@@ -131,7 +434,6 @@ export function AppSidebar() {
   }, [isDesktop, setForcedCollapse])
 
   // Auto-collapse on medium screens, auto-expand on large screens
-  // Only applies when user hasn't manually toggled
   useEffect(() => {
     if (isXl && !hasManuallyToggled) {
       setCollapsed(false)
@@ -140,7 +442,7 @@ export function AppSidebar() {
     }
   }, [isDesktop, isXl, hasManuallyToggled, setCollapsed])
 
-  // Reset manual toggle flag when crossing breakpoints (so auto-behavior resumes)
+  // Reset manual toggle flag when crossing genuine breakpoints
   const [prevDesktop, setPrevDesktop] = useState(isDesktop)
   const [prevXl, setPrevXl] = useState(isXl)
   useEffect(() => {
@@ -155,10 +457,6 @@ export function AppSidebar() {
   useEffect(() => {
     setOverlayOpen(false)
   }, [pathname, setOverlayOpen])
-
-  const featureNav = getFeatureNav(t)
-  const adminNav = getAdminNav(t)
-  const navigation = mode === 'feature' ? featureNav : adminNav
 
   const { logout } = useAuth()
   const {
@@ -179,7 +477,6 @@ export function AppSidebar() {
     setIsMac(navigator.platform.toLowerCase().includes('mac'))
   }, [])
 
-  // Effective collapsed state: overlay mode overrides manual collapse
   const effectiveCollapsed = forcedCollapse ? !overlayOpen : isCollapsed
 
   const handleToggle = () => {
@@ -191,420 +488,58 @@ export function AppSidebar() {
   }
 
   const handleSidebarMouseEnter = () => {
-    if (forcedCollapse) {
-      setOverlayOpen(true)
-    }
+    if (forcedCollapse) setOverlayOpen(true)
   }
 
   const handleSidebarMouseLeave = () => {
-    if (forcedCollapse) {
-      setOverlayOpen(false)
-    }
+    if (forcedCollapse) setOverlayOpen(false)
   }
 
   const handleCreateSelection = (target: CreateTarget) => {
     setCreateMenuOpen(false)
-
-    if (target === 'source') {
-      openSourceDialog()
-    } else if (target === 'notebook') {
-      openNotebookDialog()
-    } else if (target === 'podcast') {
-      openPodcastDialog()
-    } else if (target === 'report') {
-      openReportDialog()
-    } else if (target === 'quiz') {
-      openQuizDialog()
-    } else if (target === 'video') {
-      openVideoDialog()
-    } else if (target === 'mindmap') {
-      openMindmapDialog()
-    } else if (target === 'ppt') {
-      openPptDialog()
+    const openMap: Record<CreateTarget, () => void> = {
+      source: openSourceDialog,
+      notebook: openNotebookDialog,
+      podcast: openPodcastDialog,
+      report: openReportDialog,
+      quiz: openQuizDialog,
+      video: openVideoDialog,
+      mindmap: openMindmapDialog,
+      ppt: openPptDialog,
     }
+    openMap[target]?.()
   }
+
+  const navigation = mode === 'feature' ? getFeatureNav(t) : getAdminNav(t)
+
+  const sharedProps = { t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen, handleCreateSelection, logout }
 
   return (
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          'app-sidebar flex h-full flex-col bg-sidebar border-sidebar-border border-r transition-all duration-300',
+          'app-sidebar h-full',
           forcedCollapse && 'absolute left-0 top-0 z-40',
           forcedCollapse && overlayOpen && 'shadow-2xl',
-          effectiveCollapsed ? 'w-16' : 'w-64'
         )}
+        style={forcedCollapse ? { width: overlayOpen ? '16rem' : '4rem' } : undefined}
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
       >
-        {/* Logo / Header */}
-        <div
-          className={cn(
-            'flex h-16 items-center group',
-            effectiveCollapsed ? 'justify-center px-2' : 'justify-between px-4'
-          )}
-        >
-          {effectiveCollapsed ? (
-            <div className="relative flex items-center justify-center w-full">
-              <Image
-                src="/logo.png"
-                alt={t('common.appName')}
-                width={28}
-                height={28}
-                className="transition-opacity group-hover:opacity-0"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggle}
-                className="absolute text-sidebar-foreground hover:bg-sidebar-accent opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 flex items-center px-1">
-                <Image
-                  src="/EduLoom_logo.png"
-                  alt={t('common.appName')}
-                  width={1499}
-                  height={363}
-                  className="w-full h-auto max-h-14"
-                  priority
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggle}
-                className="text-sidebar-foreground hover:bg-sidebar-accent"
-                data-testid="sidebar-toggle"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </>
-          )}
+        {/* ── Collapsed panel: always visible, z-10 ── */}
+        <div className="absolute inset-y-0 left-0 z-10 w-16">
+          <CollapsedBar {...sharedProps} />
         </div>
 
-        {/* Brand accent gradient */}
-        {!effectiveCollapsed && <div className="sidebar-brand-accent mb-1" />}
-
-        {/* Mode badge */}
-        {!effectiveCollapsed && (
-          <div className="text-xs font-semibold uppercase tracking-wider p-0.5 rounded text-center bg-transparent text-sidebar-foreground/60 mx-3 mb-1">
-            {mode === 'feature' ? t('navigation.featureMode') : t('navigation.adminMode')}
-          </div>
-        )}
-
-        {/* Navigation */}
-        <nav
-          className={cn(
-            'flex-1 space-y-1 py-2 overflow-y-auto',
-            effectiveCollapsed ? 'px-2' : 'px-3'
-          )}
-        >
-          {/* Create button — feature mode only */}
-          {mode === 'feature' && (
-            <div
-              className={cn(
-                'mb-4',
-                effectiveCollapsed ? 'px-0' : 'px-3'
-              )}
-            >
-              <DropdownMenu open={createMenuOpen} onOpenChange={setCreateMenuOpen}>
-                {effectiveCollapsed ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          onClick={() => setCreateMenuOpen(true)}
-                          variant="default"
-                          size="sm"
-                          className="w-full justify-center px-2 bg-primary hover:bg-primary/90 text-primary-foreground border-0"
-                          aria-label={t('common.create')}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{t('common.create')}</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      onClick={() => setCreateMenuOpen(true)}
-                      variant="default"
-                      size="sm"
-                      className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground border-0"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t('common.create')}
-                    </Button>
-                  </DropdownMenuTrigger>
-                )}
-
-                <DropdownMenuContent
-                  align={effectiveCollapsed ? 'end' : 'start'}
-                  side={effectiveCollapsed ? 'right' : 'bottom'}
-                  className="w-48"
-                >
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('source')
-                    }}
-                    className="gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    {t('navigation.sources')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('notebook')
-                    }}
-                    className="gap-2"
-                  >
-                    <Book className="h-4 w-4" />
-                    {t('navigation.notebooks')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('podcast')
-                    }}
-                    className="gap-2"
-                  >
-                    <Mic className="h-4 w-4" />
-                    {t('navigation.podcasts')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('report')
-                    }}
-                    className="gap-2"
-                  >
-                    <FileBarChart className="h-4 w-4" />
-                    {t('navigation.reports')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('quiz')
-                    }}
-                    className="gap-2"
-                  >
-                    <FileQuestion className="h-4 w-4" />
-                    {t('navigation.quiz')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('video')
-                    }}
-                    className="gap-2"
-                  >
-                    <Video className="h-4 w-4" />
-                    {t('navigation.videos')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('mindmap')
-                    }}
-                    className="gap-2"
-                  >
-                    <Network className="h-4 w-4" />
-                    {t('navigation.mindmaps')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      handleCreateSelection('ppt')
-                    }}
-                    className="gap-2"
-                  >
-                    <Presentation className="h-4 w-4" />
-                    {t('navigation.ppt')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-
-          {/* Nav sections */}
-          {navigation.map((section, index) => (
-            <div key={section.title}>
-              {index > 0 && (
-                <Separator className="my-3" />
-              )}
-              <div className="space-y-1">
-                {!effectiveCollapsed && (
-                  <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-                    {section.title}
-                  </h3>
-                )}
-
-                {section.items.map((item) => {
-                  const isActive = item.href === '/settings'
-                    ? pathname === '/settings'
-                    : (pathname?.startsWith(item.href) || false)
-                  const button = (
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      className={cn(
-                        'w-full gap-3 text-sidebar-foreground sidebar-menu-item',
-                        isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
-                        effectiveCollapsed ? 'justify-center px-2' : 'justify-start'
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!effectiveCollapsed && <span>{item.name}</span>}
-                    </Button>
-                  )
-
-                  if (effectiveCollapsed) {
-                    return (
-                      <Tooltip key={item.name}>
-                        <TooltipTrigger asChild>
-                          <Link href={item.href}>
-                            {button}
-                          </Link>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">{item.name}</TooltipContent>
-                      </Tooltip>
-                    )
-                  }
-
-                  return (
-                    <Link key={item.name} href={item.href}>
-                      {button}
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Footer */}
+        {/* ── Expanded panel: slides via GPU transform, z-20 ── */}
         <div
           className={cn(
-            'border-t border-sidebar-border p-3 space-y-3',
-            effectiveCollapsed && 'px-2'
+            'absolute inset-y-0 left-0 z-20 w-64',
+            'transition-transform duration-300 ease-out',
+            effectiveCollapsed ? '-translate-x-full' : 'translate-x-0',
           )}
         >
-          {/* Quick actions hint */}
-          {!effectiveCollapsed && (
-            <div className="px-3 py-1.5 text-xs text-sidebar-foreground/60">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Command className="h-3 w-3" />
-                  {t('common.quickActions')}
-                </span>
-                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                  {isMac ? <span className="text-xs">⌘</span> : <span>Ctrl+</span>}K
-                </kbd>
-              </div>
-              <p className="mt-1 text-[10px] text-sidebar-foreground/40">
-                {t('common.quickActionsDesc')}
-              </p>
-            </div>
-          )}
-
-          <div
-            className={cn(
-              'flex flex-col gap-2',
-              effectiveCollapsed ? 'items-center' : 'items-stretch'
-            )}
-          >
-            {/* Mode switcher */}
-            {effectiveCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-center sidebar-menu-item"
-                    asChild
-                  >
-                    <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
-                      <ArrowLeftRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  {mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 sidebar-menu-item"
-                asChild
-              >
-                <Link href={mode === 'feature' ? '/settings/api-keys' : '/notebooks'}>
-                  <ArrowLeftRight className="h-4 w-4" />
-                  {mode === 'feature' ? t('navigation.switchToAdmin') : t('navigation.switchToFeature')}
-                </Link>
-              </Button>
-            )}
-
-            {effectiveCollapsed ? (
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <ThemeToggle iconOnly />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{t('common.theme')}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <LanguageToggle iconOnly />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{t('common.language')}</TooltipContent>
-                </Tooltip>
-              </>
-            ) : (
-              <>
-                <ThemeToggle />
-                <LanguageToggle />
-              </>
-            )}
-
-            {effectiveCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center sidebar-menu-item"
-                    onClick={logout}
-                    aria-label={t('common.signOut')}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">{t('common.signOut')}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 sidebar-menu-item"
-                onClick={logout}
-                aria-label={t('common.signOut')}
-              >
-                <LogOut className="h-4 w-4" />
-                {t('common.signOut')}
-              </Button>
-            )}
-          </div>
+          <ExpandedBar {...sharedProps} isMac={isMac} />
         </div>
       </div>
     </TooltipProvider>

@@ -150,6 +150,10 @@ export const zhCN = {
     searchNotebooks: "搜索笔记本",
     untitled: "未命名",
   },
+  sidebar: {
+    expand: "展开侧边栏",
+    collapse: "折叠侧边栏",
+  },
   apiErrors: {
     notebookNotFound: "找不到笔记本",
     sourceNotFound: "找不到源文件",

@@ -18,16 +18,17 @@ const LIGHT_GRADIENT = ['#b91c1c', '#78350f', '#14532d']
 export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const { overlayOpen, forcedCollapse, setOverlayOpen } = useSidebarStore()
+  const { isCollapsed, overlayOpen, forcedCollapse, setOverlayOpen } = useSidebarStore()
   const { effectiveTheme } = useTheme()
   const isDark = effectiveTheme === 'dark'
 
   const showScrim = forcedCollapse && overlayOpen
+  const effectiveCollapsed = forcedCollapse ? !overlayOpen : isCollapsed
 
   return (
-    <div className="flex h-screen overflow-hidden relative">
+    <div className="h-screen overflow-hidden">
       {/* ── FloatingLines overlay — subtle wave lines over main content ── */}
-      <div className="absolute inset-0 z-[5] pointer-events-none opacity-[0.12]">
+      <div className="fixed inset-0 z-[5] pointer-events-none opacity-[0.12]">
         <FloatingLines
           enabledWaves={['bottom', 'top', 'middle']}
           lineCount={8}
@@ -41,6 +42,7 @@ export function AppShell({ children }: AppShellProps) {
           mixBlendMode="normal"
         />
       </div>
+
       {/* Skip-to-content link for keyboard users */}
       <a
         href="#main-content"
@@ -48,7 +50,12 @@ export function AppShell({ children }: AppShellProps) {
       >
         {t('common.skipToContent')}
       </a>
-      <AppSidebar />
+
+      {/* Sidebar container — fixed left, w-16; ExpandedBar overflows to w-64 when visible */}
+      <div className="fixed left-0 top-0 h-full z-40 w-16">
+        <AppSidebar />
+      </div>
+
       {/* Scrim overlay — dims content when sidebar expands on small screens */}
       {showScrim && (
         <div
@@ -56,10 +63,18 @@ export function AppShell({ children }: AppShellProps) {
           onClick={() => setOverlayOpen(false)}
         />
       )}
+
+      {/* Main content — margin-left follows sidebar width.
+           Desktop: transitions between collapsed (4rem) and expanded (16rem).
+           Mobile (overlay): always 4rem for the collapsed bar. */}
       <main
         id="main-content"
-        className="flex-1 flex flex-col min-h-0 overflow-hidden bg-background"
-        style={!isDesktop ? { paddingLeft: '4rem' } : undefined}
+        className="flex flex-col min-h-0 overflow-hidden bg-background h-full transition-[margin-left] duration-300 ease-out"
+        style={{
+          marginLeft: isDesktop
+            ? (effectiveCollapsed ? '4rem' : '16rem')
+            : '4rem'
+        }}
       >
         <SetupBanner />
         {children}
