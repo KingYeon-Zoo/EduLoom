@@ -1,200 +1,120 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { useTranslation } from '@/lib/hooks/use-translation'
-
-interface Ripple {
-  id: number
-  x: number
-  y: number
-  opacity: number
-  scale: number
-}
+import { useState, useEffect, type ReactNode } from 'react'
+import Lightfall from '@/components/Lightfall'
 
 interface SplashScreenProps {
-  onClick: () => void
+  children?: ReactNode
 }
 
-/**
- * Meteor shower — single direction: 左下 → 右上 ↗
- * Dense stream (48 trails) traversing the full viewport.
- */
-const METEORS = Array.from({ length: 48 }, (_, i) => ({
-  id: `m-${i}`,
-  left: `${-5 + (i * 2.2) % 110}%`,       // spread from off-screen left to off-screen right
-  top: `${85 + (i * 3.7) % 30}%`,          // start near bottom, varied height
-  delay: `${(i * 0.18) % 3}s`,             // tight stagger for continuous stream
-  duration: `${1.8 + (i * 0.08) % 1.2}s`,  // slightly varied speed
-  width: `${40 + (i * 11) % 80}px`,        // varied trail length
-}))
-
-export function SplashScreen({ onClick }: SplashScreenProps) {
-  const { t } = useTranslation()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [ripples, setRipples] = useState<(Ripple | null)[]>(() => Array(8).fill(null))
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
-  const nextSlotRef = useRef(0)
-  const idCounterRef = useRef(0)
-
-  const prefersReducedMotion =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false
-
-  const isTouchDevice =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(hover: none)').matches
-      : false
-
-  const showCenterGlow = prefersReducedMotion || isTouchDevice
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-
-      setMousePos({ x: x / rect.width, y: y / rect.height })
-
-      // Update CSS custom properties for spotlight (no React re-render)
-      if (containerRef.current) {
-        containerRef.current.style.setProperty('--spotlight-x', `${x}px`)
-        containerRef.current.style.setProperty('--spotlight-y', `${y}px`)
-      }
-
-      if (prefersReducedMotion) return
-
-      const id = idCounterRef.current++
-      const slot = nextSlotRef.current
-      nextSlotRef.current = (slot + 1) % 8
-
-      setRipples((prev) => {
-        const next = [...prev]
-        next[slot] = { id, x, y, opacity: 1, scale: 1 }
-        return next
-      })
-
-      requestAnimationFrame(() => {
-        setRipples((prev) => {
-          const next = [...prev]
-          if (next[slot]?.id === id) {
-            next[slot] = { ...next[slot]!, opacity: 0, scale: 2 }
-          }
-          return next
-        })
-      })
-    },
-    [prefersReducedMotion],
-  )
+export function SplashScreen({ children }: SplashScreenProps) {
+  const [revealed, setRevealed] = useState(false)
+  const [brandingGone, setBrandingGone] = useState(false)
 
   useEffect(() => {
-    const handleResize = () => setRipples(Array(8).fill(null))
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  const parallaxX = (mousePos.x - 0.5) * 10
-  const parallaxY = (mousePos.y - 0.5) * 10
+    if (revealed) {
+      // Unmount centered branding after its fade-out completes
+      const timer = setTimeout(() => setBrandingGone(true), 550)
+      return () => clearTimeout(timer)
+    }
+  }, [revealed])
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer overflow-hidden
-                 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950"
-      onMouseMove={handleMouseMove}
-      onClick={onClick}
-      style={
-        {
-          '--spotlight-x': '50%',
-          '--spotlight-y': '50%',
-        } as React.CSSProperties
-      }
-    >
-      {/* ── Spotlight lens — follows mouse, brightens/magnifies area ── */}
-      {!prefersReducedMotion && (
-        <div
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{
-            background: `radial-gradient(
-              circle 140px at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-              rgba(255, 255, 255, 0.07) 0%,
-              rgba(168, 180, 255, 0.04) 40%,
-              transparent 70%
-            )`,
-            transition: 'opacity 0.2s ease-out',
-          }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0A0729]">
+      {/* ── Lightfall WebGL background (always visible) ── */}
+      <div className="absolute inset-0 z-0">
+        <Lightfall
+          colors={['#A6C8FF', '#5227FF', '#FF9FFC']}
+          backgroundColor="#0A0729"
+          speed={0.4}
+          streakCount={3}
+          streakWidth={1.2}
+          streakLength={0.8}
+          glow={1.2}
+          density={0.5}
+          twinkle={1}
+          zoom={3}
+          backgroundGlow={0.4}
+          opacity={1}
+          mouseInteraction
+          mouseStrength={0.4}
+          mouseRadius={0.1}
         />
-      )}
-
-      {/* ── Meteor shower (bottom-left → top-right ↗) ── */}
-      {!prefersReducedMotion &&
-        METEORS.map((m) => (
-          <div
-            key={m.id}
-            className="absolute pointer-events-none"
-            style={{
-              left: m.left,
-              top: m.top,
-              width: m.width,
-              height: '1.5px',
-              background:
-                'linear-gradient(90deg, rgba(199,210,254,0) 0%, rgba(199,210,254,0.6) 55%, rgba(255,255,255,1) 100%)',
-              borderRadius: '1px',
-              boxShadow: '0 0 4px rgba(199,210,254,0.6)',
-              animation: `meteor-warp ${m.duration} ${m.delay} linear infinite`,
-              opacity: 0,
-            }}
-          />
-        ))}
-
-      {/* ── Ripple layer ── */}
-      {!prefersReducedMotion &&
-        ripples.map((ripple, i) =>
-          ripple ? (
-            <div
-              key={`${ripple.id}-${i}`}
-              className="absolute pointer-events-none rounded-full"
-              style={{
-                left: ripple.x - 60,
-                top: ripple.y - 60,
-                width: 120,
-                height: 120,
-                background:
-                  'radial-gradient(circle, oklch(0.546 0.245 262.881 / 0.2) 0%, transparent 70%)',
-                opacity: ripple.opacity,
-                transform: `scale(${ripple.scale})`,
-                transition: 'opacity 800ms ease-out, transform 800ms ease-out',
-              }}
-            />
-          ) : null,
-        )}
-
-      {/* ── Center glow for reduced-motion / touch devices ── */}
-      {showCenterGlow && (
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                     w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl animate-pulse pointer-events-none"
-          style={{ animationDuration: '4s' }}
-        />
-      )}
-
-      {/* ── Brand text with parallax ── */}
-      <div
-        className="text-center select-none relative z-10"
-        style={{
-          transform: prefersReducedMotion
-            ? 'none'
-            : `translate(${parallaxX}px, ${parallaxY}px)`,
-          transition: 'transform 0.1s ease-out',
-        }}
-      >
-        <h1 className="font-heading text-6xl font-bold text-white tracking-wide">
-          EduLoom
-        </h1>
-        <p className="mt-4 text-lg text-white/60 font-sans">
-          {t('auth.splashSubtitle')}
-        </p>
       </div>
+
+      {/* ── Splash branding — absolute overlay, fades out then unmounts ── */}
+      {!brandingGone && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center"
+          style={{
+            opacity: revealed ? 0 : 1,
+            pointerEvents: revealed ? 'none' : 'auto',
+            transition: 'opacity 500ms ease-out',
+          }}
+          onClick={() => setRevealed(true)}
+        >
+          <h1 className="font-heading text-9xl font-bold text-white tracking-wide cursor-pointer">
+            EduLoom
+          </h1>
+          <p className="mt-3 font-heading text-5xl font-medium tracking-[0.5em] text-white/85">
+            学织
+          </p>
+          <p className="mt-8 text-2xl font-sans font-light tracking-[0.15em] text-white/70">
+            你的智能AI学习助手
+          </p>
+          <div className="mt-10 h-px w-40 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          <p className="mt-10 text-lg font-sans tracking-[0.3em] text-white/40">
+            点击任意位置
+          </p>
+          <p className="mt-3 text-sm font-sans tracking-[0.2em] text-white/25">
+            开启新的篇章
+          </p>
+        </div>
+      )}
+
+      {/* ── Revealed layout: branding left + login card right, center-symmetric ── */}
+      {revealed && (
+        <div
+          className="relative z-10 flex items-center justify-center gap-12 lg:gap-20 w-full max-w-4xl px-6"
+          style={{
+            animation: 'revealLayout 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+          }}
+        >
+          <style>{`
+            @keyframes revealLayout {
+              from {
+                transform: scale(0.3);
+                opacity: 0;
+              }
+              to {
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+          `}</style>
+
+          {/* ── Left: Compact branding ── */}
+          <div className="hidden sm:flex flex-col items-end text-right flex-shrink-0">
+            <h2 className="font-heading text-5xl lg:text-6xl font-bold text-white tracking-wide leading-none">
+              EduLoom
+            </h2>
+            <p className="mt-2 font-heading text-2xl lg:text-3xl font-medium tracking-[0.4em] text-white/80">
+              学织
+            </p>
+            <p className="mt-4 text-sm lg:text-base font-sans font-light tracking-[0.1em] text-white/50">
+              你的智能AI学习助手
+            </p>
+          </div>
+
+          {/* ── Center divider ── */}
+          <div className="hidden sm:block w-px h-48 bg-gradient-to-b from-transparent via-white/15 to-transparent flex-shrink-0" />
+
+          {/* ── Right: Login card ── */}
+          <div className="flex-shrink-0 w-full max-w-sm">
+            {children}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
