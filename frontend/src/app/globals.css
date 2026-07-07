@@ -319,3 +319,22 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Sidebar frosted glass — semi-transparent to reveal FloatingLines behind
+   Placed outside @layer to beat Tailwind utility classes
+   ══════════════════════════════════════════════════════════════════════════ */
+.app-sidebar {
+  background-color: transparent !important;
+}
+
+.app-sidebar [class*="flex h-full flex-col"] {
+  background-color: color-mix(in oklch, var(--sidebar) 65%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Border also semi-transparent for cohesive look */
+.app-sidebar .border-sidebar-border {
+  border-color: color-mix(in oklch, var(--sidebar-border) 50%, transparent) !important;
+}

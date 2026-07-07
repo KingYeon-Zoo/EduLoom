@@ -526,17 +526,25 @@ export function AppSidebar() {
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
       >
-        {/* ── Collapsed panel: always visible, z-10 ── */}
-        <div className="absolute inset-y-0 left-0 z-10 w-16">
+        {/* ── Collapsed panel: slides out left when expanding, slides in after delay when collapsing ── */}
+        <div
+          className={cn(
+            'absolute inset-y-0 left-0 z-10 w-16',
+            'transition-transform duration-300 ease-out',
+            // Expand: slide out immediately. Collapse: slide in after ExpandedBar clears
+            effectiveCollapsed ? 'translate-x-0 delay-150' : '-translate-x-full delay-0',
+          )}
+        >
           <CollapsedBar {...sharedProps} />
         </div>
 
-        {/* ── Expanded panel: slides via GPU transform, z-20 ── */}
+        {/* ── Expanded panel: slides in after delay when expanding, slides out immediately when collapsing ── */}
         <div
           className={cn(
             'absolute inset-y-0 left-0 z-20 w-64',
             'transition-transform duration-300 ease-out',
-            effectiveCollapsed ? '-translate-x-full' : 'translate-x-0',
+            // Expand: slide in after CollapsedBar clears. Collapse: slide out immediately
+            effectiveCollapsed ? '-translate-x-full delay-0' : 'translate-x-0 delay-150',
           )}
         >
           <ExpandedBar {...sharedProps} isMac={isMac} />
