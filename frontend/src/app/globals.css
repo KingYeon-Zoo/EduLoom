@@ -252,14 +252,15 @@
 
 /* ═══════════════════════════════════════════════════════
    Splash Screen — Meteor Shower
-   方向: 左下 → 右上 ↗ (rotate 35deg)
+   方向: 左下 → 右上 ↗ (rotate -45deg, counter-clockwise)
+   头部(亮白)在左/下 → 尾部(透明)在右/上
    密集流线贯穿全屏
    ═══════════════════════════════════════════════════════ */
 
 @keyframes meteor-warp {
   0% {
     opacity: 0;
-    transform: translateX(-100px) rotate(35deg);
+    transform: translateX(-100px) rotate(-45deg);
   }
   3% {
     opacity: 1;
@@ -269,7 +270,7 @@
   }
   100% {
     opacity: 0;
-    transform: translateX(1000px) rotate(35deg);
+    transform: translateX(1000px) rotate(-45deg);
   }
 }
 

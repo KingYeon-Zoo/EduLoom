@@ -138,7 +138,7 @@ export function SplashScreen({ onClick }: SplashScreenProps) {
               width: m.width,
               height: '1.5px',
               background:
-                'linear-gradient(90deg, rgba(199,210,254,0) 0%, rgba(199,210,254,0.8) 55%, rgba(255,255,255,1) 100%)',
+                'linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(199,210,254,0.6) 45%, rgba(199,210,254,0) 100%)',
               borderRadius: '1px',
               boxShadow: '0 0 4px rgba(199,210,254,0.6)',
               animation: `meteor-warp ${m.duration} ${m.delay} linear infinite`,
