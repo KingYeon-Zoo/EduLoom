@@ -479,6 +479,20 @@ export function AppSidebar() {
 
   const effectiveCollapsed = forcedCollapse ? !overlayOpen : isCollapsed
 
+  // Freeze tooltips briefly on window restore to prevent focus-triggered popups
+  const [tooltipDelay, setTooltipDelay] = useState(0)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setTooltipDelay(999999)
+        const t = setTimeout(() => setTooltipDelay(0), 500)
+        return () => clearTimeout(t)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
   const handleToggle = () => {
     if (forcedCollapse) {
       setOverlayOpen(!overlayOpen)
@@ -515,7 +529,7 @@ export function AppSidebar() {
   const sharedProps = { t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen, handleCreateSelection, logout }
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider delayDuration={tooltipDelay}>
       <div
         className={cn(
           'app-sidebar h-full',
