@@ -105,7 +105,7 @@ export const useAuthStore = create<AuthState>()(
             return true
           } else {
             const data = await response.json().catch(() => ({}))
-            let errorMessage = data.detail || 'Authentication failed'
+            const errorMessage = data.detail || 'Authentication failed'
             
             set({ 
               error: errorMessage,

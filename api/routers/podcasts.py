@@ -32,6 +32,18 @@ class PodcastEpisodeResponse(BaseModel):
 
 
 def _resolve_audio_path(audio_file: str) -> Path:
+    path_obj = Path(audio_file)
+    if path_obj.is_absolute() and path_obj.exists():
+        return path_obj
+        
+    if path_obj.is_absolute():
+        parts = path_obj.parts
+        if "data" in parts:
+            idx = parts.index("data")
+            rel_path = Path(*parts[idx:])
+            if rel_path.exists():
+                return rel_path
+
     if audio_file.startswith("file://"):
         parsed = urlparse(audio_file)
         return Path(unquote(parsed.path))

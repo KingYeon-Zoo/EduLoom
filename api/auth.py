@@ -72,7 +72,13 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Skip authentication for excluded paths
-        if request.url.path in self.excluded_paths:
+        path = request.url.path
+        if path in self.excluded_paths:
+            return await call_next(request)
+
+        # Skip authentication for static assets (audio, images, video)
+        if (path.startswith("/api/studio/artifacts/") and "/files/" in path) or \
+           (path.startswith("/api/podcasts/episodes/") and path.endswith("/audio")):
             return await call_next(request)
 
         # Skip authentication for CORS preflight requests (OPTIONS)

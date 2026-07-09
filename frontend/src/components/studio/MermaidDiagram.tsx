@@ -16,6 +16,7 @@ interface MermaidDiagramProps {
   code: string
   id: string
   interactive?: boolean
+  className?: string
 }
 
 /** 
@@ -23,13 +24,13 @@ interface MermaidDiagramProps {
  * - 针对以 mindmap 开头的代码：使用类似 NotebookLM 的 React 交互式脑图渲染器，支持缩放、平移、折叠、导出
  * - 针对其他 Mermaid 图（流程图、时序图等）：继续使用原生的 Mermaid SVG 渲染
  */
-export function MermaidDiagram({ code, id, interactive = true }: MermaidDiagramProps) {
+export function MermaidDiagram({ code, id, interactive = true, className }: MermaidDiagramProps) {
   const isMindmap = useMemo(() => {
     return code?.trim().toLowerCase().startsWith('mindmap')
   }, [code])
 
   if (isMindmap) {
-    return <InteractiveMindmap code={code} id={id} interactive={interactive} />
+    return <InteractiveMindmap code={code} id={id} interactive={interactive} className={className} />
   }
 
   return <MermaidNativeDiagram code={code} id={id} />
@@ -225,7 +226,17 @@ function parseMermaidToTree(code: string): MindmapNode | null {
   return rootNode
 }
 
-function InteractiveMindmap({ code, id, interactive }: { code: string; id: string; interactive: boolean }) {
+function InteractiveMindmap({ 
+  code, 
+  id, 
+  interactive, 
+  className 
+}: { 
+  code: string; 
+  id: string; 
+  interactive: boolean; 
+  className?: string 
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   
   // 树状数据状态
@@ -524,7 +535,7 @@ function InteractiveMindmap({ code, id, interactive }: { code: string; id: strin
 
   if (!tree) {
     return (
-      <div className="flex flex-col items-center justify-center h-[300px] border border-dashed rounded-lg bg-slate-50 dark:bg-slate-900">
+      <div className={`flex flex-col items-center justify-center border border-dashed rounded-lg bg-slate-50 dark:bg-slate-900 ${className || 'h-[300px]'}`}>
         <Network className="h-10 w-10 text-slate-300 dark:text-slate-700 animate-pulse mb-2" />
         <span className="text-xs text-slate-400">正在解析导图数据...</span>
       </div>
@@ -538,9 +549,9 @@ function InteractiveMindmap({ code, id, interactive }: { code: string; id: strin
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUpOrLeave}
       onMouseLeave={handleMouseUpOrLeave}
-      className={`relative w-full h-[550px] overflow-hidden bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-2xl select-none transition-colors ${
+      className={`relative w-full overflow-hidden bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-2xl select-none transition-colors ${
         interactive ? 'cursor-grab active:cursor-grabbing' : ''
-      }`}
+      } ${className || 'h-[550px]'}`}
     >
       {/* 缩放/平移 画布容器 */}
       <div 

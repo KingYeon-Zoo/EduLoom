@@ -53,97 +53,97 @@ DEFINE INDEX IF NOT EXISTS idx_episode_command ON TABLE episode COLUMNS command 
 insert into episode_profile 
 [
             {
-                name: "tech_discussion",
-                description: "Technical discussion between 2 experts",
-                speaker_config: "tech_experts",
-                outline_provider: "openai",
-                outline_model: "gpt-5-mini",
-                transcript_provider: "openai", 
-                transcript_model: "gpt-5-mini",
-                default_briefing: "Create an engaging technical discussion about the provided content. Focus on practical insights, real-world applications, and detailed explanations that would interest developers and technical professionals.",
+                name: "技术讨论",
+                description: "两位专家进行深度的技术概念对谈",
+                speaker_config: "技术专家",
+                outline_provider: "doubao",
+                outline_model: "doubao-seed-2-0-lite-260428",
+                transcript_provider: "doubao", 
+                transcript_model: "doubao-seed-2-0-lite-260428",
+                default_briefing: "请用简体中文，围绕所提供的计算机知识内容，创作一期生动、专业的双人技术对谈播客。两位主播一问一答、自然口语化，深入浅出地讲清核心概念、原理与实际应用，适合计算机专业学生与开发者收听。全程使用中文，避免中英夹杂。",
                 num_segments: 5
             },
             {
-                name: "solo_expert",
-                description: "Single expert explaining complex topics",
-                speaker_config: "solo_expert",
-                outline_provider: "openai",
-                outline_model: "gpt-5-mini",
-                transcript_provider: "openai",
-                transcript_model: "gpt-5-mini", 
-                default_briefing: "Create an educational explanation of the provided content. Break down complex concepts into digestible segments, use analogies and examples, and maintain an engaging teaching style.",
+                name: "专家独白",
+                description: "单人口吻讲解复杂的概念与知识点",
+                speaker_config: "教育专家",
+                outline_provider: "doubao",
+                outline_model: "doubao-seed-2-0-lite-260428",
+                transcript_provider: "doubao",
+                transcript_model: "doubao-seed-2-0-lite-260428", 
+                default_briefing: "请用简体中文，围绕所提供的知识内容，创作一期生动且易懂的单人专家讲解播客。用通俗易懂的语言剖析复杂的概念，善用类比与生动案例，保持引人引人入胜的教学风格。",
                 "num_segments":4            },
             {
-                name: "business_analysis",
-                description: "Business-focused analysis and discussion",
-                speaker_config: "business_panel",
-                outline_provider: "openai",
-                outline_model: "gpt-5-mini",
-                transcript_provider: "openai",
-                transcript_model: "gpt-5-mini",
-                default_briefing: "Analyze the provided content from a business perspective. Discuss market implications, strategic insights, competitive advantages, and actionable business intelligence.",
+                name: "商业分析",
+                description: "侧重商业视角、市场动态的分析与对谈",
+                speaker_config: "商业评论",
+                outline_provider: "doubao",
+                outline_model: "doubao-seed-2-0-lite-260428",
+                transcript_provider: "doubao",
+                transcript_model: "doubao-seed-2-0-lite-260428",
+                default_briefing: "请用简体中文，围绕所提供的知识内容，从商业、市场和产业的角度进行多维度分析。讨论商业落地、战略考量、竞争优势以及可落地的商业洞察。",
                 "num_segments":6            }
         ];
 
 insert into speaker_profile
 [
             {
-                name: "tech_experts",
-                description: "Two technical experts for tech discussions",
-                tts_provider: "openai",
-                tts_model: "gpt-4o-mini-tts",
+                name: "技术专家",
+                description: "两位适合探讨技术与工程权衡的技术专家",
+                tts_provider: "doubao",
+                tts_model: "seed-tts-2.0",
                 speakers: [
                     {
-                        name: "Dr. Alex Chen",
+                        name: "陈博士",
                         voice_id: "nova",
-                        backstory: "Senior AI researcher and former tech lead at major companies. Specializes in making complex technical concepts accessible.",
-                        personality: "Analytical, clear communicator, asks probing questions to dig deeper into technical details"
+                        backstory: "资深 AI 研究员，前大厂技术负责人。擅长把复杂的学术课题用生动的语言讲给大众听。",
+                        personality: "分析力强、表达清晰，善于层层追问深入技术细节。"
                     },
                     {
-                        name: "Jamie Rodriguez",
+                        name: "晓明",
                         voice_id: "alloy", 
-                        backstory: "Full-stack engineer and tech entrepreneur. Loves practical applications and real-world implementations.",
-                        personality: "Enthusiastic, practical-minded, great at explaining implementation details and trade-offs"
+                        backstory: "全栈工程师与技术创业者。热爱实际应用和工程落地。",
+                        personality: "热情务实，擅长讲解实现细节与工程权衡。"
                     }
                 ]
             },
             {
-                name: "solo_expert",
-                description: "Single expert for educational content",
-                tts_provider: "openai",
-                tts_model: "gpt-4o-mini-tts",
+                name: "教育专家",
+                description: "单人教师/教授发音人，适合教育讲解类内容",
+                tts_provider: "doubao",
+                tts_model: "seed-tts-2.0",
                 speakers: [
                     {
-                        name: "Professor Sarah Kim",
+                        name: "金教授",
                         voice_id: "nova",
-                        backstory: "Distinguished professor and researcher. Has a gift for making complex topics accessible to broad audiences.",
-                        personality: "Patient teacher, uses analogies and examples, breaks down complex concepts step by step"
+                        backstory: "著名教授和研究员。有着将高深理论通俗化讲授的天赋。",
+                        personality: "有耐心的导师，善用类比和实例，一步步理清复杂概念。"
                     }
                 ]
             },
             {
-                name: "business_panel",
-                description: "Business analysis panel with diverse perspectives",
-                tts_provider: "openai", 
-                tts_model: "gpt-4o-mini-tts",
+                name: "商业评论",
+                description: "三人商业评论团，多视角讨论",
+                tts_provider: "doubao", 
+                tts_model: "seed-tts-2.0",
                 speakers: [
                     {
-                        name: "Marcus Thompson",
+                        name: "马库斯",
                         voice_id: "echo",
-                        backstory: "Former McKinsey consultant, now startup advisor. Expert in strategic analysis and market dynamics.",
-                        personality: "Strategic thinker, data-driven, excellent at identifying key insights and implications"
+                        backstory: "前知名咨询顾问，现初创企业顾问。精通战略分析和市场动态。",
+                        personality: "战略型思维，以数据为导向，擅长提炼关键见解和行业启示。"
                     },
                     {
-                        name: "Elena Vasquez", 
+                        name: "埃琳娜", 
                         voice_id: "shimmer",
-                        backstory: "Serial entrepreneur and investor. Focuses on practical implementation and execution.",
-                        personality: "Action-oriented, pragmatic, brings startup experience and execution focus"
+                        backstory: "连续创业者与天使投资人。关注实际执行和创业落地。",
+                        personality: "行动派，务实，擅长结合其丰富的实战经验丰富对谈讨论。"
                     },
                     {
-                        name: "Johny Bing", 
+                        name: "强尼·兵", 
                         voice_id: "ash",
-                        backstory: "Youtube celebrity and business mogul. Focuses on practical implementation and execution.",
-                        personality: "Controversial, likes to question ideas and concepts. He brings a fresh perspective and always has a point to make."
+                        backstory: "商业博主和投资人。关注技术在商业环境下的核心价值转换。",
+                        personality: "观点犀利，喜欢以大众化视角对概念进行追问与审视，非常接地气。"
                     }
                 ]
             }

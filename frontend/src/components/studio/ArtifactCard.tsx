@@ -138,7 +138,7 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
               {artifact.created && new Date(artifact.created).toLocaleString()}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
             <ArtifactBody artifact={artifact} />
           </div>
         </DialogContent>
@@ -177,7 +177,7 @@ function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact;
         )
       }
       return artifact.content ? (
-        <MermaidDiagram code={artifact.content} id={artifact.id} />
+        <MermaidDiagram code={artifact.content} id={artifact.id} className="flex-1 h-full min-h-[450px]" />
       ) : null
 
     case 'ppt':
