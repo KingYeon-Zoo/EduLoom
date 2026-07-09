@@ -1,8 +1,9 @@
 <div align="center">
 
-<img src="./logo.png" alt="EduLoom Logo" width="160" height="160" />
+<img src="./banner.png" alt="EduLoom · 学织" width="440" />
 
-# EduLoom · 学织
+<br/>
+<br/>
 
 ### 基于大模型多智能体协同的个性化学习资源生成与智能学习系统
 
