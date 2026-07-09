@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   Compass,
   GraduationCap,
-  Users,
   Sparkles,
   Loader2,
   Circle,
@@ -41,11 +40,9 @@ import {
   useUpdateStep,
   useAssessments,
   useGenerateAssessment,
-  useAgentRoster,
 } from '@/lib/hooks/use-learning'
 import {
   ACTIVE_PATH_STATUSES,
-  AgentInfo,
   AssessmentDimension,
   LearningAssessment,
   PathStep,
@@ -116,10 +113,6 @@ export default function LearningPage() {
                 <GraduationCap className="h-4 w-4" />
                 {t('learning.tabAssessment')}
               </TabsTrigger>
-              <TabsTrigger value="agents">
-                <Users className="h-4 w-4" />
-                {t('learning.tabAgents')}
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="path">
@@ -135,9 +128,6 @@ export default function LearningPage() {
               ) : (
                 <EmptyHint text={t('learning.selectNotebookFirst')} />
               )}
-            </TabsContent>
-            <TabsContent value="agents">
-              <AgentsTab />
             </TabsContent>
           </Tabs>
         </div>
@@ -450,35 +440,3 @@ function DimensionCard({ dim }: { dim: AssessmentDimension }) {
   )
 }
 
-// --------------------------------------------------------------------------
-// Agents tab
-// --------------------------------------------------------------------------
-function AgentsTab() {
-  const { t } = useTranslation()
-  const { agents, isLoading } = useAgentRoster()
-
-  if (isLoading) return <EmptyHint text={t('common.loading')} />
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground max-w-2xl">
-        {t('learning.agentsDesc')}
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {agents.map((a: AgentInfo) => (
-          <Card key={a.key}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-sm">{a.name}</CardTitle>
-                <Badge variant="outline">{a.project}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {a.responsibility}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-}

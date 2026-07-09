@@ -174,6 +174,33 @@ async def lifespan(app: FastAPI):
         await ensure_doubao_tts_default()
     except Exception as e:
         logger.warning(f"Failed to ensure Doubao default models: {e}")
+    # Ensure default admin user exists
+    try:
+        from open_notebook.database.repository import repo_create, repo_query
+        import hashlib
+        
+        try:
+            admin_users = await repo_query("SELECT * FROM user WHERE username = 'admin'")
+            has_admin = len(admin_users) > 0
+        except RuntimeError as e:
+            if "does not exist" in str(e):
+                has_admin = False
+            else:
+                raise
+
+        if not has_admin:
+            logger.info("Initializing default admin user...")
+            admin_pwd_hash = hashlib.sha256("admin".encode()).hexdigest()
+            await repo_create("user", {
+                "username": "admin",
+                "password": admin_pwd_hash,
+                "role": "admin"
+            })
+            logger.success("Default admin user (username: admin, password: admin) created successfully.")
+        else:
+            logger.info("Default admin user already exists.")
+    except Exception as e:
+        logger.warning(f"Failed to initialize default admin user: {e}")
 
     # Yield control to the application
     yield
@@ -199,7 +226,7 @@ else:
     logger.info(f"CORS allowed origins: {CORS_ALLOWED_ORIGINS}")
 
 # Add password authentication middleware first
-# Exclude /api/auth/status and /api/config from authentication
+# Exclude public auth endpoints and config from authentication
 app.add_middleware(
     PasswordAuthMiddleware,
     excluded_paths=[
@@ -209,6 +236,9 @@ app.add_middleware(
         "/openapi.json",
         "/redoc",
         "/api/auth/status",
+        "/api/auth/captcha",
+        "/api/auth/login",
+        "/api/auth/register",
         "/api/config",
     ],
 )

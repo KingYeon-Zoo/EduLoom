@@ -14,7 +14,7 @@ import { CheckboxList } from '@/components/ui/checkbox-list'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import { useCreateNote } from '@/lib/hooks/use-notes'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface SaveToNotebooksDialogProps {
@@ -31,6 +31,7 @@ export function SaveToNotebooksDialog({
   answer
 }: SaveToNotebooksDialogProps) {
   const { t } = useTranslation()
+  const { success, error } = useToast()
   const [selectedNotebooks, setSelectedNotebooks] = useState<string[]>([])
   const { data: notebooks, isLoading } = useNotebooks(false) // false = not archived
   const createNote = useCreateNote()
@@ -45,7 +46,7 @@ export function SaveToNotebooksDialog({
 
   const handleSave = async () => {
     if (selectedNotebooks.length === 0) {
-      toast.error(t('searchPage.selectNotebook'))
+      error(t('searchPage.selectNotebook'))
       return
     }
 
@@ -60,11 +61,11 @@ export function SaveToNotebooksDialog({
         })
       }
 
-      toast.success(t('searchPage.saveSuccess'))
+      success(t('searchPage.saveSuccess'))
       setSelectedNotebooks([])
       onOpenChange(false)
     } catch {
-      toast.error(t('searchPage.saveError'))
+      error(t('searchPage.saveError'))
     }
   }
 

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -26,7 +26,7 @@ import { SessionManager } from '@/components/source/SessionManager'
 import { MessageActions } from '@/components/source/MessageActions'
 import { convertReferencesToCompactMarkdown, createCompactReferenceLinkComponent } from '@/lib/utils/source-references'
 import { useModalManager } from '@/lib/hooks/use-modal-manager'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface NotebookContextStats {
@@ -90,7 +90,40 @@ export function ChatPanel({
   generationSuggestion,
   onDismissSuggestion,
 }: ChatPanelProps) {
-  const { t } = useTranslation()
+  const { t, language, i18n } = useTranslation()
+  const [loadingIndex, setLoadingIndex] = useState(0)
+
+  // ChatGPT-style rotating thinking message status
+  useEffect(() => {
+    if (!isStreaming) {
+      setLoadingIndex(0)
+      return
+    }
+    const interval = setInterval(() => {
+      setLoadingIndex((prev) => (prev + 1) % 4)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [isStreaming])
+
+  const zhLoadingTexts = [
+    '正在思考...',
+    '正在检索知识库向量...',
+    '正在整理资料...',
+    '正在整合生成回复...'
+  ]
+
+  const enLoadingTexts = [
+    'Thinking...',
+    'Searching knowledge base vector...',
+    'Synthesizing context...',
+    'Generating response...'
+  ]
+
+  const currentLanguage = language || i18n?.language || 'zh-CN'
+  const loadingTexts = currentLanguage.startsWith('zh') ? zhLoadingTexts : enLoadingTexts
+  const currentLoadingText = loadingTexts[loadingIndex]
+
+  const { error } = useToast()
   const router = useRouter()
   const chatInputId = useId()
   const [input, setInput] = useState('')
@@ -108,7 +141,7 @@ export function ChatPanel({
       // The modal component itself will handle displaying "not found" states.
       // This try-catch is here for future enhancements or unexpected errors.
     } catch {
-      toast.error(t('common.noResults'))
+      error(t('common.noResults'))
     }
   }
 
@@ -164,7 +197,7 @@ export function ChatPanel({
 
   return (
     <>
-    <Card className="flex flex-col h-full flex-1 overflow-hidden">
+    <Card className="flex flex-col h-full flex-1 min-w-0 overflow-hidden">
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -204,7 +237,7 @@ export function ChatPanel({
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 min-w-[300px]">
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -217,7 +250,7 @@ export function ChatPanel({
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${
+                  className={`flex gap-3 min-w-0 ${
                     message.type === 'human' ? 'justify-end' : 'justify-start'
                   }`}
                 >
@@ -228,12 +261,18 @@ export function ChatPanel({
                       </div>
                     </div>
                   )}
-                  <div className="flex flex-col gap-2 max-w-[80%]">
+                  <div
+                    className={`flex flex-col gap-2 min-w-0 overflow-hidden ${
+                      message.type === 'human' 
+                        ? 'max-w-[80%]' 
+                        : 'flex-1 max-w-[85%] lg:max-w-[80%]'
+                    }`}
+                  >
                     <div
-                      className={`rounded-lg px-4 py-2 ${
+                      className={`rounded-lg px-4 py-2 min-w-0 ${
                         message.type === 'human'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'bg-primary text-primary-foreground w-fit ml-auto break-words'
+                          : 'bg-muted w-fit max-w-full'
                       }`}
                     >
                       {message.type === 'ai' ? (
@@ -303,13 +342,16 @@ export function ChatPanel({
                     <Bot className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="rounded-lg px-4 py-2 bg-muted">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="rounded-lg px-4 py-2 bg-muted/40 border border-border/30 flex items-center min-h-[40px]">
+                  <span className="text-sm text-muted-foreground/75 animate-pulse select-none font-medium">
+                    {currentLoadingText}
+                  </span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
         {/* Context Indicators */}
@@ -427,7 +469,7 @@ function AIMessageContent({
   const LinkComponent = createCompactReferenceLinkComponent(onReferenceClick)
 
   return (
-    <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none break-words prose-headings:font-semibold prose-a:text-blue-600 prose-a:break-all prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-p:mb-4 prose-p:leading-7 prose-li:mb-2">
+    <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none break-words [word-break:break-word] overflow-wrap-anywhere prose-headings:font-semibold prose-a:text-blue-600 prose-a:break-all prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-p:mb-4 prose-p:leading-7 prose-li:mb-2">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -452,6 +494,9 @@ function AIMessageContent({
           tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
           th: ({ children }) => <th className="border border-border px-3 py-2 text-left font-semibold">{children}</th>,
           td: ({ children }) => <td className="border border-border px-3 py-2">{children}</td>,
+          pre: ({ children }) => (
+            <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 text-sm">{children}</pre>
+          ),
         }}
       >
         {markdownWithCompactRefs}

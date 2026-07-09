@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { LoaderIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
@@ -27,46 +27,6 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 
 const MAX_BATCH_SIZE = 50
 
-const createSourceSchema = z.object({
-  type: z.enum(['link', 'upload', 'text']),
-  title: z.string().optional(),
-  url: z.string().optional(),
-  content: z.string().optional(),
-  file: z.any().optional(),
-  notebooks: z.array(z.string()).optional(),
-  transformations: z.array(z.string()).optional(),
-  embed: z.boolean(),
-  async_processing: z.boolean(),
-}).refine((data) => {
-  if (data.type === 'link') {
-    return !!data.url && data.url.trim() !== ''
-  }
-  if (data.type === 'text') {
-    return !!data.content && data.content.trim() !== ''
-  }
-  if (data.type === 'upload') {
-    if (data.file instanceof FileList) {
-      return data.file.length > 0
-    }
-    return !!data.file
-  }
-  return true
-}, {
-  message: 'Please provide the required content for the selected source type',
-  path: ['type'],
-}).refine((data) => {
-  // Make title mandatory for text sources
-  if (data.type === 'text') {
-    return !!data.title && data.title.trim() !== ''
-  }
-  return true
-}, {
-  message: 'Title is required for text sources',
-  path: ['title'],
-})
-
-type CreateSourceFormData = z.infer<typeof createSourceSchema>
-
 interface AddSourceDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -85,18 +45,58 @@ interface BatchProgress {
   currentItem?: string
 }
 
-export function AddSourceDialog({ 
-  open, 
-  onOpenChange, 
-  defaultNotebookId 
+export function AddSourceDialog({
+  open,
+  onOpenChange,
+  defaultNotebookId
 }: AddSourceDialogProps) {
   const { t } = useTranslation()
+  const { success, error, warning } = useToast()
 
   const WIZARD_STEPS: readonly WizardStep[] = [
     { number: 1, title: t('sources.addSource'), description: t('sources.processDescription') },
     { number: 2, title: t('navigation.notebooks'), description: t('notebooks.searchPlaceholder') },
     { number: 3, title: t('navigation.process'), description: t('sources.processDescription') },
   ]
+
+  const createSourceSchema = z.object({
+    type: z.enum(['link', 'upload', 'text']),
+    title: z.string().optional(),
+    url: z.string().optional(),
+    content: z.string().optional(),
+    file: z.any().optional(),
+    notebooks: z.array(z.string()).optional(),
+    transformations: z.array(z.string()).optional(),
+    embed: z.boolean(),
+    async_processing: z.boolean(),
+  }).refine((data) => {
+    if (data.type === 'link') {
+      return !!data.url && data.url.trim() !== ''
+    }
+    if (data.type === 'text') {
+      return !!data.content && data.content.trim() !== ''
+    }
+    if (data.type === 'upload') {
+      if (data.file instanceof FileList) {
+        return data.file.length > 0
+      }
+      return !!data.file
+    }
+    return true
+  }, {
+    message: t('sources.contentRequired'),
+    path: ['type'],
+  }).refine((data) => {
+    if (data.type === 'text') {
+      return !!data.title && data.title.trim() !== ''
+    }
+    return true
+  }, {
+    message: t('sources.titleRequiredForText'),
+    path: ['title'],
+  })
+
+  type CreateSourceFormData = z.infer<typeof createSourceSchema>
 
   // Simplified state management
   const [currentStep, setCurrentStep] = useState(1)
@@ -394,11 +394,11 @@ export function AddSourceDialog({
 
         // Show summary toast
         if (results.failed === 0) {
-          toast.success(t('sources.batchSuccess').replace('{count}', results.success.toString()))
+          success(t('sources.batchSuccess').replace('{count}', results.success.toString()))
         } else if (results.success === 0) {
-          toast.error(t('sources.batchFailed').replace('{count}', results.failed.toString()))
+          error(t('sources.batchFailed').replace('{count}', results.failed.toString()))
         } else {
-          toast.warning(t('sources.batchPartial').replace('{success}', results.success.toString()).replace('{failed}', results.failed.toString()))
+          warning(t('sources.batchPartial').replace('{success}', results.success.toString()).replace('{failed}', results.failed.toString()))
         }
 
         handleClose()
@@ -585,7 +585,7 @@ export function AddSourceDialog({
           </WizardContainer>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center px-6 py-4 border-t border-border bg-muted">
+          <div className="flex justify-between items-center px-6 py-4 border-t border-border">
             <Button 
               type="button" 
               variant="outline" 
@@ -605,26 +605,27 @@ export function AddSourceDialog({
                 </Button>
               )}
 
-              {/* Show Next button on steps 1 and 2, styled as outline/secondary */}
-              {currentStep < 3 && (
+              {/* Step 1-2: show Next as primary */}
+              {currentStep < 3 ? (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   onClick={(e) => handleNextStep(e)}
                   disabled={!currentStepValid}
+                  className="min-w-[120px]"
                 >
                   {t('common.next')}
                 </Button>
+              ) : (
+                /* Step 3: show Done as primary */
+                <Button
+                  type="submit"
+                  disabled={!currentStepValid || createSource.isPending}
+                  className="min-w-[120px]"
+                >
+                  {createSource.isPending ? t('common.adding') : t('common.done')}
+                </Button>
               )}
-
-              {/* Show Done button on all steps, styled as primary */}
-              <Button
-                type="submit"
-                disabled={!currentStepValid || createSource.isPending}
-                className="min-w-[120px]"
-              >
-                {createSource.isPending ? t('common.adding') : t('common.done')}
-              </Button>
             </div>
           </div>
         </form>

@@ -85,7 +85,7 @@ export function useSource(id: string) {
 
 export function useCreateSource() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -122,30 +122,29 @@ export function useCreateSource() {
 
       // Show different messages based on processing mode
       if (variables.async_processing) {
-        toast({
-          title: t('sources.sourceQueued'),
-          description: t('sources.sourceQueuedDesc'),
-        })
+        success(
+          t('sources.sourceQueued'),
+          t('sources.sourceQueuedDesc'),
+        )
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('sources.sourceAddedSuccess'),
-        })
+        success(
+          t('common.success'),
+          t('sources.sourceAddedSuccess'),
+        )
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToAddSource')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToAddSource')),
+      )
     },
   })
 }
 
 export function useUpdateSource() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -155,24 +154,23 @@ export function useUpdateSource() {
       // Invalidate ALL sources queries (both general and notebook-specific)
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.source(id) })
-      toast({
-        title: t('common.success'),
-        description: t('sources.sourceUpdatedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('sources.sourceUpdatedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToUpdateSource')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToUpdateSource')),
+      )
     },
   })
 }
 
 export function useDeleteSource() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -182,24 +180,23 @@ export function useDeleteSource() {
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       // Also invalidate the specific source
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.source(id) })
-      toast({
-        title: t('common.success'),
-        description: t('sources.sourceDeletedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('sources.sourceDeletedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToDeleteSource')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToDeleteSource')),
+      )
     },
   })
 }
 
 export function useFileUpload() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -213,17 +210,16 @@ export function useFileUpload() {
         queryKey: QUERY_KEYS.sourcesInfinite(variables.notebookId),
         refetchType: 'active'
       })
-      toast({
-        title: t('common.success'),
-        description: t('sources.fileUploadedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('sources.fileUploadedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToUploadFile')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToUploadFile')),
+      )
     },
   })
 }
@@ -375,7 +371,7 @@ export function useSourceStatusStream(sourceId: string, enabled = true) {
 
 export function useRetrySource() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -389,24 +385,23 @@ export function useRetrySource() {
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.source(sourceId) })
 
-      toast({
-        title: t('sources.sourceRequeued'),
-        description: t('sources.sourceRequeuedDesc'),
-      })
+      success(
+        t('sources.sourceRequeued'),
+        t('sources.sourceRequeuedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToRetry')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToRetry')),
+      )
     },
   })
 }
 
 export function useAddSourcesToNotebook() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -436,39 +431,36 @@ export function useAddSourcesToNotebook() {
 
       // Show appropriate toast based on results
       if (result.failures === 0) {
-        toast({
-          title: t('common.success'),
-          description: t('sources.sourcesAddedToNotebook').replace('{count}', result.successes.toString()),
-        })
+        success(
+          t('common.success'),
+          t('sources.sourcesAddedToNotebook').replace('{count}', result.successes.toString()),
+        )
       } else if (result.successes === 0) {
-        toast({
-          title: t('common.error'),
-          description: t('sources.failedToAddSourcesToNotebook'),
-          variant: 'destructive',
-        })
+        error(
+          t('common.error'),
+          t('sources.failedToAddSourcesToNotebook'),
+        )
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('sources.partialAddSuccess')
+        success(
+          t('common.success'),
+          t('sources.partialAddSuccess')
             .replace('{success}', result.successes.toString())
             .replace('{failed}', result.failures.toString()),
-          variant: 'default',
-        })
+        )
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToAddSourcesToNotebook')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToAddSourcesToNotebook')),
+      )
     },
   })
 }
 
 export function useRemoveSourceFromNotebook() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -485,17 +477,16 @@ export function useRemoveSourceFromNotebook() {
       // Also invalidate the specific source
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.source(sourceId) })
 
-      toast({
-        title: t('common.success'),
-        description: t('sources.sourceRemovedFromNotebook'),
-      })
+      success(
+        t('common.success'),
+        t('sources.sourceRemovedFromNotebook'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToRemoveSourceFromNotebook')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorMessage(err, (key) => t(key), t('sources.failedToRemoveSourceFromNotebook')),
+      )
     },
   })
 }

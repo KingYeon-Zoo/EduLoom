@@ -10,11 +10,7 @@ import { ModalProvider } from '@/components/providers/ModalProvider'
 import { CreateDialogsProvider } from '@/lib/hooks/use-create-dialogs'
 import { CommandPalette } from '@/components/common/CommandPalette'
 
-export default function DashboardShell({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
@@ -40,9 +36,7 @@ export default function DashboardShell({
     )
   }
 
-  if (!isAuthenticated) {
-    return null
-  }
+  if (!isAuthenticated) return null
 
   return (
     <ErrorBoundary>

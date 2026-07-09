@@ -25,33 +25,32 @@ export function useNote(id?: string, options?: { enabled?: boolean }) {
 
 export function useCreateNote() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: CreateNoteRequest) => notesApi.create(data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.notes(variables.notebook_id) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notes(variables.notebook_id)
       })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.noteCreatedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.noteCreatedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToCreateNote')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('notebooks.failedToCreateNote')),
+      )
     },
   })
 }
 
 export function useUpdateNote() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -60,24 +59,23 @@ export function useUpdateNote() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes() })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.note(id) })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.noteUpdatedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.noteUpdatedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToUpdateNote')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('notebooks.failedToUpdateNote')),
+      )
     },
   })
 }
 
 export function useDeleteNote() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -85,17 +83,16 @@ export function useDeleteNote() {
     onSuccess: () => {
       // Invalidate all notes queries (with and without notebook IDs)
       queryClient.invalidateQueries({ queryKey: ['notes'] })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.noteDeletedSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.noteDeletedSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToDeleteNote')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('notebooks.failedToDeleteNote')),
+      )
     },
   })
 }

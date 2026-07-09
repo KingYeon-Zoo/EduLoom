@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Save, Copy, Loader2, Check } from 'lucide-react'
 import { useCreateNote } from '@/lib/hooks/use-notes'
-import { toast } from 'sonner'
+import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface MessageActionsProps {
@@ -15,12 +15,13 @@ interface MessageActionsProps {
 
 export function MessageActions({ content, notebookId }: MessageActionsProps) {
   const { t } = useTranslation()
+  const { success, error } = useToast()
   const [copySuccess, setCopySuccess] = useState(false)
   const createNote = useCreateNote()
 
   const handleSaveToNote = () => {
     if (!notebookId) {
-      toast.error(t('sources.cannotSaveNoteNoNotebook'))
+      error(t('sources.cannotSaveNoteNoNotebook'))
       return
     }
 
@@ -37,7 +38,7 @@ export function MessageActions({ content, notebookId }: MessageActionsProps) {
       // Try modern clipboard API first
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(content)
-        toast.success(t('common.copyToClipboard'))
+        success(t('common.copyToClipboard'))
         setCopySuccess(true)
         setTimeout(() => setCopySuccess(false), 2000)
       } else {
@@ -53,18 +54,18 @@ export function MessageActions({ content, notebookId }: MessageActionsProps) {
 
         try {
           document.execCommand('copy')
-          toast.success(t('common.copyToClipboard'))
+          success(t('common.copyToClipboard'))
           setCopySuccess(true)
           setTimeout(() => setCopySuccess(false), 2000)
         } catch {
-          toast.error(t('common.error'))
+          error(t('common.error'))
         }
 
         document.body.removeChild(textArea)
       }
     } catch (err) {
       console.error('Failed to copy to clipboard:', err)
-      toast.error(t('common.error'))
+      error(t('common.error'))
     }
   }
 

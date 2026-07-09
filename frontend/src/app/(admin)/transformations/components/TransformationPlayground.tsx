@@ -91,6 +91,12 @@ export function TransformationPlayground({ transformations, selectedTransformati
               name="input"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && canExecute) {
+                  e.preventDefault()
+                  handleExecute()
+                }
+              }}
               placeholder={t('transformations.inputPlaceholder')}
               rows={8}
               className="font-mono text-sm"

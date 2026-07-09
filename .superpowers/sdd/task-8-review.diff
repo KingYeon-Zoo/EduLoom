@@ -1,0 +1,56 @@
+diff --git a/frontend/src/app/(auth)/login/page.tsx b/frontend/src/app/(auth)/login/page.tsx
+index ed77e29..c327e7a 100644
+--- a/frontend/src/app/(auth)/login/page.tsx
++++ b/frontend/src/app/(auth)/login/page.tsx
+@@ -1,10 +1,46 @@
+-import { LoginForm } from '@/components/auth/LoginForm'
++'use client'
++
++import { useState } from 'react'
+ import { ErrorBoundary } from '@/components/common/ErrorBoundary'
++import { LoginForm } from '@/components/auth/LoginForm'
++import { SplashScreen } from '@/components/auth/SplashScreen'
++import { FlashOverlay } from '@/components/auth/FlashOverlay'
++import { FlipTransition } from '@/components/auth/FlipTransition'
++import { LoginLayout } from '@/components/auth/LoginLayout'
++
++type Phase = 'splash' | 'flash' | 'flip' | 'login'
++
++function LoginPage() {
++  const [phase, setPhase] = useState<Phase>('splash')
++
++  return (
++    <>
++      {phase === 'splash' && (
++        <SplashScreen onClick={() => setPhase('flash')} />
++      )}
++      {phase === 'flash' && (
++        <FlashOverlay onComplete={() => setPhase('flip')} />
++      )}
++      {phase === 'flip' && (
++        <FlipTransition onComplete={() => setPhase('login')}>
++          <LoginLayout>
++            <LoginForm />
++          </LoginLayout>
++        </FlipTransition>
++      )}
++      {phase === 'login' && (
++        <LoginLayout>
++          <LoginForm />
++        </LoginLayout>
++      )}
++    </>
++  )
++}
+ 
+-export default function LoginPage() {
++export default function LoginPageWrapper() {
+   return (
+     <ErrorBoundary>
+-      <LoginForm />
++      <LoginPage />
+     </ErrorBoundary>
+   )
+-}
+\ No newline at end of file
++}

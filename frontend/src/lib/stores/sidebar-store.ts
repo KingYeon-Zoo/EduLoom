@@ -32,7 +32,7 @@ export const useSidebarStore = create<SidebarState>()(
     }),
     {
       name: 'sidebar-storage',
-      partialize: (state) => ({ isCollapsed: state.isCollapsed }),
+      partialize: (state) => ({ isCollapsed: state.isCollapsed, hasManuallyToggled: state.hasManuallyToggled }),
     }
   )
 )

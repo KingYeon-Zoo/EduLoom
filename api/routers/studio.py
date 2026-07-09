@@ -84,6 +84,22 @@ class StudioProfileResponse(BaseModel):
 # --------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------
+def _resolve_studio_path(file_path_str: str) -> Path:
+    path_obj = Path(file_path_str)
+    if path_obj.is_absolute() and path_obj.exists():
+        return path_obj
+        
+    if path_obj.is_absolute():
+        parts = path_obj.parts
+        if "data" in parts:
+            idx = parts.index("data")
+            rel_path = Path(*parts[idx:])
+            if rel_path.exists():
+                return rel_path
+                
+    return Path(file_path_str)
+
+
 async def _to_artifact_response(artifact) -> StudioArtifactResponse:
     job_status = None
     error_message = None
@@ -170,7 +186,7 @@ async def get_studio_artifact_file(artifact_id: str, idx: int):
     if idx < 0 or idx >= len(paths):
         raise HTTPException(status_code=404, detail="File index out of range")
 
-    file_path = Path(paths[idx])
+    file_path = _resolve_studio_path(paths[idx])
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found on disk")
 
@@ -205,7 +221,7 @@ async def retry_studio_artifact(artifact_id: str):
     # Clean up disk products from the failed run.
     for p in artifact.file_paths or []:
         try:
-            fp = Path(p)
+            fp = _resolve_studio_path(p)
             if fp.exists():
                 fp.unlink()
         except Exception as e:
@@ -230,7 +246,7 @@ async def delete_studio_artifact(artifact_id: str):
 
     for p in artifact.file_paths or []:
         try:
-            fp = Path(p)
+            fp = _resolve_studio_path(p)
             if fp.exists():
                 fp.unlink()
         except Exception as e:

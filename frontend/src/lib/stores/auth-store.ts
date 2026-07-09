@@ -13,7 +13,8 @@ interface AuthState {
   authRequired: boolean | null
   setHasHydrated: (state: boolean) => void
   checkAuthRequired: () => Promise<boolean>
-  login: (password: string) => Promise<boolean>
+  login: (username: string, password: string, captchaKey: string, captchaCode: string) => Promise<boolean>
+  register: (username: string, password: string) => Promise<{ success: boolean; message?: string }>
   logout: () => void
   checkAuth: () => Promise<boolean>
 }
@@ -74,40 +75,37 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      login: async (password: string) => {
+      login: async (username: string, password: string, captchaKey: string, captchaCode: string) => {
         set({ isLoading: true, error: null })
         try {
           const apiUrl = await getApiUrl()
 
-          // Test auth with notebooks endpoint
-          const response = await fetch(`${apiUrl}/api/notebooks`, {
-            method: 'GET',
+          const response = await fetch(`${apiUrl}/api/auth/login`, {
+            method: 'POST',
             headers: {
-              'Authorization': `Bearer ${password}`,
               'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+              username,
+              password,
+              captcha_key: captchaKey,
+              captcha_code: captchaCode
+            })
           })
           
           if (response.ok) {
+            const data = await response.json()
             set({ 
               isAuthenticated: true, 
-              token: password, 
+              token: data.token, 
               isLoading: false,
               lastAuthCheck: Date.now(),
               error: null
             })
             return true
           } else {
-            let errorMessage = 'Authentication failed'
-            if (response.status === 401) {
-              errorMessage = 'Invalid password. Please try again.'
-            } else if (response.status === 403) {
-              errorMessage = 'Access denied. Please check your credentials.'
-            } else if (response.status >= 500) {
-              errorMessage = 'Server error. Please try again later.'
-            } else {
-              errorMessage = `Authentication failed (${response.status})`
-            }
+            const data = await response.json().catch(() => ({}))
+            const errorMessage = data.detail || 'Authentication failed'
             
             set({ 
               error: errorMessage,
@@ -136,6 +134,48 @@ export const useAuthStore = create<AuthState>()(
             token: null
           })
           return false
+        }
+      },
+      
+      register: async (username: string, password: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const apiUrl = await getApiUrl()
+
+          const response = await fetch(`${apiUrl}/api/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username,
+              password
+            })
+          })
+
+          if (response.ok) {
+            set({ isLoading: false, error: null })
+            return { success: true }
+          } else {
+            const data = await response.json().catch(() => ({}))
+            const errorMessage = data.detail || 'Registration failed'
+            set({ isLoading: false, error: errorMessage })
+            return { success: false, message: errorMessage }
+          }
+        } catch (error) {
+          console.error('Network error during registration:', error)
+          let errorMessage = 'Registration failed'
+          
+          if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+            errorMessage = 'Unable to connect to server. Please check if the API is running.'
+          } else if (error instanceof Error) {
+            errorMessage = `Network error: ${error.message}`
+          } else {
+            errorMessage = 'An unexpected error occurred during registration'
+          }
+          
+          set({ isLoading: false, error: errorMessage })
+          return { success: false, message: errorMessage }
         }
       },
       

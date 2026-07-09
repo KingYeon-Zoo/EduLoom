@@ -14,7 +14,6 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 const noop = () => {}
 
-/** Default store shape returned when no specific mock is set */
 const defaultStore = {
   isCollapsed: false,
   forcedCollapse: false,
@@ -27,15 +26,13 @@ const defaultStore = {
   setOverlayOpen: noop,
 }
 
-vi.mocked(useSidebarStore).mockReturnValue(defaultStore as any)
-
 describe('AppSidebar', () => {
   it('renders correctly when expanded', () => {
+    vi.mocked(useSidebarStore).mockReturnValue(defaultStore as any)
+
     render(<AppSidebar />)
 
     // With mocked t() returning keys, check for translation key strings
-    // App name is now only in the logo's alt text (not visible text)
-    expect(screen.getByAltText('common.appName')).toBeDefined()
     expect(screen.getByText('navigation.sources')).toBeDefined()
     expect(screen.getByText('navigation.notebooks')).toBeDefined()
   })
@@ -63,7 +60,9 @@ describe('AppSidebar', () => {
 
     render(<AppSidebar />)
 
-    // In collapsed mode, app name shouldn't be visible (as text)
+    // In collapsed mode, the collapsed logo icon (with alt="EduLoom") should be present
+    expect(screen.queryByAltText('EduLoom')).toBeDefined()
+    // In collapsed mode, the full logo (common.appName) shouldn't be visible as text
     expect(screen.queryByText('common.appName')).toBeNull()
   })
 })

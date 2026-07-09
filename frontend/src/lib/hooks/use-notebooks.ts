@@ -23,31 +23,30 @@ export function useNotebook(id: string) {
 
 export function useCreateNotebook() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: CreateNotebookRequest) => notebooksApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebooks })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.createSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.createSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        t(getApiErrorKey(err, t('common.error'))),
+      )
     },
   })
 }
 
 export function useUpdateNotebook() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -56,17 +55,16 @@ export function useUpdateNotebook() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebooks })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebook(id) })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.updateSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.updateSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        t(getApiErrorKey(err, t('common.error'))),
+      )
     },
   })
 }
@@ -81,7 +79,7 @@ export function useNotebookDeletePreview(id: string, enabled: boolean = false) {
 
 export function useDeleteNotebook() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -96,17 +94,16 @@ export function useDeleteNotebook() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebooks })
       // Also invalidate sources since some may have been deleted
       queryClient.invalidateQueries({ queryKey: ['sources'] })
-      toast({
-        title: t('common.success'),
-        description: t('notebooks.deleteSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('notebooks.deleteSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        t(getApiErrorKey(err, t('common.error'))),
+      )
     },
   })
 }

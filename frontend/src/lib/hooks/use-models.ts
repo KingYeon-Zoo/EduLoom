@@ -30,31 +30,30 @@ export function useModel(id: string) {
 
 export function useCreateModel() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: CreateModelRequest) => modelsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.models })
-      toast({
-        title: t('common.success'),
-        description: t('models.saveSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('models.saveSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useDeleteModel() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -63,17 +62,16 @@ export function useDeleteModel() {
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.models })
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.defaults })
       queryClient.invalidateQueries({ queryKey: ['credentials'] })
-      toast({
-        title: t('common.success'),
-        description: t('models.deleteSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('models.deleteSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -87,24 +85,23 @@ export function useModelDefaults() {
 
 export function useUpdateModelDefaults() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: (data: Partial<ModelDefaults>) => modelsApi.updateDefaults(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MODEL_QUERY_KEYS.defaults })
-      toast({
-        title: t('common.success'),
-        description: t('models.saveSuccess'),
-      })
+      success(
+        t('common.success'),
+        t('models.saveSuccess'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -118,7 +115,7 @@ export function useProviders() {
 
 export function useAutoAssignDefaults() {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -130,29 +127,27 @@ export function useAutoAssignDefaults() {
       const missingCount = result.missing.length
 
       if (assignedCount > 0) {
-        toast({
-          title: t('common.success'),
-          description: t('models.autoAssignSuccess').replace('{count}', assignedCount.toString()),
-        })
+        success(
+          t('common.success'),
+          t('models.autoAssignSuccess').replace('{count}', assignedCount.toString()),
+        )
       } else if (missingCount > 0) {
-        toast({
-          title: t('common.warning'),
-          description: t('models.autoAssignNoModels'),
-          variant: 'destructive',
-        })
+        error(
+          t('common.warning'),
+          t('models.autoAssignNoModels'),
+        )
       } else {
-        toast({
-          title: t('common.success'),
-          description: t('models.autoAssignAlreadySet'),
-        })
+        success(
+          t('common.success'),
+          t('models.autoAssignAlreadySet'),
+        )
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }

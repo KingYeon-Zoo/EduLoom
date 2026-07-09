@@ -30,7 +30,7 @@ export function useLearningPath(notebookId: string) {
 
 export function useGeneratePath(notebookId: string) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -39,24 +39,23 @@ export function useGeneratePath(notebookId: string) {
       await queryClient.refetchQueries({
         queryKey: QUERY_KEYS.learningPath(notebookId),
       })
-      toast({
-        title: t('learning.planStarted'),
-        description: t('learning.planStartedDesc'),
-      })
+      success(
+        t('learning.planStarted'),
+        t('learning.planStartedDesc'),
+      )
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('learning.planFailed'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('learning.planFailed'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
 
 export function useUpdateStep(notebookId: string) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
@@ -65,12 +64,11 @@ export function useUpdateStep(notebookId: string) {
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEYS.learningPath(notebookId), data)
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('common.error'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }
@@ -87,16 +85,16 @@ export function useAssessments(notebookId: string) {
 
 export function useGenerateAssessment(notebookId: string) {
   const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const { success, error } = useToast()
   const { t } = useTranslation()
 
   return useMutation({
     mutationFn: () => learningApi.generateAssessment(notebookId),
     onSuccess: async () => {
-      toast({
-        title: t('learning.assessStarted'),
-        description: t('learning.assessStartedDesc'),
-      })
+      success(
+        t('learning.assessStarted'),
+        t('learning.assessStartedDesc'),
+      )
       // Poll the assessment list a few times until the new snapshot lands.
       const refetch = () => {
         queryClient.refetchQueries({
@@ -117,12 +115,11 @@ export function useGenerateAssessment(notebookId: string) {
         setTimeout(cleanup, 25_000) // auto-clean after all timers fire
       }
     },
-    onError: (error: unknown) => {
-      toast({
-        title: t('learning.assessFailed'),
-        description: getApiErrorKey(error, t('common.error')),
-        variant: 'destructive',
-      })
+    onError: (err: unknown) => {
+      error(
+        t('learning.assessFailed'),
+        getApiErrorKey(err, t('common.error')),
+      )
     },
   })
 }

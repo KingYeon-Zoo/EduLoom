@@ -73,9 +73,18 @@ export function InlineEdit({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !multiline) {
-      e.preventDefault()
-      handleSave()
+    if (e.key === 'Enter') {
+      if (multiline) {
+        // Multi-line: Ctrl/Cmd+Enter to save, plain Enter for newline
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault()
+          handleSave()
+        }
+      } else {
+        // Single-line: Enter to save
+        e.preventDefault()
+        handleSave()
+      }
     } else if (e.key === 'Escape') {
       e.preventDefault()
       handleCancel()
