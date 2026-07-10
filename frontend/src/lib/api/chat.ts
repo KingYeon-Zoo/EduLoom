@@ -66,8 +66,8 @@ export const chatApi = {
    * Yields parsed events: { type: 'user_message' | 'ai_message' | 'generation_suggestion' | 'complete' | 'error', ... }
    */
   sendMessageStream: async function* (data: SendNotebookChatMessageRequest) {
-    const { getApiUrl } = await import('@/lib/config')
-    const baseUrl = await getApiUrl()
+    const { getApiEndpoint } = await import('@/lib/config')
+    const url = await getApiEndpoint('/chat/execute/stream')
 
     // Extract auth token (same logic as apiClient interceptor)
     let token = ''
@@ -81,7 +81,7 @@ export const chatApi = {
       }
     }
 
-    const response = await fetch(`${baseUrl}/chat/execute/stream`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Trash2, RotateCw, Loader2, Download, Eye, FileText, Video, Network, Presentation } from 'lucide-react'
+import { Trash2, RotateCw, Loader2, Download, Eye, Play, Sparkles, Video, Network, Presentation } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -62,6 +62,7 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
   const active = isActive(status)
   const failed = status === 'failed' || status === 'error'
   const isCompleted = !active && !failed
+  const displayName = getArtifactDisplayName(artifact, t)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
@@ -72,7 +73,7 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-medium truncate">{artifact.name}</h3>
+            <h3 className="font-medium truncate">{displayName}</h3>
             {artifact.created && (
               <p className="text-xs text-muted-foreground">
                 {new Date(artifact.created).toLocaleString()}
@@ -133,7 +134,7 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
           style={{ aspectRatio: '4 / 3', maxHeight: '85vh' }}
         >
           <DialogHeader>
-            <DialogTitle>{artifact.name}</DialogTitle>
+            <DialogTitle>{displayName}</DialogTitle>
             <DialogDescription>
               {artifact.created && new Date(artifact.created).toLocaleString()}
             </DialogDescription>
@@ -145,6 +146,11 @@ export function ArtifactCard({ artifact, onDelete, onRetry }: ArtifactCardProps)
       </Dialog>
     </>
   )
+}
+
+function getArtifactDisplayName(artifact: StudioArtifact, t: (key: string) => string) {
+  if (artifact.resource_type !== 'video') return artifact.name
+  return artifact.name.replace(/知识点快讲/g, t('studio.conceptAnimation'))
 }
 
 function ArtifactBody({ artifact, preview = false }: { artifact: StudioArtifact; preview?: boolean }) {
@@ -326,13 +332,26 @@ function VideoThumbnail({ artifact }: { artifact: StudioArtifact }) {
   }
 
   return (
-    <video
-      src={url}
-      preload="metadata"
-      className="w-full rounded border max-h-[180px] object-cover"
-      onError={() => setError(true)}
-      muted
-    />
+    <div className="relative overflow-hidden rounded-lg border bg-black">
+      <video
+        src={url}
+        preload="metadata"
+        className="aspect-video w-full max-h-[180px] object-cover"
+        onError={() => setError(true)}
+        muted
+      />
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-3 pt-10 text-white">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/18 backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
+          <span className="truncate text-sm font-medium">{t('studio.conceptAnimation')}</span>
+        </div>
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-black shadow-sm">
+          <Play className="ml-0.5 h-4 w-4 fill-current" />
+        </span>
+      </div>
+    </div>
   )
 }
 

@@ -237,7 +237,7 @@ export const enUS = {
     podcasts: "Podcasts",
     reports: "Reports",
     quiz: "Quiz",
-    videos: "Video Overviews",
+    videos: "Concept Animations",
     mindmaps: "Mind Maps",
     ppt: "Study Slides",
     models: "Models",
@@ -297,16 +297,17 @@ export const enUS = {
   studio: {
     types: {
       report: "Report",
-      video: "Video Overview",
+      video: "Concept Animation",
       mindmap: "Mind Map",
       ppt: "Study Slides",
       quiz: "Quiz",
     },
     reportDesc: "AI-generated structured study reports from your sources",
-    videoDesc: "Generate teaching video overviews from your sources",
+    videoDesc: "Animated concept demos for quickly understanding core mechanisms",
     mindmapDesc: "Generate visual mind maps from your sources",
     pptDesc: "AI generates slide images page by page, stitched into a study deck",
     quizDesc: "AI-generated quizzes with answers and explanations from your sources",
+    conceptAnimation: "Concept Animation",
     slide: "Slide",
     downloadPpt: "Download PPT",
     clickToViewMindmap: "Mind map — click to view details",
@@ -332,9 +333,9 @@ export const enUS = {
     generateTitle_quiz: "Generate Quiz",
     generateDesc_quiz:
       "Pick a notebook and preset; AI generates practice questions with answers.",
-    generateTitle_video: "Generate Teaching Video",
+    generateTitle_video: "Generate Concept Animation",
     generateDesc_video:
-      "Pick a notebook and preset; AI generates a video overview from its sources.",
+      "Pick a notebook and preset; AI generates an animated concept demo from its sources.",
     generateTitle_mindmap: "Generate Mind Map",
     generateDesc_mindmap:
       "Pick a notebook and preset; AI generates a visual mind map from its sources.",

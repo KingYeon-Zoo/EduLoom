@@ -271,8 +271,8 @@ export function useSourceStatusStream(sourceId: string, enabled = true) {
 
     const connectStream = async () => {
       try {
-        const { getApiUrl } = await import('@/lib/config')
-        const baseUrl = await getApiUrl()
+        const { getApiEndpoint } = await import('@/lib/config')
+        const url = await getApiEndpoint(`/sources/${sourceId}/status/stream`)
 
         let token = ''
         if (typeof window !== 'undefined') {
@@ -286,7 +286,7 @@ export function useSourceStatusStream(sourceId: string, enabled = true) {
         }
 
         const response = await fetch(
-          `${baseUrl}/sources/${sourceId}/status/stream`,
+          url,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
             signal: controller.signal,

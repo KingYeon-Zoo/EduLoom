@@ -27,17 +27,17 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="h-screen overflow-hidden">
-      {/* ── FloatingLines overlay — subtle wave lines over main content ── */}
-      <div className="fixed inset-0 z-[5] pointer-events-none opacity-[0.12]">
+      {/* ── FloatingLines overlay — static, low-cost page texture ── */}
+      <div className="fixed inset-0 z-[5] pointer-events-none opacity-[0.08]">
         <FloatingLines
-          enabledWaves={['bottom', 'top', 'middle']}
-          lineCount={8}
-          lineDistance={27.5}
+          enabledWaves={['bottom']}
+          lineCount={5}
+          lineDistance={32}
           bendRadius={7.5}
           bendStrength={-1.5}
           interactive={false}
-          parallax={true}
-          animationSpeed={0.6}
+          parallax={false}
+          animationSpeed={0}
           linesGradient={isDark ? DARK_GRADIENT : LIGHT_GRADIENT}
           mixBlendMode="normal"
         />

@@ -52,14 +52,56 @@ export function CreateDialogsProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      <AddSourceDialog open={sourceDialogOpen} onOpenChange={setSourceDialogOpen} />
-      <CreateNotebookDialog open={notebookDialogOpen} onOpenChange={setNotebookDialogOpen} />
-      <GeneratePodcastDialog open={podcastDialogOpen} onOpenChange={setPodcastDialogOpen} />
-      <GenerateArtifactDialog resourceType="report" open={reportDialogOpen} onOpenChange={setReportDialogOpen} />
-      <GenerateArtifactDialog resourceType="quiz" open={quizDialogOpen} onOpenChange={setQuizDialogOpen} />
-      <GenerateArtifactDialog resourceType="video" open={videoDialogOpen} onOpenChange={setVideoDialogOpen} />
-      <GenerateArtifactDialog resourceType="mindmap" open={mindmapDialogOpen} onOpenChange={setMindmapDialogOpen} />
-      <GenerateArtifactDialog resourceType="ppt" open={pptDialogOpen} onOpenChange={setPptDialogOpen} />
+      {sourceDialogOpen && (
+        <AddSourceDialog open={sourceDialogOpen} onOpenChange={setSourceDialogOpen} />
+      )}
+      {notebookDialogOpen && (
+        <CreateNotebookDialog
+          open={notebookDialogOpen}
+          onOpenChange={setNotebookDialogOpen}
+        />
+      )}
+      {podcastDialogOpen && (
+        <GeneratePodcastDialog
+          open={podcastDialogOpen}
+          onOpenChange={setPodcastDialogOpen}
+        />
+      )}
+      {reportDialogOpen && (
+        <GenerateArtifactDialog
+          resourceType="report"
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+        />
+      )}
+      {quizDialogOpen && (
+        <GenerateArtifactDialog
+          resourceType="quiz"
+          open={quizDialogOpen}
+          onOpenChange={setQuizDialogOpen}
+        />
+      )}
+      {videoDialogOpen && (
+        <GenerateArtifactDialog
+          resourceType="video"
+          open={videoDialogOpen}
+          onOpenChange={setVideoDialogOpen}
+        />
+      )}
+      {mindmapDialogOpen && (
+        <GenerateArtifactDialog
+          resourceType="mindmap"
+          open={mindmapDialogOpen}
+          onOpenChange={setMindmapDialogOpen}
+        />
+      )}
+      {pptDialogOpen && (
+        <GenerateArtifactDialog
+          resourceType="ppt"
+          open={pptDialogOpen}
+          onOpenChange={setPptDialogOpen}
+        />
+      )}
     </CreateDialogsContext.Provider>
   )
 }

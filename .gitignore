@@ -166,3 +166,6 @@ node_modules/
 
 # Python Tools Cache
 .ruff_cache/
+
+# Large media files
+介绍视频.mov

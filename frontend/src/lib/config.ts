@@ -38,6 +38,19 @@ export async function getApiUrl(): Promise<string> {
 }
 
 /**
+ * Get a full backend API endpoint URL for native fetch calls.
+ *
+ * Axios requests use apiClient, which appends `/api` in its interceptor. Native
+ * fetch callers need the same prefix explicitly, including when the API base URL
+ * is the empty string and requests go through Next.js rewrites.
+ */
+export async function getApiEndpoint(path: string): Promise<string> {
+  const baseUrl = await getApiUrl()
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${baseUrl}/api${normalizedPath}`
+}
+
+/**
  * Get the full configuration.
  */
 export async function getConfig(): Promise<AppConfig> {

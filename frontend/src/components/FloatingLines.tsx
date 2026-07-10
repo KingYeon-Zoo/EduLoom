@@ -349,6 +349,26 @@ export default function FloatingLines({
 
     const clock = new Clock()
 
+    const shouldAnimate = animationSpeed > 0 || interactive || parallax
+
+    const renderFrame = () => {
+      uniforms.iTime.value = clock.getElapsedTime()
+
+      if (interactive) {
+        currentMouseRef.current.lerp(targetMouseRef.current, mouseDamping)
+        uniforms.iMouse.value.copy(currentMouseRef.current)
+        currentInfluenceRef.current += (targetInfluenceRef.current - currentInfluenceRef.current) * mouseDamping
+        uniforms.bendInfluence.value = currentInfluenceRef.current
+      }
+
+      if (parallax) {
+        currentParallaxRef.current.lerp(targetParallaxRef.current, mouseDamping)
+        uniforms.parallaxOffset.value.copy(currentParallaxRef.current)
+      }
+
+      renderer.render(scene, camera)
+    }
+
     const setSize = () => {
       if (!active) return
       const width = container.clientWidth || 1
@@ -357,6 +377,7 @@ export default function FloatingLines({
       const canvasWidth = renderer.domElement.width
       const canvasHeight = renderer.domElement.height
       uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1)
+      if (!shouldAnimate) renderFrame()
     }
 
     setSize()
@@ -395,24 +416,14 @@ export default function FloatingLines({
     let raf = 0
     const renderLoop = () => {
       if (!active) return
-      uniforms.iTime.value = clock.getElapsedTime()
-
-      if (interactive) {
-        currentMouseRef.current.lerp(targetMouseRef.current, mouseDamping)
-        uniforms.iMouse.value.copy(currentMouseRef.current)
-        currentInfluenceRef.current += (targetInfluenceRef.current - currentInfluenceRef.current) * mouseDamping
-        uniforms.bendInfluence.value = currentInfluenceRef.current
-      }
-
-      if (parallax) {
-        currentParallaxRef.current.lerp(targetParallaxRef.current, mouseDamping)
-        uniforms.parallaxOffset.value.copy(currentParallaxRef.current)
-      }
-
-      renderer.render(scene, camera)
+      renderFrame()
       raf = requestAnimationFrame(renderLoop)
     }
-    renderLoop()
+    if (shouldAnimate) {
+      renderLoop()
+    } else {
+      renderFrame()
+    }
 
     return () => {
       active = false

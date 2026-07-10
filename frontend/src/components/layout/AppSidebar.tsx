@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -105,8 +105,9 @@ const getAdminNav = (t: TFunction) => [
 ] as const
 
 type CreateTarget = 'source' | 'notebook' | 'podcast' | 'report' | 'quiz' | 'video' | 'mindmap' | 'ppt'
+type CreateMenuPanel = 'collapsed' | 'expanded'
 
-// ── Collapsed panel — always rendered, z-10 ──
+// ── Collapsed panel ──
 
 function CollapsedBar({
   t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen,
@@ -166,16 +167,16 @@ function CollapsedBar({
                 <TooltipContent side="right">{t('common.create')}</TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end" side="right" className="w-48">
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('source') }} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('notebook') }} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('source')} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('notebook')} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('podcast') }} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('podcast')} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('report') }} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('quiz') }} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('video') }} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('mindmap') }} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('ppt') }} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('report')} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('quiz')} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('video')} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('mindmap')} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('ppt')} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -247,7 +248,7 @@ function CollapsedBar({
   )
 }
 
-// ── Expanded panel — slides in/out via translateX, z-20 ──
+// ── Expanded panel ──
 
 function ExpandedBar({
   t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen,
@@ -321,16 +322,16 @@ function ExpandedBar({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="bottom" className="w-48">
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('source') }} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('notebook') }} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('source')} className="gap-2"><FileText className="h-4 w-4" />{t('navigation.sources')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('notebook')} className="gap-2"><Book className="h-4 w-4" />{t('navigation.notebooks')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('podcast') }} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('podcast')} className="gap-2"><Mic className="h-4 w-4" />{t('navigation.podcasts')}</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('report') }} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('quiz') }} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('video') }} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('mindmap') }} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleCreateSelection('ppt') }} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('report')} className="gap-2"><FileBarChart className="h-4 w-4" />{t('navigation.reports')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('quiz')} className="gap-2"><FileQuestion className="h-4 w-4" />{t('navigation.quiz')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('video')} className="gap-2"><Video className="h-4 w-4" />{t('navigation.videos')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('mindmap')} className="gap-2"><Network className="h-4 w-4" />{t('navigation.mindmaps')}</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCreateSelection('ppt')} className="gap-2"><Presentation className="h-4 w-4" />{t('navigation.ppt')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -406,7 +407,7 @@ function ExpandedBar({
   )
 }
 
-// ── Main AppSidebar — two stacked panels with GPU transform ──
+// ── Main AppSidebar ──
 
 export function AppSidebar() {
   const { t } = useTranslation()
@@ -470,12 +471,16 @@ export function AppSidebar() {
     openPptDialog,
   } = useCreateDialogs()
 
-  const [createMenuOpen, setCreateMenuOpen] = useState(false)
+  const [activeCreateMenu, setActiveCreateMenu] = useState<CreateMenuPanel | null>(null)
   const [isMac, setIsMac] = useState(true)
 
   useEffect(() => {
     setIsMac(navigator.platform.toLowerCase().includes('mac'))
   }, [])
+
+  useEffect(() => {
+    setActiveCreateMenu(null)
+  }, [pathname])
 
   const effectiveCollapsed = forcedCollapse ? !overlayOpen : isCollapsed
 
@@ -510,7 +515,7 @@ export function AppSidebar() {
   }
 
   const handleCreateSelection = (target: CreateTarget) => {
-    setCreateMenuOpen(false)
+    setActiveCreateMenu(null)
     const openMap: Record<CreateTarget, () => void> = {
       source: openSourceDialog,
       notebook: openNotebookDialog,
@@ -521,12 +526,17 @@ export function AppSidebar() {
       mindmap: openMindmapDialog,
       ppt: openPptDialog,
     }
-    openMap[target]?.()
+    window.requestAnimationFrame(() => {
+      openMap[target]?.()
+    })
   }
 
-  const navigation = mode === 'feature' ? getFeatureNav(t) : getAdminNav(t)
+  const navigation = useMemo(
+    () => (mode === 'feature' ? getFeatureNav(t) : getAdminNav(t)),
+    [mode, t],
+  )
 
-  const sharedProps = { t, pathname, mode, handleToggle, navigation, createMenuOpen, setCreateMenuOpen, handleCreateSelection, logout }
+  const sharedProps = { t, pathname, mode, handleToggle, navigation, handleCreateSelection, logout }
 
   return (
     <TooltipProvider delayDuration={tooltipDelay}>
@@ -540,29 +550,28 @@ export function AppSidebar() {
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
       >
-        {/* ── Collapsed panel: slides out left when expanding, slides in after delay when collapsing ── */}
-        <div
-          className={cn(
-            'absolute inset-y-0 left-0 z-10 w-16',
-            'transition-transform duration-300 ease-out',
-            // Expand: slide out immediately. Collapse: slide in after ExpandedBar clears
-            effectiveCollapsed ? 'translate-x-0 delay-150' : '-translate-x-full delay-0',
-          )}
-        >
-          <CollapsedBar {...sharedProps} />
-        </div>
-
-        {/* ── Expanded panel: slides in after delay when expanding, slides out immediately when collapsing ── */}
-        <div
-          className={cn(
-            'absolute inset-y-0 left-0 z-20 w-64',
-            'transition-transform duration-300 ease-out',
-            // Expand: slide in after CollapsedBar clears. Collapse: slide out immediately
-            effectiveCollapsed ? '-translate-x-full delay-0' : 'translate-x-0 delay-150',
-          )}
-        >
-          <ExpandedBar {...sharedProps} isMac={isMac} />
-        </div>
+        {effectiveCollapsed ? (
+          <div className="absolute inset-y-0 left-0 z-10 w-16">
+            <CollapsedBar
+              {...sharedProps}
+              createMenuOpen={activeCreateMenu === 'collapsed'}
+              setCreateMenuOpen={(open) =>
+                setActiveCreateMenu(open ? 'collapsed' : null)
+              }
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-y-0 left-0 z-20 w-64">
+            <ExpandedBar
+              {...sharedProps}
+              isMac={isMac}
+              createMenuOpen={activeCreateMenu === 'expanded'}
+              setCreateMenuOpen={(open) =>
+                setActiveCreateMenu(open ? 'expanded' : null)
+              }
+            />
+          </div>
+        )}
       </div>
     </TooltipProvider>
   )
