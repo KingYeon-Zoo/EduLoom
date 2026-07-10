@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { podcastsApi, EpisodeProfileInput, SpeakerProfileInput } from '@/lib/api/podcasts'
@@ -15,6 +15,8 @@ import {
   groupEpisodesByStatus,
   speakerUsageMap,
 } from '@/lib/types/podcasts'
+import { toDemoPodcastEpisode } from '@/lib/demo-media'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 
 export function useLanguages() {
   return useQuery({
@@ -49,6 +51,16 @@ function hasActiveEpisodes(episodes: PodcastEpisode[]) {
 
 export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
   const { autoRefresh = true } = options ?? {}
+  const demoTask = useDemoMediaStore((state) => state.tasks.podcast)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!demoTask) return
+    const updateNow = () => setNow(Date.now())
+    updateNow()
+    const intervalId = window.setInterval(updateNow, 1_000)
+    return () => window.clearInterval(intervalId)
+  }, [demoTask])
 
   const query = useQuery({
     queryKey: QUERY_KEYS.podcastEpisodes,
@@ -67,7 +79,15 @@ export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
     },
   })
 
-  const episodes = useMemo(() => query.data ?? [], [query.data])
+  const episodes = useMemo(() => {
+    const apiEpisodes = query.data ?? []
+    if (!demoTask) return apiEpisodes
+    const demoEpisode = toDemoPodcastEpisode(demoTask, now)
+    return [
+      demoEpisode,
+      ...apiEpisodes.filter((episode) => episode.id !== demoEpisode.id),
+    ]
+  }, [demoTask, now, query.data])
 
   const statusGroups = useMemo<EpisodeStatusGroups>(
     () => groupEpisodesByStatus(episodes),

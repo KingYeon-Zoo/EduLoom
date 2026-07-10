@@ -8,16 +8,24 @@ import { EpisodeCard } from '@/components/podcasts/EpisodeCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useTranslation } from '@/lib/hooks/use-translation'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 
 export function EpisodesTab() {
   const { t } = useTranslation()
   const { episodes, isLoading, isError } = usePodcastEpisodes()
   const deleteEpisode = useDeletePodcastEpisode()
   const retryEpisode = useRetryPodcastEpisode()
+  const clearDemoTask = useDemoMediaStore((state) => state.clearTask)
 
   const handleDelete = useCallback(
-    (episodeId: string) => deleteEpisode.mutateAsync(episodeId),
-    [deleteEpisode]
+    (episodeId: string) => {
+      if (episodeId.startsWith('demo-podcast-')) {
+        clearDemoTask('podcast')
+        return Promise.resolve()
+      }
+      return deleteEpisode.mutateAsync(episodeId)
+    },
+    [clearDemoTask, deleteEpisode]
   )
 
   const handleRetry = useCallback(
