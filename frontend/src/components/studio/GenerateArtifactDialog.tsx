@@ -32,6 +32,7 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -62,6 +63,7 @@ export function GenerateArtifactDialog({
   const { t } = useTranslation()
   const { success, error } = useToast()
   const queryClient = useQueryClient()
+  const startDemoTask = useDemoMediaStore((state) => state.startTask)
 
   // ---- content selection state -------------------------------------------
   const [expandedNotebooks, setExpandedNotebooks] = useState<string[]>([])
@@ -459,6 +461,14 @@ export function GenerateArtifactDialog({
   }
 
   const handleSubmit = useCallback(async () => {
+    if (resourceType === 'video') {
+      startDemoTask('video', Date.now(), name.trim() || undefined)
+      success(t('common.success'), t('demoGeneration.backgroundHint'))
+      resetState()
+      onOpenChange(false)
+      return
+    }
+
     if (!name.trim()) {
       error(t('studio.nameRequired'), t('studio.nameRequiredDesc'))
       return
@@ -499,6 +509,7 @@ export function GenerateArtifactDialog({
     }
   }, [
     name,
+    startDemoTask,
     profileName,
     buildContentFromSelections,
     generate,
@@ -518,7 +529,10 @@ export function GenerateArtifactDialog({
     if (!value) resetState()
   }
 
-  const canSubmit = !!name.trim() && !!profileName && !isSubmitting
+  const canSubmit =
+    resourceType === 'video'
+      ? !isSubmitting
+      : !!name.trim() && !!profileName && !isSubmitting
 
   // ---- right panel JSX ---------------------------------------------------
   const rightPanel = (
