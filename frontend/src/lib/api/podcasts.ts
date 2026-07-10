@@ -6,7 +6,6 @@ import {
   SpeakerProfile,
   Language,
   PodcastGenerationRequest,
-  PodcastGenerationResponse,
 } from '@/lib/types/podcasts'
 
 export type EpisodeProfileInput = Omit<EpisodeProfile, 'id'>
@@ -30,6 +29,10 @@ export async function resolvePodcastAssetUrl(path?: string | null): Promise<stri
   }
 
   if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  if (path.startsWith('/demo-assets/')) {
     return path
   }
 
@@ -123,12 +126,8 @@ export const podcastsApi = {
     return response.data
   },
 
-  generatePodcast: async (payload: PodcastGenerationRequest) => {
-    const response = await apiClient.post<PodcastGenerationResponse>(
-      '/podcasts/generate',
-      payload
-    )
-    return response.data
+  generatePodcast: async (_payload: PodcastGenerationRequest) => {
+    throw new Error('Demo podcast generation is disabled')
   },
 
   listLanguages: async () => {
