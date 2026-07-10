@@ -11,7 +11,6 @@ import {
   hasSelections,
   type SourceMode,
   type NotebookSelection,
-  type NotebookSummary,
 } from '@/components/studio/ContentSelectionPanel'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import { useEpisodeProfiles } from '@/lib/hooks/use-podcasts'
@@ -20,7 +19,6 @@ import { sourcesApi } from '@/lib/api/sources'
 import { notesApi } from '@/lib/api/notes'
 import {
   NoteResponse,
-  NotebookResponse,
   SourceListResponse,
 } from '@/lib/types/api'
 import { QUERY_KEYS } from '@/lib/api/query-client'
@@ -121,12 +119,6 @@ export function GeneratePodcastDialog({
     return map
   }, [notebooks, notesQueries])
 
-  // Stable key for fetching state
-  const fetchingKey = useMemo(
-    () => sourcesQueries.map((q) => (q.isFetching ? '1' : '0')).join(''),
-    [sourcesQueries],
-  )
-
   const fetchingNotebookIds = useMemo(() => {
     const ids = new Set<string>()
     notebooks.forEach((notebook, index) => {
@@ -135,7 +127,7 @@ export function GeneratePodcastDialog({
       }
     })
     return ids
-  }, [notebooks, fetchingKey])
+  }, [notebooks, sourcesQueries])
 
   // Stable key based on actual data to prevent effect running on every
   // render — only changes when actual source/note IDs change.

@@ -11,7 +11,6 @@ import {
   EpisodeProfile,
   EpisodeStatusGroups,
   PodcastEpisode,
-  PodcastGenerationRequest,
   groupEpisodesByStatus,
   speakerUsageMap,
 } from '@/lib/types/podcasts'
@@ -399,31 +398,6 @@ export function useDuplicateSpeakerProfile() {
       error(
         t('podcasts.failedToDuplicateSpeaker'),
         getApiErrorKey(err, t('common.error')),
-      )
-    },
-  })
-}
-
-export function useGeneratePodcast() {
-  const queryClient = useQueryClient()
-  const { success, error } = useToast()
-  const { t } = useTranslation()
-
-  return useMutation({
-    mutationFn: (payload: PodcastGenerationRequest) =>
-      podcastsApi.generatePodcast(payload),
-    onSuccess: async (response) => {
-      // Immediately refetch to show the new episode
-      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
-      success(
-        t('podcasts.generationStarted'),
-        t('podcasts.generationStartedDesc').replace('{name}', response.episode_name),
-      )
-    },
-    onError: (err: unknown) => {
-      error(
-        t('podcasts.failedToStartGeneration'),
-        getApiErrorKey(err, t('podcasts.tryAgainMoment')),
       )
     },
   })

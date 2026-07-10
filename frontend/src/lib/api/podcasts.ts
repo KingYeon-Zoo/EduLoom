@@ -127,6 +127,7 @@ export const podcastsApi = {
   },
 
   generatePodcast: async (_payload: PodcastGenerationRequest) => {
+    void _payload
     throw new Error('Demo podcast generation is disabled')
   },
 

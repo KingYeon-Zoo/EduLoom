@@ -11,7 +11,6 @@ import {
   hasSelections,
   type SourceMode,
   type NotebookSelection,
-  type NotebookSummary,
 } from '@/components/studio/ContentSelectionPanel'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import {
@@ -23,9 +22,7 @@ import { chatApi } from '@/lib/api/chat'
 import { sourcesApi } from '@/lib/api/sources'
 import { notesApi } from '@/lib/api/notes'
 import {
-  BuildContextRequest,
   NoteResponse,
-  NotebookResponse,
   SourceListResponse,
 } from '@/lib/types/api'
 import { QUERY_KEYS } from '@/lib/api/query-client'
@@ -134,11 +131,6 @@ export function GenerateArtifactDialog({
     return map
   }, [notebooks, notesQueries])
 
-  const fetchingKey = useMemo(
-    () => sourcesQueries.map((q) => (q.isFetching ? '1' : '0')).join(''),
-    [sourcesQueries],
-  )
-
   const fetchingNotebookIds = useMemo(() => {
     const ids = new Set<string>()
     notebooks.forEach((notebook, index) => {
@@ -147,7 +139,7 @@ export function GenerateArtifactDialog({
       }
     })
     return ids
-  }, [notebooks, fetchingKey])
+  }, [notebooks, sourcesQueries])
 
   const dataKey = useMemo(() => {
     const sourceIds = sourcesQueries
