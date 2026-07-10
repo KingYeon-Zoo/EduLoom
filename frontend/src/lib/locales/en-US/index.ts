@@ -294,6 +294,16 @@ export const enUS = {
     tutorSuggestDismiss: "Dismiss",
     tutorSuggestTypePrefix: "Suggested: ",
   },
+  demoGeneration: {
+    videoTitle: "Generating teaching video",
+    podcastTitle: "Generating AI podcast",
+    backgroundHint: "You can close this animation; the task will keep running in the background",
+    remaining: "About {time} remaining",
+    stageAnalyze: "Analyzing learning materials",
+    stageArrange: "Structuring the content",
+    stageSynthesize: "Synthesizing the final media",
+    close: "Close generation animation",
+  },
   studio: {
     types: {
       report: "Report",

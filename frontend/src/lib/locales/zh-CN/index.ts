@@ -294,6 +294,16 @@ export const zhCN = {
     tutorSuggestDismiss: "忽略",
     tutorSuggestTypePrefix: "建议生成：",
   },
+  demoGeneration: {
+    videoTitle: "正在生成教学视频",
+    podcastTitle: "正在生成智能播客",
+    backgroundHint: "可以关闭此动画，任务仍将在后台继续",
+    remaining: "预计剩余 {time}",
+    stageAnalyze: "分析学习资料",
+    stageArrange: "编排内容结构",
+    stageSynthesize: "合成媒体成品",
+    close: "关闭生成动画",
+  },
   studio: {
     types: {
       report: "学习报告",
