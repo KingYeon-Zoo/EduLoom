@@ -17,6 +17,7 @@ import {
   ReasoningEffort
 } from '@/lib/types/api'
 import { ContextSelections } from '@/app/(feature)/notebooks/[id]/page'
+import { mergeNotebookChatStreamMessages } from '@/lib/notebook-chat-stream'
 
 interface UseNotebookChatParams {
   notebookId: string
@@ -251,6 +252,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
       // Accumulate AI messages as they stream in
       const aiMessages: NotebookChatMessage[] = []
+      const streamMessagePrefix = `ai-stream-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       let complete = false
 
       for await (const event of eventStream) {
@@ -261,25 +263,25 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
           case 'ai_message': {
             const aiMsg: NotebookChatMessage = {
-              id: `ai-${Date.now()}-${aiMessages.length}`,
+              id: `${streamMessagePrefix}-${aiMessages.length}`,
               type: 'ai',
               content: event.content ?? '',
               timestamp: event.timestamp ?? new Date().toISOString(),
             }
             aiMessages.push(aiMsg)
+            const streamedSnapshot = aiMessages.map((message) => ({
+              ...message,
+            }))
 
-            // Update UI incrementally — replace optimistic user msg + previous AI with full list
-            setMessages(prev => {
-              const nonTemp = prev.filter(msg => !msg.id.startsWith('temp-'))
-              // Remove any previously streamed AI messages from this turn
-              const cleaned = nonTemp.filter(m => !m.id.startsWith('ai-stream-'))
-              // Tag AI messages with stream marker so they can be replaced on next event
-              const tagged = aiMessages.map((m, i) => ({
-                ...m,
-                id: i === aiMessages.length - 1 ? m.id : `ai-stream-${i}`,
-              }))
-              return [...cleaned, ...tagged]
-            })
+            // React may batch several SSE events. Replace this turn's snapshot
+            // atomically so no mutable-array closure can append duplicate ids.
+            setMessages((previousMessages) =>
+              mergeNotebookChatStreamMessages(
+                previousMessages,
+                streamedSnapshot,
+                streamMessagePrefix,
+              ),
+            )
             break
           }
 
@@ -298,11 +300,8 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
         }
       }
 
-      // On completion, remove stream markers and refetch session
+      // On completion, replace transient messages with persisted session data.
       if (complete && aiMessages.length > 0) {
-        setMessages(prev =>
-          prev.map(m => ({ ...m, id: m.id.startsWith('ai-stream-') ? `ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` : m.id }))
-        )
         await refetchCurrentSession()
       }
     } catch (err: unknown) {
