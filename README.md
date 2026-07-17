@@ -67,6 +67,28 @@ EduLoom 以 **多智能体（Multi-Agent）协同** 为核心，把学生上传�
 
 ---
 
+## 🎥 项目介绍与演示
+
+<div align="center">
+
+<a href="./docs/project-introduction/EduLoom-demo.mp4">
+  <img src="./docs/project-introduction/demo-cover.svg" alt="点击观看 EduLoom 项目介绍与功能演示视频" width="820" />
+</a>
+
+**点击上方封面观看完整项目演示视频**
+
+<br/>
+
+[📽️ 下载演示视频](./docs/project-introduction/EduLoom-demo.mp4) ·
+[📊 下载项目介绍 PPT](./docs/project-introduction/EduLoom-demo-presentation.pptx) ·
+[📄 下载项目介绍文档](./docs/project-introduction/EduLoom-project-introduction.docx)
+
+</div>
+
+> 演示视频通过 Git LFS 管理。克隆仓库后如未自动下载视频，请运行 `git lfs pull`。
+
+---
+
 ## ✨ 核心能力
 
 EduLoom 由一层很薄的 **`LearningCoordinator`（协调器）** 调度多个角色清晰的专职智能体协作完成，每个智能体只专注一项职责——从建立"学生是谁"，到"该学什么、怎么学"，再到"学得如何"，形成完整闭环。
