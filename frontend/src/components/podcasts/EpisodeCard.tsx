@@ -263,7 +263,7 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
                 </DialogHeader>
                 <div className="space-y-4 overflow-hidden">
                   {audioSrc ? (
-                    <audio controls preload="none" src={audioSrc} className="w-full" />
+                    <audio controls preload="metadata" src={audioSrc} className="w-full" />
                   ) : audioError ? (
                     <p className="text-sm text-destructive">{audioError}</p>
                   ) : null}
@@ -421,7 +421,7 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
         </div>
 
         {audioSrc ? (
-          <audio controls preload="none" src={audioSrc} className="w-full" />
+          <audio controls preload="metadata" src={audioSrc} className="w-full" />
         ) : audioError ? (
           <p className="text-sm text-destructive">{audioError}</p>
         ) : null}

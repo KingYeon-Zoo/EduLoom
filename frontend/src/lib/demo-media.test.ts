@@ -65,5 +65,17 @@ describe('demo media record mapping', () => {
       audio_url: null,
     })
     expect(episode.episode_profile.name).toBe('深度学习双人漫谈')
+    expect(episode.episode_profile).toMatchObject({
+      outline_provider: 'doubao',
+      outline_model: 'doubao-seed-2-0-lite-260428',
+      transcript_provider: 'doubao',
+      transcript_model: 'doubao-seed-2-0-lite-260428',
+    })
+    expect(episode.speaker_profile).toMatchObject({
+      tts_provider: 'doubao',
+      tts_model: 'seed-tts-2.0',
+    })
+    expect(episode.outline?.segments).toHaveLength(5)
+    expect(episode.transcript?.transcript).toHaveLength(59)
   })
 })

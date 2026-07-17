@@ -169,3 +169,13 @@ node_modules/
 
 # Large media files
 介绍视频.mov
+
+# Local demo, QA, and report artifacts
+/.playwright-cli/
+/output/
+/images/
+/*.srt
+/*.docx
+/介绍文档.md
+/口播稿-画面对齐版.md
+/生成过程补录.mov
