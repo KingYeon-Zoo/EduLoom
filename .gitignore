@@ -179,3 +179,8 @@ node_modules/
 /介绍文档.md
 /口播稿-画面对齐版.md
 /生成过程补录.mov
+
+# 比赛演示包需要随仓库发布，仅包含脱敏数据库模板及其引用的媒体。
+!/.env.demo.example
+!/demo_bundle/
+!/demo_bundle/**

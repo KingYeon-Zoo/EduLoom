@@ -23,6 +23,10 @@
 
 </div>
 
+<p align="center">
+  <img src="./docs/assets/eduloom-promo-poster.png" alt="EduLoom 宣传海报：把零散的课程资料，编织成你的个性化学习网络" width="100%" />
+</p>
+
 ---
 
 <div align="center">
@@ -215,11 +219,12 @@ run-dev.sh                 # 一键开发启动脚本
 项目采用标准三层架构，需依次启动 **SurrealDB → FastAPI 后端 → Next.js 前端**。
 
 ```bash
-cp .env.example .env      # 填写 AI Provider 与豆包多模态密钥
-./run-dev.sh              # 一键并行拉起数据库、后端、前端
+./run-dev.sh              # 首次运行自动安装内置演示数据并拉起全部服务
 ```
 
-启动后访问 **[http://localhost:3000](http://localhost:3000)**，API 文档见 **[http://localhost:5055/docs](http://localhost:5055/docs)**。详细的环境依赖、密钥获取与本地模型接入见 [配置文档](#-配置文档)。
+首次运行会从 `demo_bundle/` 恢复脱敏演示数据库和配套媒体，并自动生成不含 API 密钥的本地 `.env`。因此从 GitHub 新克隆的项目启动后也会直接显示 4 个主题笔记本、16 个来源及报告、测验、导图、幻灯片、视频、播客、学习路径和能力评估，不会进入空白状态。
+
+启动后访问 **[http://localhost:3000](http://localhost:3000)**，默认管理员账号和密码均为 `admin`，API 文档见 **[http://localhost:5055/docs](http://localhost:5055/docs)**。浏览内置演示数据不需要模型密钥；聊天与重新生成资源等在线 AI 功能需在设置页配置自己的服务商密钥。详细的环境依赖、密钥获取与本地模型接入见 [配置文档](#-配置文档)。
 
 ---
 

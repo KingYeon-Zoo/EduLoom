@@ -1,2 +1,5 @@
 # Ensure shell scripts always use LF so they run in Linux containers (e.g. Docker)
 *.sh text eol=lf
+
+# SurrealDB RocksDB 文件必须按二进制处理，避免跨平台换行转换破坏数据库。
+demo_bundle/surreal_data/** binary
