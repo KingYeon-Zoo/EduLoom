@@ -3,3 +3,6 @@
 
 # SurrealDB RocksDB 文件必须按二进制处理，避免跨平台换行转换破坏数据库。
 demo_bundle/surreal_data/** binary
+
+# 大型演示视频通过 Git LFS 保存，克隆后执行 git lfs pull 即可还原原文件。
+*.mp4 filter=lfs diff=lfs merge=lfs -text
