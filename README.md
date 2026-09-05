@@ -102,3 +102,13 @@ git lfs pull --include="docs/project-introduction/EduLoom-demo.mp4"
 EduLoom 基于 [Open Notebook](https://github.com/lfnovo/open-notebook) 开发，保留其资料管理、笔记、问答及相关基础设施。围绕个性化学习新增和改造的工作包括画像维护、资源生成与推荐、两阶段路径规划、辅导评估和学习工作台。
 
 项目使用 LangGraph、FastAPI、Next.js、SurrealDB 等开源组件，模型生成由配置的服务商提供。许可证见 [LICENSE](LICENSE)。
+
+## 宣传示意
+
+下图为项目宣传素材，实际界面和运行范围以上方演示及代码说明为准。
+
+![项目宣传示意](docs/assets/eduloom-promo-poster.png)
+
+### 预置媒体演示模式
+
+默认播客与视频请求连接后端真实生成服务。只需展示预置媒体时，在前端构建环境设置 `NEXT_PUBLIC_DEMO_MODE=true` 并重新构建；该模式展示的媒体是预置内容。

@@ -13,6 +13,7 @@ import { GeneratePodcastDialog } from '@/components/podcasts/GeneratePodcastDial
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { useEpisodeProfiles, useSpeakerProfiles, usePodcastEpisodes } from '@/lib/hooks/use-podcasts'
 import { needsModelSetup } from '@/lib/types/podcasts'
+import { DemoGenerationProgress } from '@/components/demo/DemoGenerationProgress'
 
 export default function PodcastsPage() {
   const { t } = useTranslation()
@@ -100,6 +101,9 @@ export default function PodcastsPage() {
 
           {/* Content — scrolls behind the glass header */}
           <div className="flex-1 px-6 pt-4 pb-6">
+            <div className="mb-5">
+              <DemoGenerationProgress type="podcast" />
+            </div>
             {activeTab === 'templates' ? (
               <TemplatesTab />
             ) : (

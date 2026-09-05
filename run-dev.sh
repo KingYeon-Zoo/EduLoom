@@ -50,6 +50,9 @@ echo -e "${CYAN}======================================================${NC}"
 echo -e "${CYAN}🚀  EduLoom 本地开发环境正在启动...${NC}"
 echo -e "${CYAN}======================================================${NC}"
 
+# 0. 首次启动时恢复内置演示数据与安全的本地配置
+./scripts/bootstrap-demo-data.sh
+
 # 1. 确保 uv 存在
 if ! command -v uv &> /dev/null && [ ! -f "$HOME/.local/bin/uv" ]; then
     echo -e "${RED}❌ 找不到 uv 包管理器，请先运行安装或配置 PATH。${NC}"
@@ -106,4 +109,9 @@ echo -e "${YELLOW}💡 按下 [Ctrl+C] 可一键优雅地停止所有服务并�
 echo -e "${CYAN}------------------------------------------------------${NC}"
 echo ""
 
-cd frontend && npm run dev
+cd frontend
+if [ ! -x "node_modules/.bin/next" ]; then
+    echo -e "${YELLOW}📦 首次启动：正在安装前端依赖...${NC}"
+    npm ci
+fi
+npm run dev

@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { isDemoMode } from '@/lib/demo-mode'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { studioApi } from '@/lib/api/studio'
@@ -15,6 +16,8 @@ import {
   StudioProfileInput,
   groupArtifactsByStatus,
 } from '@/lib/types/studio'
+import { toDemoStudioArtifact } from '@/lib/demo-media'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 
 function hasActiveArtifacts(artifacts: StudioArtifact[]) {
   return artifacts.some((a) =>
@@ -23,6 +26,19 @@ function hasActiveArtifacts(artifacts: StudioArtifact[]) {
 }
 
 export function useArtifacts(resourceType: ResourceType) {
+  const demoTask = useDemoMediaStore((state) =>
+    isDemoMode() && resourceType === 'video' ? state.tasks.video : undefined,
+  )
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!demoTask) return
+    const updateNow = () => setNow(Date.now())
+    updateNow()
+    const intervalId = window.setInterval(updateNow, 1_000)
+    return () => window.clearInterval(intervalId)
+  }, [demoTask])
+
   const query = useQuery({
     queryKey: QUERY_KEYS.studioArtifacts(resourceType),
     queryFn: () => studioApi.listArtifacts(resourceType),
@@ -33,7 +49,15 @@ export function useArtifacts(resourceType: ResourceType) {
     },
   })
 
-  const artifacts = useMemo(() => query.data ?? [], [query.data])
+  const artifacts = useMemo(() => {
+    const apiArtifacts = query.data ?? []
+    if (!demoTask) return apiArtifacts
+    const demoArtifact = toDemoStudioArtifact(demoTask, now)
+    return [
+      demoArtifact,
+      ...apiArtifacts.filter((artifact) => artifact.id !== demoArtifact.id),
+    ]
+  }, [demoTask, now, query.data])
   const statusGroups = useMemo<ArtifactStatusGroups>(
     () => groupArtifactsByStatus(artifacts),
     [artifacts]

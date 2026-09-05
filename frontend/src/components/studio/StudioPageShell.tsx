@@ -13,6 +13,7 @@ import { GenerateArtifactDialog } from './GenerateArtifactDialog'
 import { useArtifacts } from '@/lib/hooks/use-studio'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
+import { DemoGenerationProgress } from '@/components/demo/DemoGenerationProgress'
 
 interface StudioPageShellProps {
   resourceType: ResourceType
@@ -127,6 +128,11 @@ export function StudioPageShell({
 
           {/* Content — scrolls behind the glass header */}
           <div className="flex-1 px-6 pt-4 pb-6">
+            {resourceType === 'video' && (
+              <div className="mb-5">
+                <DemoGenerationProgress type="video" />
+              </div>
+            )}
             {activeTab === 'templates' ? (
               <StudioTemplatesTab resourceType={resourceType} />
             ) : (

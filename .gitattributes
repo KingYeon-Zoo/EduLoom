@@ -1,3 +1,5 @@
-# Ensure shell scripts always use LF so they run in Linux containers (e.g. Docker)
+# Shell scripts use LF in Linux containers
 *.sh text eol=lf
 docs/project-introduction/*.mp4 filter=lfs diff=lfs merge=lfs -text
+# 数据库文件保持二进制
+demo_bundle/surreal_data/** binary

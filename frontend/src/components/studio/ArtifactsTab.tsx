@@ -9,12 +9,14 @@ import {
 } from '@/lib/hooks/use-studio'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 
 export function ArtifactsTab({ resourceType }: { resourceType: ResourceType }) {
   const { t } = useTranslation()
   const { artifacts, isLoading } = useArtifacts(resourceType)
   const deleteArtifact = useDeleteArtifact(resourceType)
   const retryArtifact = useRetryArtifact(resourceType)
+  const clearDemoTask = useDemoMediaStore((state) => state.clearTask)
 
   return (
     <div className="space-y-5">
@@ -32,7 +34,13 @@ export function ArtifactsTab({ resourceType }: { resourceType: ResourceType }) {
             <ArtifactCard
               key={artifact.id}
               artifact={artifact}
-              onDelete={(id) => deleteArtifact.mutate(id)}
+              onDelete={(id) => {
+                if (id.startsWith('demo-video-')) {
+                  clearDemoTask('video')
+                  return
+                }
+                deleteArtifact.mutate(id)
+              }}
               onRetry={(id) => retryArtifact.mutate(id)}
             />
           ))}

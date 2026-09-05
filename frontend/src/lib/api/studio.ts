@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import apiClient from './client'
 import { getApiUrl } from '@/lib/config'
 import {
@@ -16,6 +17,7 @@ export async function resolveStudioAssetUrl(
 ): Promise<string | undefined> {
   if (!path) return undefined
   if (/^https?:\/\//i.test(path)) return path
+  if (path.startsWith('/demo-assets/')) return path
   const base = await getApiUrl()
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`
 }
@@ -36,6 +38,9 @@ export const studioApi = {
   },
 
   generate: async (payload: StudioGenerationRequest) => {
+    if (isDemoMode() && payload.resource_type === 'video') {
+      throw new Error('Demo video generation is disabled')
+    }
     const response = await apiClient.post<StudioGenerationResponse>(
       '/studio/generate',
       payload

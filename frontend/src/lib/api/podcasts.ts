@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import apiClient from './client'
 import { getApiUrl } from '@/lib/config'
 import {
@@ -30,6 +31,10 @@ export async function resolvePodcastAssetUrl(path?: string | null): Promise<stri
   }
 
   if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  if (path.startsWith('/demo-assets/')) {
     return path
   }
 
@@ -124,6 +129,7 @@ export const podcastsApi = {
   },
 
   generatePodcast: async (payload: PodcastGenerationRequest) => {
+    if (isDemoMode()) throw new Error('演示模式不调用真实播客生成服务')
     const response = await apiClient.post<PodcastGenerationResponse>(
       '/podcasts/generate',
       payload

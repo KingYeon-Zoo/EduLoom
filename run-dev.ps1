@@ -70,6 +70,14 @@ Write-Host "========================================="
 Write-Host "[START] EduLoom Development Services (Windows)"
 Write-Host "========================================="
 
+# 0. 首次启动时恢复脱敏演示数据库与配套媒体
+try {
+    & "$PSScriptRoot\scripts\bootstrap-demo-data.ps1"
+} catch {
+    Write-Host "[错误] 恢复演示数据失败：$($_.Exception.Message)"
+    exit 1
+}
+
 # 1. Check uv
 $UvCmd = $null
 if (Get-Command uv -ErrorAction SilentlyContinue) {

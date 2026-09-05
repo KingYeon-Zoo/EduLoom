@@ -11,7 +11,6 @@ import {
   hasSelections,
   type SourceMode,
   type NotebookSelection,
-  type NotebookSummary,
 } from '@/components/studio/ContentSelectionPanel'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import {
@@ -23,15 +22,15 @@ import { chatApi } from '@/lib/api/chat'
 import { sourcesApi } from '@/lib/api/sources'
 import { notesApi } from '@/lib/api/notes'
 import {
-  BuildContextRequest,
   NoteResponse,
-  NotebookResponse,
   SourceListResponse,
 } from '@/lib/types/api'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
+import { isDemoMode } from '@/lib/demo-mode'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -62,6 +61,7 @@ export function GenerateArtifactDialog({
   const { t } = useTranslation()
   const { success, error } = useToast()
   const queryClient = useQueryClient()
+  const startDemoTask = useDemoMediaStore((state) => state.startTask)
 
   // ---- content selection state -------------------------------------------
   const [expandedNotebooks, setExpandedNotebooks] = useState<string[]>([])
@@ -132,11 +132,6 @@ export function GenerateArtifactDialog({
     return map
   }, [notebooks, notesQueries])
 
-  const fetchingKey = useMemo(
-    () => sourcesQueries.map((q) => (q.isFetching ? '1' : '0')).join(''),
-    [sourcesQueries],
-  )
-
   const fetchingNotebookIds = useMemo(() => {
     const ids = new Set<string>()
     notebooks.forEach((notebook, index) => {
@@ -145,7 +140,7 @@ export function GenerateArtifactDialog({
       }
     })
     return ids
-  }, [notebooks, fetchingKey])
+  }, [notebooks, sourcesQueries])
 
   const dataKey = useMemo(() => {
     const sourceIds = sourcesQueries
@@ -459,6 +454,14 @@ export function GenerateArtifactDialog({
   }
 
   const handleSubmit = useCallback(async () => {
+    if (isDemoMode() && resourceType === 'video') {
+      startDemoTask('video', Date.now(), name.trim() || undefined)
+      success(t('common.success'), t('demoGeneration.backgroundHint'))
+      resetState()
+      onOpenChange(false)
+      return
+    }
+
     if (!name.trim()) {
       error(t('studio.nameRequired'), t('studio.nameRequiredDesc'))
       return
@@ -499,6 +502,7 @@ export function GenerateArtifactDialog({
     }
   }, [
     name,
+    startDemoTask,
     profileName,
     buildContentFromSelections,
     generate,
@@ -518,7 +522,10 @@ export function GenerateArtifactDialog({
     if (!value) resetState()
   }
 
-  const canSubmit = !!name.trim() && !!profileName && !isSubmitting
+  const canSubmit =
+    isDemoMode() && resourceType === 'video'
+      ? !isSubmitting
+      : !!name.trim() && !!profileName && !isSubmitting
 
   // ---- right panel JSX ---------------------------------------------------
   const rightPanel = (

@@ -31,6 +31,7 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 import { Separator } from '@/components/ui/separator'
 import type { AppMode } from '@/lib/stores/mode-store'
 import {
+  type LucideIcon,
   Book,
   Search,
   Mic,
@@ -106,6 +107,14 @@ const getAdminNav = (t: TFunction) => [
 
 type CreateTarget = 'source' | 'notebook' | 'podcast' | 'report' | 'quiz' | 'video' | 'mindmap' | 'ppt'
 type CreateMenuPanel = 'collapsed' | 'expanded'
+type NavigationSection = {
+  title: string
+  items: ReadonlyArray<{
+    name: string
+    href: string
+    icon: LucideIcon
+  }>
+}
 
 // ── Collapsed panel ──
 
@@ -117,7 +126,7 @@ function CollapsedBar({
   pathname: string | null
   mode: AppMode
   handleToggle: () => void
-  navigation: ReturnType<typeof getFeatureNav>
+  navigation: readonly NavigationSection[]
   createMenuOpen: boolean
   setCreateMenuOpen: (v: boolean) => void
   handleCreateSelection: (target: CreateTarget) => void
@@ -258,7 +267,7 @@ function ExpandedBar({
   pathname: string | null
   mode: AppMode
   handleToggle: () => void
-  navigation: ReturnType<typeof getFeatureNav>
+  navigation: readonly NavigationSection[]
   createMenuOpen: boolean
   setCreateMenuOpen: (v: boolean) => void
   handleCreateSelection: (target: CreateTarget) => void

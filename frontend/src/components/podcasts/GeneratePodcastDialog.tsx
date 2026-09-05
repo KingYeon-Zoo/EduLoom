@@ -42,6 +42,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
+import { isDemoMode } from '@/lib/demo-mode'
 
 interface GeneratePodcastDialogProps {
   open: boolean
@@ -55,6 +57,7 @@ export function GeneratePodcastDialog({
   const { t } = useTranslation()
   const { success, error } = useToast()
   const queryClient = useQueryClient()
+  const startDemoTask = useDemoMediaStore((state) => state.startTask)
 
   // ---- state ----------------------------------------------------------
   const [expandedNotebooks, setExpandedNotebooks] = useState<string[]>([])
@@ -444,6 +447,13 @@ export function GeneratePodcastDialog({
   }, [notebooks, selections, t])
 
   const handleSubmit = useCallback(async () => {
+    if (isDemoMode()) {
+      startDemoTask('podcast', Date.now(), episodeName.trim() || undefined)
+      success(t('common.success'), t('demoGeneration.backgroundHint'))
+      resetState()
+      onOpenChange(false)
+      return
+    }
     if (!selectedEpisodeProfile) {
       error(t('podcasts.profileRequired'), t('podcasts.profileRequiredDesc'))
       return
@@ -488,6 +498,7 @@ export function GeneratePodcastDialog({
     }
   }, [
     buildContentFromSelections,
+    startDemoTask,
     episodeName,
     generatePodcast,
     instructions,

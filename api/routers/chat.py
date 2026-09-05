@@ -476,6 +476,17 @@ async def execute_chat(request: ExecuteChatRequest):
         raise HTTPException(status_code=500, detail="Failed to execute chat")
 
 
+def _get_new_ai_messages(
+    result_messages: List[Any], previous_ai_count: int
+) -> List[Any]:
+    """Return only AI messages created by the current graph invocation."""
+    ai_messages = [
+        message
+        for message in result_messages
+        if getattr(message, "type", None) == "ai"
+    ]
+    return ai_messages[max(0, previous_ai_count) :]
+
 
 async def stream_notebook_chat_response(
     session_id: str,
@@ -503,6 +514,11 @@ async def stream_notebook_chat_response(
             state_values["notebook"] = notebook
             state_values["model_override"] = model_override
             state_values["reasoning_effort"] = reasoning_effort
+            previous_ai_count = sum(
+                1
+                for existing_message in state_values["messages"]
+                if getattr(existing_message, "type", None) == "ai"
+            )
 
             # Add user message to state
             user_message = HumanMessage(content=message)
@@ -526,15 +542,17 @@ async def stream_notebook_chat_response(
             )
 
             # Stream AI messages
-            if "messages" in result:
-                for msg in result["messages"]:
-                    if hasattr(msg, "type") and msg.type == "ai":
-                        ai_event = {
-                            "type": "ai_message",
-                            "content": msg.content if hasattr(msg, "content") else str(msg),
-                            "timestamp": None,
-                        }
-                        yield f"data: {json.dumps(ai_event)}\n\n"
+            for msg in _get_new_ai_messages(
+                result.get("messages", []), previous_ai_count
+            ):
+                ai_event = {
+                    "type": "ai_message",
+                    "content": (
+                        msg.content if hasattr(msg, "content") else str(msg)
+                    ),
+                    "timestamp": None,
+                }
+                yield f"data: {json.dumps(ai_event)}\n\n"
 
             # Send generation suggestion if present
             if result.get("generation_suggestion"):
