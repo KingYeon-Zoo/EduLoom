@@ -11,16 +11,23 @@ import {
   hasSelections,
   type SourceMode,
   type NotebookSelection,
+  type NotebookSummary,
 } from '@/components/studio/ContentSelectionPanel'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
-import { useEpisodeProfiles } from '@/lib/hooks/use-podcasts'
+import {
+  useEpisodeProfiles,
+  useGeneratePodcast,
+} from '@/lib/hooks/use-podcasts'
 import { chatApi } from '@/lib/api/chat'
 import { sourcesApi } from '@/lib/api/sources'
 import { notesApi } from '@/lib/api/notes'
 import {
+  BuildContextRequest,
   NoteResponse,
+  NotebookResponse,
   SourceListResponse,
 } from '@/lib/types/api'
+import { PodcastGenerationRequest } from '@/lib/types/podcasts'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
@@ -36,6 +43,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
+import { isDemoMode } from '@/lib/demo-mode'
 
 interface GeneratePodcastDialogProps {
   open: boolean
@@ -47,7 +55,7 @@ export function GeneratePodcastDialog({
   onOpenChange,
 }: GeneratePodcastDialogProps) {
   const { t } = useTranslation()
-  const { success } = useToast()
+  const { success, error } = useToast()
   const queryClient = useQueryClient()
   const startDemoTask = useDemoMediaStore((state) => state.startTask)
 
@@ -60,12 +68,14 @@ export function GeneratePodcastDialog({
   const [episodeName, setEpisodeName] = useState('')
   const [instructions, setInstructions] = useState('')
 
+  const [isBuildingContext, setIsBuildingContext] = useState(false)
   const [tokenCount, setTokenCount] = useState<number>(0)
   const [charCount, setCharCount] = useState<number>(0)
 
   // ---- queries --------------------------------------------------------
   const notebooksQuery = useNotebooks()
   const episodeProfilesQuery = useEpisodeProfiles()
+  const generatePodcast = useGeneratePodcast()
 
   const notebooks = useMemo(
     () => notebooksQuery.data ?? [],
@@ -119,6 +129,12 @@ export function GeneratePodcastDialog({
     return map
   }, [notebooks, notesQueries])
 
+  // Stable key for fetching state
+  const fetchingKey = useMemo(
+    () => sourcesQueries.map((q) => (q.isFetching ? '1' : '0')).join(''),
+    [sourcesQueries],
+  )
+
   const fetchingNotebookIds = useMemo(() => {
     const ids = new Set<string>()
     notebooks.forEach((notebook, index) => {
@@ -127,7 +143,7 @@ export function GeneratePodcastDialog({
       }
     })
     return ids
-  }, [notebooks, sourcesQueries])
+  }, [notebooks, fetchingKey])
 
   // Stable key based on actual data to prevent effect running on every
   // render — only changes when actual source/note IDs change.
@@ -367,21 +383,134 @@ export function GeneratePodcastDialog({
     [],
   )
 
-  const handleSubmit = useCallback(() => {
-    startDemoTask('podcast', Date.now(), episodeName.trim() || undefined)
-    success(t('common.success'), t('demoGeneration.backgroundHint'))
-    resetState()
-    onOpenChange(false)
+  const buildContentFromSelections = useCallback(async () => {
+    const parts: string[] = []
+    const tasks: Array<{ notebookId: string; payload: BuildContextRequest }> =
+      []
+
+    Object.entries(selections).forEach(([notebookId, selection]) => {
+      const sourcesConfig = Object.entries(selection.sources)
+        .filter(([, mode]) => mode !== 'off')
+        .reduce<Record<string, string>>((acc, [sourceId, mode]) => {
+          const normalizedId = sourceId.replace(/^source:/, '')
+          acc[normalizedId] =
+            mode === 'insights' ? 'insights' : 'full content'
+          return acc
+        }, {})
+
+      const notesConfig = Object.entries(selection.notes)
+        .filter(([, mode]) => mode !== 'off')
+        .reduce<Record<string, string>>((acc, [noteId]) => {
+          const normalizedId = noteId.replace(/^note:/, '')
+          acc[normalizedId] = 'full content'
+          return acc
+        }, {})
+
+      if (
+        Object.keys(sourcesConfig).length === 0 &&
+        Object.keys(notesConfig).length === 0
+      ) {
+        return
+      }
+
+      tasks.push({
+        notebookId,
+        payload: {
+          notebook_id: notebookId,
+          context_config: { sources: sourcesConfig, notes: notesConfig },
+        },
+      })
+    })
+
+    if (tasks.length === 0) return ''
+
+    for (const task of tasks) {
+      try {
+        const response = await chatApi.buildContext(task.payload)
+        const notebookName =
+          notebooks.find((nb) => nb.id === task.notebookId)?.name ??
+          task.notebookId
+        const contextString = JSON.stringify(response.context, null, 2)
+        const snippet = `${t('common.notebookLabel').replace('{name}', notebookName)}\n${contextString}`
+        parts.push(snippet)
+      } catch (error) {
+        console.error(
+          'Failed to build context for notebook',
+          task.notebookId,
+          error,
+        )
+        throw new Error(t('podcasts.buildContextFailed'))
+      }
+    }
+
+    return parts.join('\n\n')
+  }, [notebooks, selections, t])
+
+  const handleSubmit = useCallback(async () => {
+    if (isDemoMode()) {
+      startDemoTask('podcast', Date.now(), episodeName.trim() || undefined)
+      success(t('common.success'), t('demoGeneration.backgroundHint'))
+      resetState()
+      onOpenChange(false)
+      return
+    }
+    if (!selectedEpisodeProfile) {
+      error(t('podcasts.profileRequired'), t('podcasts.profileRequiredDesc'))
+      return
+    }
+
+    if (!episodeName.trim()) {
+      error(t('podcasts.nameRequired'), t('podcasts.nameRequiredDesc'))
+      return
+    }
+
+    setIsBuildingContext(true)
+    try {
+      const content = await buildContentFromSelections()
+      if (!content.trim()) {
+        error(t('podcasts.addContext'), t('podcasts.addContextDesc'))
+        return
+      }
+
+      const payload: PodcastGenerationRequest = {
+        episode_profile: selectedEpisodeProfile.name,
+        speaker_profile: selectedEpisodeProfile.speaker_config,
+        episode_name: episodeName.trim(),
+        content,
+        briefing_suffix: instructions.trim() ? instructions.trim() : undefined,
+      }
+
+      await generatePodcast.mutateAsync(payload)
+      success(t('common.success'), t('podcasts.podcastTaskStarted'))
+
+      setTimeout(() => {
+        onOpenChange(false)
+        resetState()
+      }, 500)
+    } catch (err) {
+      console.error('Failed to generate podcast', err)
+      error(
+        t('podcasts.generationFailed'),
+        err instanceof Error ? err.message : t('common.refreshPage'),
+      )
+    } finally {
+      setIsBuildingContext(false)
+    }
   }, [
-    episodeName,
+    buildContentFromSelections,
     startDemoTask,
+    episodeName,
+    generatePodcast,
+    instructions,
     onOpenChange,
     resetState,
+    selectedEpisodeProfile,
     success,
+    error,
     t,
   ])
 
-  const isSubmitting = false
+  const isSubmitting = generatePodcast.isPending || isBuildingContext
 
   const handleOpenChange = (value: boolean) => {
     onOpenChange(value)

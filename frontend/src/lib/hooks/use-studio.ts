@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -26,7 +27,7 @@ function hasActiveArtifacts(artifacts: StudioArtifact[]) {
 
 export function useArtifacts(resourceType: ResourceType) {
   const demoTask = useDemoMediaStore((state) =>
-    resourceType === 'video' ? state.tasks.video : undefined,
+    isDemoMode() && resourceType === 'video' ? state.tasks.video : undefined,
   )
   const [now, setNow] = useState(() => Date.now())
 

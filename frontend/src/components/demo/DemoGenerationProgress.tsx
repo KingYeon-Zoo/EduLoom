@@ -1,5 +1,7 @@
 'use client'
 
+import { isDemoMode } from '@/lib/demo-mode'
+
 import { useEffect, useState } from 'react'
 import { Check, Mic2, Video, X } from 'lucide-react'
 
@@ -22,7 +24,7 @@ function formatRemaining(milliseconds: number) {
 
 export function DemoGenerationProgress({ type }: { type: DemoMediaType }) {
   const { t } = useTranslation()
-  const task = useDemoMediaStore((state) => state.tasks[type])
+  const task = useDemoMediaStore((state) => isDemoMode() ? state.tasks[type] : undefined)
   const dismissedTaskId = useDemoMediaStore(
     (state) => state.dismissedTaskIds[type],
   )

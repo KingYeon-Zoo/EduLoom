@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -11,6 +12,7 @@ import {
   EpisodeProfile,
   EpisodeStatusGroups,
   PodcastEpisode,
+  PodcastGenerationRequest,
   groupEpisodesByStatus,
   speakerUsageMap,
 } from '@/lib/types/podcasts'
@@ -50,7 +52,7 @@ function hasActiveEpisodes(episodes: PodcastEpisode[]) {
 
 export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
   const { autoRefresh = true } = options ?? {}
-  const demoTask = useDemoMediaStore((state) => state.tasks.podcast)
+  const demoTask = useDemoMediaStore((state) => isDemoMode() ? state.tasks.podcast : undefined)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -398,6 +400,31 @@ export function useDuplicateSpeakerProfile() {
       error(
         t('podcasts.failedToDuplicateSpeaker'),
         getApiErrorKey(err, t('common.error')),
+      )
+    },
+  })
+}
+
+export function useGeneratePodcast() {
+  const queryClient = useQueryClient()
+  const { success, error } = useToast()
+  const { t } = useTranslation()
+
+  return useMutation({
+    mutationFn: (payload: PodcastGenerationRequest) =>
+      podcastsApi.generatePodcast(payload),
+    onSuccess: async (response) => {
+      // Immediately refetch to show the new episode
+      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
+      success(
+        t('podcasts.generationStarted'),
+        t('podcasts.generationStartedDesc').replace('{name}', response.episode_name),
+      )
+    },
+    onError: (err: unknown) => {
+      error(
+        t('podcasts.failedToStartGeneration'),
+        getApiErrorKey(err, t('podcasts.tryAgainMoment')),
       )
     },
   })

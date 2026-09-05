@@ -1,268 +1,114 @@
-<div align="center">
-
-<img src="./banner.png" alt="EduLoom · 学织" width="440" />
-
-<br/>
-<br/>
-
-### 基于大模型多智能体协同的个性化学习系统
-
-**把零散的课程资料，编织成一张属于每位学生的个性化学习网络。**
-
-<br/>
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![SurrealDB](https://img.shields.io/badge/SurrealDB-Graph_+_Vector-FF00A0.svg?style=for-the-badge&logo=surrealdb&logoColor=white)](https://surrealdb.com/)
-
-<br/>
-
-**[✨ 核心能力](#-核心能力)** · **[🤖 多智能体架构](#-多智能体协同架构)** · **[🏗️ 系统设计](#️-系统设计)** · **[🛠️ 技术栈](#️-技术栈)** · **[📂 项目结构](#-项目结构)**
-
-</div>
-
 <p align="center">
-  <img src="./docs/assets/eduloom-promo-poster.png" alt="EduLoom 宣传海报：把零散的课程资料，编织成你的个性化学习网络" width="100%" />
+  <img src="banner.png" width="240" alt="EduLoom 学织" />
 </p>
 
----
+# EduLoom 学织
 
-<div align="center">
+**面向自主学习者的个性化学习系统：从课程资料出发，结合学习画像安排内容、练习与下一步学习。**
 
-> _Edu·cation + Loom（织机）_ ——像织机把散乱的丝线织成布一样，
-> 由一组分工明确的智能体，将零散知识编织成结构化、可推送、可评估的个性化学习网络。
+上传一份教材，或整理一个想学的主题。EduLoom 把资料、问答、资源生成、学习路径和效果评估放在同一个工作台中，让学习过程能够接着上一次继续。
 
-</div>
+<p align="center">
+  <img src="docs/showcase/learning-workspace.png" width="100%" alt="实际演示画面：资料库、学习笔记与基于资料的问答工作台" />
+</p>
 
----
+[观看演示](docs/project-introduction/EduLoom-demo.mp4) · [项目介绍](docs/project-introduction/EduLoom-project-introduction.docx) · [核心设计](#核心设计) · [本地运行](#本地运行)
 
-## 📖 项目简介
+## 一次学习如何展开
 
-**EduLoom（学织）** 是一款开源、本地优先、以隐私为核心的个性化学习系统。
-
-在线课程与资料唾手可得，真正的难题从来不是"内容不够"，而是——**学习资源繁杂无序、难以精准匹配个体差异、缺乏贯穿始终的智能化指导**。同一份教材，对基础扎实的学生是复习提纲，对初学者却是天书。
-
-EduLoom 以 **多智能体（Multi-Agent）协同** 为核心，把学生上传的课程文档、文献、网页等原始材料，自动编织成一整套 **多模态、个性化、随学随新** 的学习资源与学习路径，让"因材施教"从理念变成可运行的系统。
+1. **建立画像。** 从对话中整理已有基础、认知方式、学习偏好、知识缺口、易错点与学习进度，支持后续增删和修正。
+2. **组织资源。** 围绕资料生成讲解、题库、思维导图、课件和教学视频，也可以在学习中请求辅导。
+3. **安排顺序。** 路径规划先确定学习步骤，再匹配资源库中的真实内容；缺少的资源单独标出。
+4. **回看效果。** 结合路径进度与练习内容生成评估，查看薄弱项，并据此调整画像和后续学习安排。
 
 <table>
-<tr>
-<td width="33%" align="center">
-
-### 🔒 隐私优先
-所有 API 密钥经 **Fernet 加密** 落地本地存储；<br/>可搭配本地模型 + 本地数据库 **完全离线运行**，数据不出本机。
-
-</td>
-<td width="33%" align="center">
-
-### 🧩 多智能体协同
-**薄协调器 + 角色清晰的专职智能体**，<br/>让"多智能体协作"在架构与 UI 中 **清晰可见、可追溯**。
-
-</td>
-<td width="33%" align="center">
-
-### 🎨 多模态生成
-一次编织出 **5+ 种** 学习资源：<br/>讲解文档 · 题库 · 思维导图 · 课件 · 教学视频。
-
-</td>
-</tr>
+  <tr>
+    <td width="50%"><img src="docs/showcase/resource-generation.png" alt="选择资料、预设与自定义要求后提交生成任务" /></td>
+    <td width="50%"><img src="docs/showcase/generated-slides.png" alt="在工作台查看生成的教学课件" /></td>
+  </tr>
+  <tr>
+    <td align="center">按资料和学习要求生成内容</td>
+    <td align="center">生成结果在工作台内查看与复用</td>
+  </tr>
 </table>
 
----
+截图取自项目演示录像。视频由 Git LFS 管理，下载方式见[演示文件说明](#演示文件)。
 
-## ✨ 核心能力
+## 核心设计
 
-EduLoom 由一层很薄的 **`LearningCoordinator`（协调器）** 调度多个角色清晰的专职智能体协作完成，每个智能体只专注一项职责——从建立"学生是谁"，到"该学什么、怎么学"，再到"学得如何"，形成完整闭环。
+### 以学习者为中心组织资料
 
-### 🧭 对话式学习画像自主构建
+项目在 Open Notebook 的资料管理与问答基础上扩展了学习者画像、资源推荐、路径规划、辅导和效果评估。画像可以持续修正，生成内容和路径规划都读取画像上下文。
 
-摒弃繁琐表单，学生通过 **自然语言对话** 即可建立画像。`ProfileExtractor` 智能体从对话与学习行为中实时抽取特征，构建并维护一个包含 **6 个固定维度** 的动态画像，随学习进程 **随学随新**：
+这里的工程重点是把学习状态接入资源组织过程：同一份资料，可以根据学习者已有基础与薄弱项，采用不同的解释方式和学习顺序。
 
-| 维度 | 说明 |
-| :--- | :--- |
-| 🧱 知识基础 | 已掌握的知识与能力水平 |
-| 🧠 认知风格 | 基于 **行为证据观察** 的学习风格（而非主观问卷） |
-| ⚠️ 易错点偏好 | 高频错误与薄弱环节 |
-| 🎯 学习目标 | 短期 / 长期学习诉求 |
-| 📈 学习进度 | 当前所处的学习阶段 |
-| 🌱 学习兴趣方向 | 偏好的主题与延伸方向 |
+### 学习顺序与资源匹配分两步完成
 
-> 认知风格维度刻意采用"观察到的行为证据"而非让用户填问卷——避免了自我报告偏差，让画像更贴近真实学习状态。
+`PathPlanner` 生成学习步骤，`ResourcePusher` 再把已存在的资源分配给各步骤。模型给出的资源 ID 会与实际加载的资源集合比对，无效 ID 被过滤，未匹配到资源的步骤保留缺口提示。
 
-### 🎨 多智能体协同的多模态资源生成
+这道校验约束的是资源引用有效性；讲解内容与教学适用性仍需要用户判断。
 
-`RecommenderAgent`（资源顾问）依据画像推荐最合适的生成预设与自定义指令，再由 5 个专职"创作智能体"分工产出多模态学习资源：
+### 将模型推理与执行控制分开
 
-| 智能体 | 产出资源 | 关键技术 |
-| :--- | :--- | :--- |
-| 📝 **讲解撰稿人** `ReportWriter` | 专业课程讲解 / 摘要文档 | LLM + RAG 检索 |
-| ❓ **命题官** `QuizMaster` | 多类型练习题库（含答案与解析） | 结构化生成 |
-| 🧭 **导图架构师** `MindMapArchitect` | 层级化知识点思维导图 | 结构化生成 |
-| 🖼️ **课件设计师** `SlideComposer` | 多页要点学习 PPT | LLM + 豆包文生图 |
-| 🎬 **视频导演** `VideoDirector` | 多模态教学视频 / 动画 | 豆包 Seedance 视频 + TTS 配音 |
+`LearningCoordinator` 负责准备上下文和调用 LangGraph 状态图，结果由服务层与任务处理器保存。问答链路把复杂问题拆成检索子任务，再汇总回答。
 
-> 所有资源支持 **流式输出、Markdown 渲染、多模态卡片化展示**，并具备生成进度追踪，避免长时间白屏等待。
+画像更新采用 `ADD / UPDATE / DELETE / NOOP` 操作，模型输出经过结构解析与字段校验。耗时生成进入异步任务队列；任务处理区分永久错误与瞬时错误，对可重试故障采用指数抖动退避。
 
-### 🛤️ 个性化学习路径规划与资源推送
+## 代码导览
 
-`PathPlanner`（路径规划师）结合课程内容与学习画像，规划循序渐进的学习路径；`ResourcePusher`（资源推送官）将已生成的多模态资源 **精准匹配** 到路径每个步骤，并自动标注 **资源缺口**（缺什么、建议生成哪种类型），形成"规划 → 推送 → 补齐"的闭环。
+| 设计 | 实现入口 |
+| --- | --- |
+| 学习画像抽取与更新 | [profile_extraction.py](edu_loom/graphs/profile_extraction.py) |
+| 两阶段规划与资源 ID 校验 | [path_planning.py](edu_loom/graphs/path_planning.py) |
+| 角色名册与无状态协调器 | [coordinator.py](edu_loom/agents/coordinator.py) |
+| 问题拆解、检索与回答汇总 | [ask.py](edu_loom/graphs/ask.py) |
+| 学习任务与重试处理 | [learning_commands.py](commands/learning_commands.py) |
+| 相关测试 | [路径规划](tests/test_path_planning.py)、[画像更新](tests/test_profile_extraction.py) |
 
-### 💬 智能辅导
+前端使用 Next.js / React，服务端使用 FastAPI / LangGraph，SurrealDB 保存资料、画像、资源和向量数据。不同模型服务通过 Provider 接入。
 
-`TutorAgent`（智能辅导员）提供即时多模态答疑：优先给出文字解答并推荐已有资源，必要时建议生成新资源（需用户确认），实现针对性的学习引导，而非机械问答。
+## 本地运行
 
-### 📊 学习效果评估
-
-`AssessmentAnalyst`（评估分析师）基于画像、练习产物与学习进度进行 **多维度评估**，给出动态调整建议——评估结果反向驱动画像更新与推送策略，让整个系统越用越懂你。
-
----
-
-## 🤖 多智能体协同架构
-
-EduLoom 刻意 **不堆砌重型编排框架**（消息总线、注册中心等在此场景属过度工程），而是采用 **"薄协调器 + 命名清晰的角色智能体"** 路线——既保证实现简洁可维护，又让"多智能体协作"在 UI 与架构图中清晰可见。
-
-```text
-                        ┌────────────────────────────┐
-                        │   LearningCoordinator 协调器  │  ← 无状态，只做编排 sequencing
-                        └──────────────┬─────────────┘
-        ┌──────────────┬──────────────┼──────────────┬──────────────┐
-        ▼              ▼              ▼              ▼              ▼
-  ProfileExtractor  Recommender    创作智能体群      PathPlanner    Assessment
-   学习画像抽取      资源顾问     (5 种资源生成)     + ResourcePusher  Analyst
-                                                    路径规划 + 推送    学习效果评估
-        ▲                                                              │
-        └───────────────  画像随学随新 · 评估反向优化  ◀───────────────┘
-```
-
-**三个值得展开的设计决策：**
-
-- **单一事实源（Single Source of Truth）**：`AGENT_ROSTER` 是"谁在协作"的唯一定义，同时驱动前端"协作智能体"面板与架构文档——运行时行为与文档描述天然一致，杜绝了"文档与代码脱节"。
-- **协调器无状态**：`LearningCoordinator` 不持有任何自身状态，只负责组装输入（笔记本内容 / 画像摘要 / 已有资源）并驱动对应的 LangGraph 状态图，返回纯数据交由服务层持久化——职责边界干净，易于测试与扩展。
-- **重活异步化**：耗时的多模态生成（视频 / 播客 / 路径规划 / 评估）走 **Surreal-Commands 异步任务队列**，在后台 worker 进程执行，通过任务状态轮询暴露进度，绝不阻塞 API 主线程。
-
-各智能体基于 **LangGraph 状态图** 实现，通过统一的 `provision_langchain_model()` 智能选择模型（自动识别长上下文场景、支持逐请求模型覆盖、主模型失败时回退）。
-
----
-
-## 🏗️ 系统设计
-
-### 三层架构
-
-```text
-┌──────────────────────────────────────────────┐
-│   前端  Next.js / React        :3000           │  画像对话 · 资源生成 · 路径 · 辅导 · 评估
-├──────────────────────────────────────────────┤  ▲ HTTP REST
-│   后端  FastAPI + LangGraph     :5055           │  多智能体编排 · 异步任务队列
-├──────────────────────────────────────────────┤  ▲ SurrealQL
-│   数据库  SurrealDB             :8000           │  画像 · 资源 · 路径 · 向量嵌入 · 图关系
-└──────────────────────────────────────────────┘
-```
-
-### 关键工程实践
-
-| 主题 | 做法 |
-| :--- | :--- |
-| **异步优先** | 数据库查询、图调用、外部 API 全链路 `async/await`；SurrealDB 异步驱动 + 连接池，FastAPI 高并发处理 |
-| **图 + 向量混合存储** | SurrealDB 单库同时承载图关系与向量嵌入，语义检索与关系查询无需跨库拼装 |
-| **自动迁移** | `AsyncMigrationManager` 在 API 启动时按版本自动执行 SurrealQL 迁移，支持可选回滚脚本 |
-| **多 Provider 抽象** | 基于 Esperanto 统一接口，一套代码对接 8+ AI 服务商，切换 Provider 无需改业务逻辑 |
-| **密钥安全** | 每个 Provider 独立凭证记录，API 密钥经 **Fernet（AES-128-CBC）** 加密后落库，逐行解密并容错处理密钥轮换 |
-| **结构化输出校验** | 智能体输出经 Pydantic v2 解析校验，异常自动分类（`error_classifier`）与重试 |
-| **防幻觉** | 资源生成基于 RAG，以学生上传的知识库内容为事实依据，降低事实性错误 |
-
----
-
-## 🛠️ 技术栈
-
-| 层 | 技术 |
-| :--- | :--- |
-| **前端** | Next.js 16 (React 19)、TypeScript、Zustand、TanStack Query、TailwindCSS、Shadcn/ui |
-| **后端** | FastAPI、Python 3.11+、LangChain、LangGraph、Pydantic v2、Loguru |
-| **数据库** | SurrealDB（图 + 向量混合存储，启动时自动迁移） |
-| **多模态生成** | 豆包 / 火山引擎方舟 Ark：Seedance 视频、Seedream 文生图、TTS 语音合成 |
-| **异步任务** | Surreal-Commands（基于数据库的任务调度队列） |
-| **多 Provider AI** | Esperanto 统一接口（OpenAI / Anthropic / Google / Groq / Ollama / Mistral / DeepSeek 等） |
-| **内容处理** | content-core（50+ 文件类型抽取）、ai-prompter（Jinja2 模板）、podcast-creator |
-
----
-
-## 📂 项目结构
-
-```text
-edu_loom/                  # Python 核心服务包
-├── agents/                # LearningCoordinator + 角色智能体名册（单一事实源）
-├── ai/                    # 模型发现、密钥加密、Provider 接入
-│   └── doubao/            # 豆包接入层（视频 / 图像 / TTS / Esperanto 适配）
-├── database/              # SurrealDB 操作与自动迁移
-├── domain/                # 领域模型（画像 / 学习路径 / 资源 / 笔记本 / 凭证）
-├── graphs/                # LangGraph 智能体状态图
-│   ├── profile_extraction.py   # 画像抽取
-│   ├── path_planning.py        # 路径规划 + 资源推送
-│   ├── assessment.py           # 学习效果评估
-│   └── chat.py / ask.py        # 对话 / 检索问答
-└── utils/                 # 向量嵌入与文本分割
-api/                       # FastAPI 路由与服务
-commands/                  # Surreal-Commands 异步任务处理器
-├── doubao_commands.py     # 视频 / 图像生成
-├── learning_commands.py   # 路径规划 / 效果评估
-├── profile_commands.py    # 画像抽取
-└── studio_commands.py     # 资源生成
-frontend/                  # Next.js 前端
-run-dev.sh                 # 一键开发启动脚本
-```
-
----
-
-## 🚀 快速开始
-
-项目采用标准三层架构，需依次启动 **SurrealDB → FastAPI 后端 → Next.js 前端**。
+准备 Python 3.11 或 3.12、uv、Node.js / npm，以及已加入 PATH 的 SurrealDB。版本约束见 [pyproject.toml](pyproject.toml) 与 [前端依赖](frontend/package.json)。
 
 ```bash
-./run-dev.sh              # 首次运行自动安装内置演示数据并拉起全部服务
+git clone https://github.com/KingYeon-Zoo/EduLoom.git
+cd EduLoom
+cp .env.example .env
+cd frontend
+npm install
+cd ..
+./run-dev.sh
 ```
 
-首次运行会从 `demo_bundle/` 恢复脱敏演示数据库和配套媒体，并自动生成不含 API 密钥的本地 `.env`。因此从 GitHub 新克隆的项目启动后也会直接显示 4 个主题笔记本、16 个来源及报告、测验、导图、幻灯片、视频、播客、学习路径和能力评估，不会进入空白状态。
+启动前按环境填写 `.env`。工作台地址为 `http://localhost:3000`，API 文档为 `http://localhost:5055/docs`。在线问答与生成需要配置对应服务商凭证；使用外部模型时，相关输入会发送给该服务商。
 
-启动后访问 **[http://localhost:3000](http://localhost:3000)**，默认管理员账号和密码均为 `admin`，API 文档见 **[http://localhost:5055/docs](http://localhost:5055/docs)**。浏览内置演示数据不需要模型密钥；聊天与重新生成资源等在线 AI 功能需在设置页配置自己的服务商密钥。详细的环境依赖、密钥获取与本地模型接入见 [配置文档](#-配置文档)。
+- [API 凭证配置](docs/3-USER-GUIDE/api-configuration.md)
+- [模型服务配置](docs/5-CONFIGURATION/ai-providers.md)
+- [OpenAI 兼容接口与本地模型接入](docs/5-CONFIGURATION/openai-compatible.md)
 
----
+### 演示文件
 
-## 📖 配置文档
+可直接打开上方演示入口，或安装 Git LFS 后在仓库内下载视频：
 
-- **[API 凭证配置指南](docs/3-USER-GUIDE/api-configuration.md)** —— 密钥加密保存、连接测试、模型导入
-- **[AI 服务商配置指南](docs/5-CONFIGURATION/ai-providers.md)** —— 密钥获取与推荐 Provider 列表
-- **[OpenAI 兼容接口配置](docs/5-CONFIGURATION/openai-compatible.md)** —— 接入 LM Studio / vLLM 等本地推理服务
+```bash
+git lfs pull --include="docs/project-introduction/EduLoom-demo.mp4"
+```
 
----
+演示中的课程资料与生成结果属于演示环境，新部署环境需自行导入资料与配置模型。
 
-## 🔗 开源依赖与致谢
+## 来源与项目工作
 
-EduLoom 在开源项目 [Open Notebook](https://github.com/lfnovo/open-notebook)（MIT）的三层架构基础上深度改造而来，并新增了学习画像、多智能体资源生成、学习路径规划、智能辅导与学习效果评估等完整能力。谨向以下开源项目致谢：
+EduLoom 基于 [Open Notebook](https://github.com/lfnovo/open-notebook) 开发，保留其资料管理、笔记、问答及相关基础设施。围绕个性化学习新增和改造的工作包括画像维护、资源生成与推荐、两阶段路径规划、辅导评估和学习工作台。
 
-| 项目 | 用途 | 协议 |
-| :--- | :--- | :--- |
-| [Open Notebook](https://github.com/lfnovo/open-notebook) | 三层架构与多模态笔记基座 | MIT |
-| [LangChain / LangGraph](https://github.com/langchain-ai/langgraph) | 多智能体状态图编排 | MIT |
-| [SurrealDB](https://surrealdb.com/) | 图 + 向量混合数据库 | BSL 1.1 |
-| [FastAPI](https://fastapi.tiangolo.com/) | 后端 Web 框架 | MIT |
-| [Next.js](https://nextjs.org/) | 前端框架 | MIT |
-| 豆包 / 火山引擎方舟 Ark | Seedance 视频、Seedream 图像、TTS | 商用 API 服务 |
+项目使用 LangGraph、FastAPI、Next.js、SurrealDB 等开源组件，模型生成由配置的服务商提供。许可证见 [LICENSE](LICENSE)。
 
----
+## 宣传示意
 
-## 📄 开源许可证
+下图为项目宣传素材，实际界面和运行范围以上方演示及代码说明为准。
 
-本项目采用 [MIT License](LICENSE) 开源。
+![项目宣传示意](docs/assets/eduloom-promo-poster.png)
 
-<div align="center">
+### 预置媒体演示模式
 
-<br/>
-
-<img src="./logo.png" alt="EduLoom" width="72" height="72" />
-
-**EduLoom · 学织** —— 让每一份资料，都成为专属你的那一堂课。
-
-<sub>Built with ❤️ · 因材施教的数字化实践</sub>
-
-</div>
+默认播客与视频请求连接后端真实生成服务。只需展示预置媒体时，在前端构建环境设置 `NEXT_PUBLIC_DEMO_MODE=true` 并重新构建；该模式展示的媒体是预置内容。

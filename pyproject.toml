@@ -104,3 +104,8 @@ ignore = [
 [[tool.mypy.overrides]]
 module = "pages.*"
 ignore_errors = true
+
+[tool.uv]
+# MoviePy 2.2 的上界仍为 Pillow<12；图像处理回归覆盖其 resize/rotate/composite 路径。
+# 统一使用修复安全漏洞的 Pillow，避免重新锁回 11.x。
+override-dependencies = ["pillow>=12.3.0"]

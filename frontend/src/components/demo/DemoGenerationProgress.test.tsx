@@ -6,6 +6,7 @@ import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 
 describe('DemoGenerationProgress', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'true')
     window.localStorage.clear()
     useDemoMediaStore.getState().reset()
   })
@@ -38,4 +39,11 @@ describe('DemoGenerationProgress', () => {
 
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
+  it('关闭演示模式时不展示已持久化的任务', () => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', '')
+    useDemoMediaStore.getState().startTask('video', Date.now(), '旧演示')
+    const { container } = render(<DemoGenerationProgress type="video" />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
 })

@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import apiClient from './client'
 import { getApiUrl } from '@/lib/config'
 import {
@@ -6,6 +7,7 @@ import {
   SpeakerProfile,
   Language,
   PodcastGenerationRequest,
+  PodcastGenerationResponse,
 } from '@/lib/types/podcasts'
 
 export type EpisodeProfileInput = Omit<EpisodeProfile, 'id'>
@@ -126,9 +128,13 @@ export const podcastsApi = {
     return response.data
   },
 
-  generatePodcast: async (_payload: PodcastGenerationRequest) => {
-    void _payload
-    throw new Error('Demo podcast generation is disabled')
+  generatePodcast: async (payload: PodcastGenerationRequest) => {
+    if (isDemoMode()) throw new Error('演示模式不调用真实播客生成服务')
+    const response = await apiClient.post<PodcastGenerationResponse>(
+      '/podcasts/generate',
+      payload
+    )
+    return response.data
   },
 
   listLanguages: async () => {

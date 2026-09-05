@@ -1,3 +1,4 @@
+import { isDemoMode } from '@/lib/demo-mode'
 import apiClient from './client'
 import { getApiUrl } from '@/lib/config'
 import {
@@ -37,7 +38,7 @@ export const studioApi = {
   },
 
   generate: async (payload: StudioGenerationRequest) => {
-    if (payload.resource_type === 'video') {
+    if (isDemoMode() && payload.resource_type === 'video') {
       throw new Error('Demo video generation is disabled')
     }
     const response = await apiClient.post<StudioGenerationResponse>(

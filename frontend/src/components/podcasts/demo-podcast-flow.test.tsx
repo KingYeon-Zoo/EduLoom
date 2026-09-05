@@ -49,6 +49,7 @@ vi.mock('@/lib/hooks/use-toast', () => ({
 
 describe('demo podcast confirmation flow', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'true')
     window.localStorage.clear()
     useDemoMediaStore.getState().reset()
     vi.clearAllMocks()

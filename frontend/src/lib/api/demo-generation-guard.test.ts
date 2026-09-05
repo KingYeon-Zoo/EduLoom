@@ -13,6 +13,7 @@ vi.mock('@/lib/config', () => ({
 
 describe('demo generation HTTP guard', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'true')
     vi.restoreAllMocks()
   })
 
@@ -60,7 +61,7 @@ describe('demo generation HTTP guard', () => {
         episode_name: '演示播客',
         content: '任意内容',
       }),
-    ).rejects.toThrow('Demo podcast generation is disabled')
+    ).rejects.toThrow('演示模式不调用真实播客生成服务')
 
     expect(postSpy).not.toHaveBeenCalled()
   })
@@ -72,5 +73,21 @@ describe('demo generation HTTP guard', () => {
     await expect(
       resolvePodcastAssetUrl('/demo-assets/audio.mp3'),
     ).resolves.toBe('/demo-assets/audio.mp3')
+  })
+})
+
+describe('正常模式生成', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', '')
+  })
+  it('默认将视频和播客请求发送到后端并返回任务', async () => {
+    const post = vi.spyOn(apiClient, 'post').mockResolvedValue({ data: { job_id: '真实任务' } } as never)
+    const video = { resource_type: 'video' as const, profile_name: '视频', name: '测试', content: '学习资料' }
+    const podcast = { episode_profile: '播客', speaker_profile: '主播', episode_name: '测试', content: '学习资料' }
+    await expect(studioApi.generate(video)).resolves.toEqual({ job_id: '真实任务' })
+    await expect(podcastsApi.generatePodcast(podcast)).resolves.toEqual({ job_id: '真实任务' })
+    expect(post).toHaveBeenCalledWith('/studio/generate', video)
+    expect(post).toHaveBeenCalledWith('/podcasts/generate', podcast)
   })
 })

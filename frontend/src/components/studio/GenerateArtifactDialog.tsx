@@ -29,6 +29,7 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { ResourceType } from '@/lib/types/studio'
+import { isDemoMode } from '@/lib/demo-mode'
 import { useDemoMediaStore } from '@/lib/stores/demo-media-store'
 import { Button } from '@/components/ui/button'
 import {
@@ -453,7 +454,7 @@ export function GenerateArtifactDialog({
   }
 
   const handleSubmit = useCallback(async () => {
-    if (resourceType === 'video') {
+    if (isDemoMode() && resourceType === 'video') {
       startDemoTask('video', Date.now(), name.trim() || undefined)
       success(t('common.success'), t('demoGeneration.backgroundHint'))
       resetState()
@@ -522,7 +523,7 @@ export function GenerateArtifactDialog({
   }
 
   const canSubmit =
-    resourceType === 'video'
+    isDemoMode() && resourceType === 'video'
       ? !isSubmitting
       : !!name.trim() && !!profileName && !isSubmitting
 

@@ -27,8 +27,8 @@ permissions:
   packages: write
 
 env:
-  GHCR_IMAGE: ghcr.io/lfnovo/open-notebook
-  DOCKERHUB_IMAGE: lfnovo/open_notebook
+  GHCR_IMAGE: ghcr.io/kingyeon-zoo/eduloom
+  DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 
 jobs:
   extract-version:
@@ -55,7 +55,7 @@ jobs:
           SECRET_DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           # Check for Docker Hub credentials
-          if [[ -n "$SECRET_DOCKER_USERNAME" && -n "$SECRET_DOCKER_PASSWORD" ]]; then
+          if [[ -n "$DOCKERHUB_IMAGE" && -n "$SECRET_DOCKER_USERNAME" && -n "$SECRET_DOCKER_PASSWORD" ]]; then
             echo "has_dockerhub_secrets=true" >> $GITHUB_OUTPUT
             echo "Docker Hub credentials available"
           else
@@ -129,7 +129,7 @@ jobs:
             echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
           else
             # PR or manual: test build only
-            echo "tags=${{ env.DOCKERHUB_IMAGE }}:${{ needs.extract-version.outputs.version }}-dev" >> $GITHUB_OUTPUT
+            echo "tags=${{ env.GHCR_IMAGE }}:${{ needs.extract-version.outputs.version }}-dev" >> $GITHUB_OUTPUT
             echo "push=false" >> $GITHUB_OUTPUT
             echo "platforms=${{ github.event.inputs.platform || 'linux/amd64' }}" >> $GITHUB_OUTPUT
           fi
